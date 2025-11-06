@@ -1,0 +1,74 @@
+package com.nbatch.job.core.util;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.*;
+
+/**
+ * @author Mr.ni 2020-04-12 0:14:00
+ */
+public class JdkSerializeTool {
+    private static final Logger logger = LoggerFactory.getLogger(JdkSerializeTool.class);
+
+
+    // ------------------------ serialize and unserialize ------------------------
+
+    /**
+     * 将对象-->byte[] (由于jedis中不支持直接存储object所以转换成byte[]存入)
+     *
+     * @param object 待转换的对象
+     */
+    public static byte[] serialize(Object object) {
+        ObjectOutputStream oos = null;
+        ByteArrayOutputStream baos = null;
+        try {
+            // 序列化
+            baos = new ByteArrayOutputStream();
+            oos = new ObjectOutputStream(baos);
+            oos.writeObject(object);
+            return baos.toByteArray();
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        } finally {
+            try {
+                assert oos != null;
+                oos.close();
+                baos.close();
+            } catch (IOException e) {
+                logger.error(e.getMessage(), e);
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * 将byte[] -->Object
+     *
+     * @param bytes byte数组
+     */
+    public static  <T> Object deserialize(byte[] bytes, Class<T> clazz) {
+        ObjectInputStream ois = null;
+        ByteArrayInputStream bais = null;
+        try {
+            // 反序列化
+            bais = new ByteArrayInputStream(bytes);
+            ois = new ObjectInputStream(bais);
+            return ois.readObject();
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        } finally {
+            try {
+                assert ois != null;
+                ois.close();
+                bais.close();
+            } catch (IOException e) {
+                logger.error(e.getMessage(), e);
+            }
+        }
+        return null;
+    }
+
+
+}

@@ -1,0 +1,202 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.nbatch</groupId>
+	<artifactId>nbatch</artifactId>
+	<version>2.5.0</version>
+	<packaging>pom</packaging>
+
+	<name>${project.artifactId}</name>
+
+	<modules>
+		<module>nbatch-core</module>
+		<module>nbatch-admin</module>
+		<module>nbatch-consumer</module>
+    </modules>
+
+	<properties>
+		<!-- env -->
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		<maven.test.skip>true</maven.test.skip>
+		<!-- plugin -->
+		<maven-source-plugin.version>3.3.1</maven-source-plugin.version>
+		<maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
+		<maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
+		<!-- base -->
+		<slf4j-api.version>2.0.16</slf4j-api.version>
+		<junit-jupiter.version>5.11.4</junit-jupiter.version>
+		<javax.annotation-api.version>1.3.2</javax.annotation-api.version>
+		<!-- net -->
+		<netty.version>4.1.116.Final</netty.version>
+		<gson.version>2.11.0</gson.version>
+		<!-- spring -->
+		<spring.version>5.3.39</spring.version>
+		<spring-boot.version>2.7.18</spring-boot.version>
+		<!-- db -->
+		<mybatis-spring-boot-starter.version>2.3.2</mybatis-spring-boot-starter.version>
+		<mysql-connector-j.version>9.1.0</mysql-connector-j.version>
+		<!-- dynamic language -->
+		<groovy.version>4.0.24</groovy.version>
+		<nbatch.version>2.5.0</nbatch.version>
+		<hutool.version>5.8.41</hutool.version>
+		<junit.version>4.13.2</junit.version>
+		<lombok.version>1.18.12</lombok.version>
+	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<!-- Import dependency management from Spring Boot (依赖管理：继承一些默认的依赖，工程需要依赖的jar包的管理，申明其他dependency的时候就不需要version) -->
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-parent</artifactId>
+				<version>${spring-boot.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+
+			<!-- ********************** embed server: netty + gson ********************** -->
+			<dependency>
+				<groupId>io.netty</groupId>
+				<artifactId>netty-codec-http</artifactId>
+				<version>${netty.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.google.code.gson</groupId>
+				<artifactId>gson</artifactId>
+				<version>${gson.version}</version>
+			</dependency>
+
+			<!-- ********************** plugin ********************** -->
+			<!-- groovy-all -->
+			<dependency>
+				<groupId>org.apache.groovy</groupId>
+				<artifactId>groovy</artifactId>
+				<version>${groovy.version}</version>
+			</dependency>
+
+			<!-- spring-context -->
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-context</artifactId>
+				<version>${spring.version}</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<!-- ********************** base ********************** -->
+			<!-- slf4j -->
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>${slf4j-api.version}</version>
+			</dependency>
+
+			<!-- javax.annotation-api -->
+			<dependency>
+				<groupId>javax.annotation</groupId>
+				<artifactId>javax.annotation-api</artifactId>
+				<version>${javax.annotation-api.version}</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<!-- mybatis-starter：mybatis + mybatis-spring + hikari（default） -->
+			<dependency>
+				<groupId>org.mybatis.spring.boot</groupId>
+				<artifactId>mybatis-spring-boot-starter</artifactId>
+				<version>${mybatis-spring-boot-starter.version}</version>
+			</dependency>
+
+			<!-- mysql -->
+			<dependency>
+				<groupId>com.mysql</groupId>
+				<artifactId>mysql-connector-j</artifactId>
+				<version>${mysql-connector-j.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.nbatch</groupId>
+				<artifactId>nbatch-core</artifactId>
+				<version>${nbatch.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>cn.hutool</groupId>
+				<artifactId>hutool-core</artifactId>
+				<version>${hutool.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<version>${junit.version}</version>
+				<scope>compile</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>org.projectlombok</groupId>
+				<artifactId>lombok</artifactId>
+				<version>${lombok.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<developers>
+		<developer>
+			<id>nbatch</id>
+			<name>Mr.ni</name>
+			<email>niwenpan8@gmail.com</email>
+		</developer>
+	</developers>
+
+	<profiles>
+
+		<profile>
+			<id>release</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<modules>
+				<module>nbatch-core</module>
+			</modules>
+			<build>
+				<plugins>
+					<!-- Source -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-source-plugin</artifactId>
+						<version>${maven-source-plugin.version}</version>
+						<executions>
+							<execution>
+								<phase>package</phase>
+								<goals>
+									<goal>jar-no-fork</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<!-- Javadoc -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-javadoc-plugin</artifactId>
+						<version>${maven-javadoc-plugin.version}</version>
+						<executions>
+							<execution>
+								<phase>package</phase>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+								<configuration>
+									<doclint>none</doclint>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
+</project>
