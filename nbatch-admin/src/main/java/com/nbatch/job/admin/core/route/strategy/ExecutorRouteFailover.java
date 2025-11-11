@@ -6,6 +6,7 @@ import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.ExecutorBiz;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.TriggerParam;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
@@ -14,23 +15,25 @@ import java.util.List;
  * @author Mr.ni
  * @date 2025/11/05
  */
+@Slf4j
 public class ExecutorRouteFailover extends ExecutorRouter {
 
     @Override
     public ReturnT<String> route(TriggerParam triggerParam, List<String> addressList) {
 
-        StringBuffer beatResultSB = new StringBuffer();
+        StringBuilder beatResultBuilder = new StringBuilder();
         for (String address : addressList) {
             // beat
             ReturnT<String> beatResult;
             try {
                 ExecutorBiz executorBiz = XxlJobScheduler.getExecutorBiz(address);
+                assert executorBiz != null;
                 beatResult = executorBiz.beat();
             } catch (Exception e) {
-                logger.error(e.getMessage(), e);
+                log.error(e.getMessage(), e);
                 beatResult = new ReturnT<>(ReturnT.FAIL_CODE, "" + e);
             }
-            beatResultSB.append((beatResultSB.length() > 0) ? "<br><br>" : "")
+            beatResultBuilder.append((beatResultBuilder.length() > 0) ? "<br><br>" : "")
                     .append(I18nUtil.getString("jobconf_beat"))
                     .append("：")
                     .append("<br>address：").append(address)
@@ -40,12 +43,12 @@ public class ExecutorRouteFailover extends ExecutorRouter {
             // beat success
             if (beatResult.getCode() == ReturnT.SUCCESS_CODE) {
 
-                beatResult.setMsg(beatResultSB.toString());
+                beatResult.setMsg(beatResultBuilder.toString());
                 beatResult.setContent(address);
                 return beatResult;
             }
         }
-        return new ReturnT<>(ReturnT.FAIL_CODE, beatResultSB.toString());
+        return new ReturnT<>(ReturnT.FAIL_CODE, beatResultBuilder.toString());
 
     }
 }

@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.nbatch.job.admin.core.route.ExecutorRouter;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.TriggerParam;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,12 +19,13 @@ import java.util.concurrent.ConcurrentMap;
  * @author Mr.ni
  * @date 2025/11/05
  */
+@Slf4j
 public class ExecutorRouteLFU extends ExecutorRouter {
 
-    private static final ConcurrentMap<Integer, HashMap<String, Integer>> JOB_LFU_MAP = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, HashMap<String, Integer>> JOB_LFU_MAP = new ConcurrentHashMap<>();
     private static long CACHE_VALID_TIME = 0;
 
-    public String route(int jobId, List<String> addressList) {
+    public String route(String jobId, List<String> addressList) {
 
         // cache clear
         if (System.currentTimeMillis() > CACHE_VALID_TIME) {

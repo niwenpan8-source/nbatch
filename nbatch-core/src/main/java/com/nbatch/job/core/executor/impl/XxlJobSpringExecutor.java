@@ -3,8 +3,7 @@ package com.nbatch.job.core.executor.impl;
 import com.nbatch.job.core.executor.XxlJobExecutor;
 import com.nbatch.job.core.glue.GlueFactory;
 import com.nbatch.job.core.handler.annotation.XxlJob;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -23,9 +22,8 @@ import java.util.Map;
  *
  * @author Mr.ni 2018-11-01 09:24:52
  */
+@Slf4j
 public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationContextAware, SmartInitializingSingleton, DisposableBean {
-    private static final Logger logger = LoggerFactory.getLogger(XxlJobSpringExecutor.class);
-
 
     // start
     @Override
@@ -89,7 +87,7 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
             Object bean = null;
             Lazy onBean = applicationContext.findAnnotationOnBean(beanDefinitionName, Lazy.class);
             if (onBean!=null){
-                logger.debug("xxl-job annotation scan, skip @Lazy Bean:{}", beanDefinitionName);
+                log.debug("xxl-job annotation scan, skip @Lazy Bean:{}", beanDefinitionName);
                 continue;
             }else {
                 bean = applicationContext.getBean(beanDefinitionName);
@@ -106,7 +104,7 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
                             }
                         });
             } catch (Throwable ex) {
-                logger.error("xxl-job method-jobhandler resolve error for bean[" + beanDefinitionName + "].", ex);
+                log.error("xxl-job method-jobhandler resolve error for bean[" + beanDefinitionName + "].", ex);
             }
             if (annotatedMethods==null || annotatedMethods.isEmpty()) {
                 continue;

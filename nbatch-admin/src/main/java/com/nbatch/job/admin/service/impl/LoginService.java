@@ -1,11 +1,12 @@
 package com.nbatch.job.admin.service.impl;
 
 import cn.hutool.core.util.StrUtil;
-import com.nbatch.job.admin.core.model.XxlJobUser;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.nbatch.job.admin.core.domain.po.JobUserPo;
 import com.nbatch.job.admin.core.util.CookieUtil;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.admin.core.util.JacksonUtil;
-import com.nbatch.job.admin.dao.XxlJobUserDao;
+import com.nbatch.job.admin.mapper.IJobUserMapper;
 import com.nbatch.job.core.biz.model.ReturnT;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
@@ -24,24 +25,24 @@ public class LoginService {
     public static final String LOGIN_IDENTITY_KEY = "XXL_JOB_LOGIN_IDENTITY";
 
     @Resource
-    private XxlJobUserDao xxlJobUserDao;
+    private IJobUserMapper jobUserMapper;
 
 
     // ---------------------- token tool ----------------------
 
-    private String makeToken(XxlJobUser xxlJobUser){
-        String tokenJson = JacksonUtil.writeValueAsString(xxlJobUser);
+    private String makeToken(JobUserPo jobUser){
+        String tokenJson = JacksonUtil.writeValueAsString(jobUser);
         assert tokenJson != null;
         return new BigInteger(tokenJson.getBytes()).toString(16);
     }
-    private XxlJobUser parseToken(String tokenHex){
-        XxlJobUser xxlJobUser = null;
+    private JobUserPo parseToken(String tokenHex){
+        JobUserPo jobUserPo = null;
         if (tokenHex != null) {
             // username_password(md5)
             String tokenJson = new String(new BigInteger(tokenHex, 16).toByteArray());
-            xxlJobUser = JacksonUtil.readValue(tokenJson, XxlJobUser.class);
+            jobUserPo = JacksonUtil.readValue(tokenJson, JobUserPo.class);
         }
-        return xxlJobUser;
+        return jobUserPo;
     }
 
 
@@ -55,16 +56,17 @@ public class LoginService {
         }
 
         // valid passowrd
-        XxlJobUser xxlJobUser = xxlJobUserDao.loadByUserName(username);
-        if (xxlJobUser == null) {
+        JobUserPo jobUser = jobUserMapper.selectOne(Wrappers.lambdaQuery(JobUserPo.class)
+                .eq(JobUserPo::getUsername, username));
+        if (jobUser == null) {
             return new ReturnT<>(500, I18nUtil.getString("login_param_unvalid"));
         }
         String passwordMd5 = DigestUtils.md5DigestAsHex(password.getBytes());
-        if (!passwordMd5.equals(xxlJobUser.getPassword())) {
+        if (!passwordMd5.equals(jobUser.getPassword())) {
             return new ReturnT<>(500, I18nUtil.getString("login_param_unvalid"));
         }
 
-        String loginToken = makeToken(xxlJobUser);
+        String loginToken = makeToken(jobUser);
 
         // do login
         CookieUtil.set(response, LOGIN_IDENTITY_KEY, loginToken, ifRemember);
@@ -87,17 +89,18 @@ public class LoginService {
      *
      * @param request request
      */
-    public XxlJobUser ifLogin(HttpServletRequest request, HttpServletResponse response){
+    public JobUserPo ifLogin(HttpServletRequest request, HttpServletResponse response){
         String cookieToken = CookieUtil.getValue(request, LOGIN_IDENTITY_KEY);
         if (cookieToken != null) {
-            XxlJobUser cookieUser = null;
+            JobUserPo cookieUser = null;
             try {
                 cookieUser = parseToken(cookieToken);
             } catch (Exception e) {
                 logout(request, response);
             }
             if (cookieUser != null) {
-                XxlJobUser dbUser = xxlJobUserDao.loadByUserName(cookieUser.getUsername());
+                JobUserPo dbUser = jobUserMapper.selectOne(Wrappers.lambdaQuery(JobUserPo.class)
+                        .eq(JobUserPo::getUsername, cookieUser.getUsername()));
                 if (dbUser != null) {
                     if (cookieUser.getPassword().equals(dbUser.getPassword())) {
                         return dbUser;

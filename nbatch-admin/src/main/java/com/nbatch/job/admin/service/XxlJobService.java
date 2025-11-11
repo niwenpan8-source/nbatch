@@ -1,8 +1,8 @@
 package com.nbatch.job.admin.service;
 
 
-import com.nbatch.job.admin.core.model.XxlJobInfo;
-import com.nbatch.job.admin.core.model.XxlJobUser;
+import com.nbatch.job.admin.core.domain.param.JobInfoParam;
+import com.nbatch.job.admin.core.domain.po.JobUserPo;
 import com.nbatch.job.core.biz.model.ReturnT;
 
 import java.util.Date;
@@ -18,81 +18,71 @@ public interface XxlJobService {
 	/**
 	 * page list
 	 *
-	 * @param start
-	 * @param length
-	 * @param jobGroup
-	 * @param jobDesc
-	 * @param executorHandler
-	 * @param author
-	 * @return
+	 * @param start 开始
+	 * @param length 长度
+	 * @param jobGroup 任务组
+	 * @param jobDesc 任务描述
+	 * @param executorHandler 执行器
+	 * @param author 作者
 	 */
-	public Map<String, Object> pageList(int start, int length, int jobGroup, int triggerStatus, String jobDesc, String executorHandler, String author);
+	Map<String, Object> pageList(int start, int length, String jobGroup, int triggerStatus, String jobDesc, String executorHandler, String author);
 
 	/**
 	 * add job
 	 *
-	 * @param jobInfo
-	 * @return
+	 * @param jobInfo 任务信息
 	 */
-	public ReturnT<String> add(XxlJobInfo jobInfo, XxlJobUser loginUser);
+	ReturnT<String> add(JobInfoParam jobInfo, JobUserPo loginUser);
 
 	/**
 	 * update job
 	 *
-	 * @param jobInfo
-	 * @return
+	 * @param jobInfo 任务信息
 	 */
-	public ReturnT<String> update(XxlJobInfo jobInfo, XxlJobUser loginUser);
+	ReturnT<String> update(JobInfoParam jobInfo, JobUserPo loginUser);
 
 	/**
 	 * remove job
-	 * 	 *
-	 * @param id
-	 * @return
+	 *
+	 * @param id 任务ID
 	 */
-	public ReturnT<String> remove(int id);
+	ReturnT<String> remove(int id);
 
 	/**
 	 * start job
 	 *
-	 * @param id
-	 * @return
+	 * @param id 任务ID
 	 */
-	public ReturnT<String> start(int id);
+	ReturnT<String> start(int id);
 
 	/**
 	 * stop job
 	 *
-	 * @param id
-	 * @return
+	 * @param id 任务ID
 	 */
-	public ReturnT<String> stop(int id);
+	ReturnT<String> stop(int id);
 
 	/**
 	 * trigger
 	 *
-	 * @param loginUser
-	 * @param jobId
-	 * @param executorParam
-	 * @param addressList
-	 * @return
+	 * @param loginUser 登录用户
+	 * @param jobId 任务ID
+	 * @param executorParam 执行参数
+	 * @param addressList 调度器地址列表
 	 */
-	public ReturnT<String> trigger(XxlJobUser loginUser, int jobId, String executorParam, String addressList);
+	ReturnT<String> trigger(JobUserPo loginUser, String jobId, String executorParam, String addressList);
 
 	/**
 	 * dashboard info
-	 *
-	 * @return
 	 */
-	public Map<String,Object> dashboardInfo();
+	Map<String,Object> dashboardInfo();
 
 	/**
 	 * chart info
 	 *
-	 * @param startDate
-	 * @param endDate
-	 * @return
+	 * @param startDate 开始日期
+	 * @param endDate 结束日期
 	 */
-	public ReturnT<Map<String,Object>> chartInfo(Date startDate, Date endDate);
+	ReturnT<Map<String,Object>> chartInfo(Date startDate, Date endDate);
 
 }

@@ -29,7 +29,6 @@ public class ScriptUtil {
      *
      * @param scriptFileName  script file name
      * @param content  script content
-     * @throws IOException
      */
     public static void markScriptFile(String scriptFileName, String content) throws IOException {
         // make file,   filePath/gluesource/666-123456789.py

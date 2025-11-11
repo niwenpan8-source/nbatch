@@ -3,8 +3,7 @@ package com.nbatch.job.core.glue.impl;
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.core.executor.impl.XxlJobSpringExecutor;
 import com.nbatch.job.core.glue.GlueFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -16,8 +15,8 @@ import java.lang.reflect.Modifier;
 /**
  * @author Mr.ni 2018-11-01
  */
+@Slf4j
 public class SpringGlueFactory extends GlueFactory {
-    private static final Logger logger = LoggerFactory.getLogger(SpringGlueFactory.class);
 
 
     /**
@@ -70,7 +69,7 @@ public class SpringGlueFactory extends GlueFactory {
                 try {
                     field.set(instance, fieldBean);
                 } catch (IllegalArgumentException | IllegalAccessException e) {
-                    logger.error(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                 }
             }
         }

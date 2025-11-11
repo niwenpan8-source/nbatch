@@ -21,7 +21,7 @@ public class XxlJobContext {
     /**
      * job id
      */
-    private final long jobId;
+    private final String jobId;
 
     /**
      * job param
@@ -66,7 +66,7 @@ public class XxlJobContext {
     private String handleMsg;
 
 
-    public XxlJobContext(long jobId, String jobParam, String jobLogFileName, int shardIndex, int shardTotal) {
+    public XxlJobContext(String jobId, String jobParam, String jobLogFileName, int shardIndex, int shardTotal) {
         this.jobId = jobId;
         this.jobParam = jobParam;
         this.jobLogFileName = jobLogFileName;

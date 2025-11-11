@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 引用Spring环境中的属性（来自application.yml） -->
+    <!-- 日志根目录：优先取logging.path，默认logs/ -->
+    <springProperty scope="context" name="LOG_PATH" source="logging.path" defaultValue="logs/"/>
+    <!-- 日志文件名：优先取logging.file.name，默认app.log -->
+    <springProperty scope="context" name="LOG_FILE_NAME" source="logging.file.name" defaultValue="app.log"/>
+    <!-- 特定包的日志级别：优先取logging.level.com.example，默认INFO -->
+    <springProperty scope="context" name="LOG_LEVEL" source="logging.level.com.nbatch" defaultValue="info"/>
+
+    <!-- 定义日志格式（复用变量） -->
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg %n"/>
+    <property name="LOG_PATTERN_CONSOLE" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg %n"/>
+
+    <!-- 单个文件最大大小：优先取logging.file.max-size，默认10MB -->
+    <property name="MAX_FILE_SIZE" value="100MB" />
+
+    <!-- 控制台输出 -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>${LOG_PATTERN_CONSOLE}</pattern>
+        </layout>
+    </appender>
+
+    <!-- 滚动文件输出（使用springProperty定义的变量） -->
+    <appender name="log_debug" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 当前日志文件路径：${LOG_PATH}/${LOG_FILE_NAME} -->
+        <file>${LOG_PATH}/${LOG_FILE_NAME}</file>
+
+        <!-- 滚动策略（引用MAX_FILE_SIZE） -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/history/%d{yyyy-MM-dd}/${LOG_FILE_NAME}.%i.log</fileNamePattern>
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize> <!-- 单个文件最大大小 -->
+            <maxHistory>30</maxHistory> <!-- 保留30天历史 -->
+        </rollingPolicy>
+
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>${LOG_PATTERN}</pattern>
+        </layout>
+    </appender>
+
+    <!-- 根日志级别 -->
+    <root level="debug">
+        <appender-ref ref="console" />
+        <appender-ref ref="log_debug" />
+    </root>
+</configuration>

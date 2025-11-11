@@ -3,8 +3,7 @@ package com.nbatch.job.executor.service.jobhandler;
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.core.context.XxlJobHelper;
 import com.nbatch.job.core.handler.annotation.XxlJob;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedInputStream;
@@ -28,9 +27,9 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Mr.ni 2019-12-11 21:52:51
  */
+@Slf4j
 @Component
 public class SampleXxlJob {
-    private static Logger logger = LoggerFactory.getLogger(SampleXxlJob.class);
 
 
     /**
@@ -245,10 +244,10 @@ public class SampleXxlJob {
         XxlJobHelper.log("XXL-JOB, Hello World.");
     }
     public void init(){
-        logger.info("init");
+        log.info("init");
     }
     public void destroy(){
-        logger.info("destroy");
+        log.info("destroy");
     }
 
 

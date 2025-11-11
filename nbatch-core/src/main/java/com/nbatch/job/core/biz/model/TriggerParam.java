@@ -17,14 +17,14 @@ import java.io.Serializable;
 public class TriggerParam implements Serializable{
     private static final long serialVersionUID = 42L;
 
-    private int jobId;
+    private String jobId;
 
     private String executorHandler;
     private String executorParams;
     private String executorBlockStrategy;
     private int executorTimeout;
 
-    private long logId;
+    private String logId;
     private long logDateTime;
 
     private String glueType;

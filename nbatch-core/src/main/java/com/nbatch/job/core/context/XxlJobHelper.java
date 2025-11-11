@@ -1,11 +1,10 @@
 package com.nbatch.job.core.context;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.core.log.XxlJobFileAppender;
-import com.nbatch.job.core.util.DateUtil;
 import com.nbatch.job.core.util.ThrowableUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.helpers.FormattingTuple;
 import org.slf4j.helpers.MessageFormatter;
 
@@ -16,6 +15,7 @@ import java.util.Date;
  *
  * @author Mr.ni
  */
+@Slf4j
 public class XxlJobHelper {
 
     // ---------------------- base info ----------------------
@@ -23,10 +23,10 @@ public class XxlJobHelper {
     /**
      * current JobId
      */
-    public static long getJobId() {
+    public static String getJobId() {
         XxlJobContext xxlJobContext = XxlJobContext.getXxlJobContext();
         if (xxlJobContext == null) {
-            return -1;
+            return null;
         }
 
         return xxlJobContext.getJobId();
@@ -86,7 +86,6 @@ public class XxlJobHelper {
 
     // ---------------------- tool for log ----------------------
 
-    private static final Logger logger = LoggerFactory.getLogger("xxl-job logger");
 
     /**
      * append log with pattern
@@ -139,7 +138,7 @@ public class XxlJobHelper {
             XxlJobFileAppender.appendLog(logFileName, formatAppendLog);
             return true;
         } else {
-            logger.info(">>>>>>>>>>> {}", formatAppendLog);
+            log.info(">>>>>>>>>>> {}", formatAppendLog);
             return false;
         }
     }

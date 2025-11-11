@@ -1,4 +1,4 @@
-package com.nbatch.job.executorbiz;
+package com.xxl.job.executorbiz;
 
 import com.nbatch.job.core.biz.ExecutorBiz;
 import com.nbatch.job.core.biz.client.ExecutorBizClient;
@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 
 /**
  * executor api test
- *
  * Created by nbatch on 17/5/12.
  */
 public class ExecutorBizTest {
@@ -28,7 +27,7 @@ public class ExecutorBizTest {
 
         // Assert result
         Assertions.assertNotNull(retval);
-        Assertions.assertNull(((ReturnT<String>) retval).getContent());
+        Assertions.assertNull(retval.getContent());
         Assertions.assertEquals(200, retval.getCode());
         Assertions.assertNull(retval.getMsg());
     }
@@ -37,14 +36,14 @@ public class ExecutorBizTest {
     public void idleBeat(){
         ExecutorBiz executorBiz = new ExecutorBizClient(addressUrl, accessToken, timeout);
 
-        final int jobId = 0;
+        final String jobId = "0";
 
         // Act
         final ReturnT<String> retval = executorBiz.idleBeat(new IdleBeatParam(jobId));
 
         // Assert result
         Assertions.assertNotNull(retval);
-        Assertions.assertNull(((ReturnT<String>) retval).getContent());
+        Assertions.assertNull(retval.getContent());
         Assertions.assertEquals(500, retval.getCode());
         Assertions.assertEquals("job thread is running or has trigger queue.", retval.getMsg());
     }
@@ -55,14 +54,14 @@ public class ExecutorBizTest {
 
         // trigger data
         final TriggerParam triggerParam = new TriggerParam();
-        triggerParam.setJobId(1);
+        triggerParam.setJobId("1");
         triggerParam.setExecutorHandler("demoJobHandler");
         triggerParam.setExecutorParams(null);
         triggerParam.setExecutorBlockStrategy(ExecutorBlockStrategyEnum.COVER_EARLY.name());
         triggerParam.setGlueType(GlueTypeEnum.BEAN.name());
         triggerParam.setGlueSource(null);
         triggerParam.setGlueUpdatetime(System.currentTimeMillis());
-        triggerParam.setLogId(1);
+        triggerParam.setLogId("1");
         triggerParam.setLogDateTime(System.currentTimeMillis());
 
         // Act
@@ -76,7 +75,7 @@ public class ExecutorBizTest {
     public void kill(){
         ExecutorBiz executorBiz = new ExecutorBizClient(addressUrl, accessToken, timeout);
 
-        final int jobId = 0;
+        final String jobId = "0";
 
         // Act
         final ReturnT<String> retval = executorBiz.kill(new KillParam(jobId));
@@ -93,7 +92,7 @@ public class ExecutorBizTest {
         ExecutorBiz executorBiz = new ExecutorBizClient(addressUrl, accessToken, timeout);
 
         final long logDateTim = 0L;
-        final long logId = 0;
+        final String logId = "0";
         final int fromLineNum = 0;
 
         // Act

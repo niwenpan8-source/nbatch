@@ -11,8 +11,7 @@ import com.nbatch.job.core.handler.IJobHandler;
 import com.nbatch.job.core.log.XxlJobFileAppender;
 import com.nbatch.job.core.util.ThrowableUtil;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collections;
 import java.util.Date;
@@ -28,15 +27,15 @@ import java.util.concurrent.TimeoutException;
  * handler thread
  * @author Mr.ni 2016-1-16 19:52:47
  */
+@Slf4j
 public class JobThread extends Thread{
-	private static final Logger logger = LoggerFactory.getLogger(JobThread.class);
 
-	private final int jobId;
+	private final String jobId;
 	@Getter
     private final IJobHandler handler;
 	private final LinkedBlockingQueue<TriggerParam> triggerQueue;
 	// avoid repeat trigger for the same TRIGGER_LOG_ID
-	private final Set<Long> triggerLogIdSet;
+	private final Set<String> triggerLogIdSet;
 
 	private volatile boolean toStop = false;
 	private String stopReason;
@@ -47,7 +46,7 @@ public class JobThread extends Thread{
 	private int idleTimes = 0;
 
 
-	public JobThread(int jobId, IJobHandler handler) {
+	public JobThread(String jobId, IJobHandler handler) {
 		this.jobId = jobId;
 		this.handler = handler;
 		this.triggerQueue = new LinkedBlockingQueue<>();
@@ -65,7 +64,7 @@ public class JobThread extends Thread{
 	public ReturnT<String> pushTriggerQueue(TriggerParam triggerParam) {
 		// avoid repeat
 		if (triggerLogIdSet.contains(triggerParam.getLogId())) {
-			logger.info(">>>>>>>>>>> repeate trigger job, logId:{}", triggerParam.getLogId());
+			log.info(">>>>>>>>>>> repeate trigger job, logId:{}", triggerParam.getLogId());
 			return new ReturnT<>(ReturnT.FAIL_CODE, "repeate trigger job, logId:" + triggerParam.getLogId());
 		}
 
@@ -103,7 +102,7 @@ public class JobThread extends Thread{
     	try {
 			handler.init();
 		} catch (Throwable e) {
-    		logger.error(e.getMessage(), e);
+    		log.error(e.getMessage(), e);
 		}
 
 		// execute
@@ -244,9 +243,9 @@ public class JobThread extends Thread{
 		try {
 			handler.destroy();
 		} catch (Throwable e) {
-			logger.error(e.getMessage(), e);
+			log.error(e.getMessage(), e);
 		}
 
-		logger.info(">>>>>>>>>>> xxl-job JobThread stoped, hashCode:{}", Thread.currentThread());
+		log.info(">>>>>>>>>>> xxl-job JobThread stoped, hashCode:{}", Thread.currentThread());
 	}
 }

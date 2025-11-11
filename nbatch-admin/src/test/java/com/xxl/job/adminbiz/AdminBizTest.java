@@ -32,7 +32,7 @@ public class AdminBizTest {
         AdminBiz adminBiz = new AdminBizClient(addressUrl, accessToken, timeoutSecond);
 
         HandleCallbackParam param = new HandleCallbackParam();
-        param.setLogId(1);
+        param.setLogId("1");
         param.setHandleCode(XxlJobContext.HANDLE_CODE_SUCCESS);
 
         List<HandleCallbackParam> callbackParamList = Arrays.asList(param);

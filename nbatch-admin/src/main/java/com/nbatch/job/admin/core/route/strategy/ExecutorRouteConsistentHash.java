@@ -3,6 +3,7 @@ package com.nbatch.job.admin.core.route.strategy;
 import com.nbatch.job.admin.core.route.ExecutorRouter;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.TriggerParam;
+import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -19,6 +20,7 @@ import java.util.TreeMap;
  * @author nbatch
  * @date 2025/11/05
  */
+@Slf4j
 public class ExecutorRouteConsistentHash extends ExecutorRouter {
 
     /**
@@ -49,7 +51,7 @@ public class ExecutorRouteConsistentHash extends ExecutorRouter {
         return hashCode & 0xffffffffL;
     }
 
-    public String hashJob(int jobId, List<String> addressList) {
+    public String hashJob(String jobId, List<String> addressList) {
 
         // ------A1------A2-------A3------
         // -----------J1------------------

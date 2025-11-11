@@ -1,6 +1,7 @@
 package com.nbatch.job.core.thread;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ObjUtil;
 import com.nbatch.job.core.biz.AdminBiz;
@@ -11,10 +12,8 @@ import com.nbatch.job.core.context.XxlJobHelper;
 import com.nbatch.job.core.enums.RegistryConfig;
 import com.nbatch.job.core.executor.XxlJobExecutor;
 import com.nbatch.job.core.log.XxlJobFileAppender;
-import com.nbatch.job.core.util.FileUtil;
 import com.nbatch.job.core.util.JdkSerializeTool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -29,8 +28,8 @@ import java.util.concurrent.TimeUnit;
  * @author Mr.ni
  * @date 2025/11/05
  */
+@Slf4j
 public class TriggerCallbackThread {
-    private static final Logger logger = LoggerFactory.getLogger(TriggerCallbackThread.class);
 
     private static final TriggerCallbackThread INSTANCE = new TriggerCallbackThread();
     public static TriggerCallbackThread getInstance(){
@@ -43,7 +42,7 @@ public class TriggerCallbackThread {
     private final LinkedBlockingQueue<HandleCallbackParam> callBackQueue = new LinkedBlockingQueue<>();
     public static void pushCallBack(HandleCallbackParam callback){
         getInstance().callBackQueue.add(callback);
-        logger.debug(">>>>>>>>>>> xxl-job, push callback request, logId:{}", callback.getLogId());
+        log.debug(">>>>>>>>>>> xxl-job, push callback request, logId:{}", callback.getLogId());
     }
 
     /**
@@ -56,7 +55,7 @@ public class TriggerCallbackThread {
 
         // valid
         if (XxlJobExecutor.getAdminBizList() == null) {
-            logger.warn(">>>>>>>>>>> xxl-job, executor callback config fail, adminAddresses is null.");
+            log.warn(">>>>>>>>>>> xxl-job, executor callback config fail, adminAddresses is null.");
             return;
         }
 
@@ -81,7 +80,7 @@ public class TriggerCallbackThread {
                     }
                 } catch (Throwable e) {
                     if (!toStop) {
-                        logger.error(e.getMessage(), e);
+                        log.error(e.getMessage(), e);
                     }
                 }
             }
@@ -95,10 +94,10 @@ public class TriggerCallbackThread {
                 }
             } catch (Throwable e) {
                 if (!toStop) {
-                    logger.error(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                 }
             }
-            logger.info(">>>>>>>>>>> xxl-job, executor callback thread destroy.");
+            log.info(">>>>>>>>>>> xxl-job, executor callback thread destroy.");
 
         });
         triggerCallbackThread.setDaemon(true);
@@ -113,7 +112,7 @@ public class TriggerCallbackThread {
                     retryFailCallbackFile();
                 } catch (Throwable e) {
                     if (!toStop) {
-                        logger.error(e.getMessage(), e);
+                        log.error(e.getMessage(), e);
                     }
 
                 }
@@ -121,11 +120,11 @@ public class TriggerCallbackThread {
                     TimeUnit.SECONDS.sleep(RegistryConfig.BEAT_TIMEOUT);
                 } catch (Throwable e) {
                     if (!toStop) {
-                        logger.error(e.getMessage(), e);
+                        log.error(e.getMessage(), e);
                     }
                 }
             }
-            logger.info(">>>>>>>>>>> xxl-job, executor retry callback thread destroy.");
+            log.info(">>>>>>>>>>> xxl-job, executor retry callback thread destroy.");
         });
         triggerRetryCallbackThread.setDaemon(true);
         triggerRetryCallbackThread.start();
@@ -140,7 +139,7 @@ public class TriggerCallbackThread {
             try {
                 triggerCallbackThread.join();
             } catch (Throwable e) {
-                logger.error(e.getMessage(), e);
+                log.error(e.getMessage(), e);
             }
         }
 
@@ -150,7 +149,7 @@ public class TriggerCallbackThread {
             try {
                 triggerRetryCallbackThread.join();
             } catch (Throwable e) {
-                logger.error(e.getMessage(), e);
+                log.error(e.getMessage(), e);
             }
         }
 
@@ -189,7 +188,7 @@ public class TriggerCallbackThread {
         for (HandleCallbackParam callbackParam: callbackParamList) {
             String logFileName = XxlJobFileAppender.makeLogFileName(new Date(callbackParam.getLogDateTim()), callbackParam.getLogId());
             XxlJobContext.setXxlJobContext(new XxlJobContext(
-                    -1,
+                    null,
                     null,
                     logFileName,
                     -1,
@@ -222,7 +221,10 @@ public class TriggerCallbackThread {
                 }
             }
         }
-        FileUtil.writeFileContent(callbackLogFile, callbackParamListBytes);
+        if (callbackParamListBytes != null) {
+            FileUtil.writeBytes(callbackParamListBytes, callbackLogFile);
+        }
+
     }
 
     private void retryFailCallbackFile(){
@@ -241,7 +243,7 @@ public class TriggerCallbackThread {
 
         // load and clear file, retry
         for (File callbaclLogFile: Objects.requireNonNull(callbackLogPath.listFiles())) {
-            byte[] callbackParamListBytes = FileUtil.readFileContent(callbaclLogFile);
+            byte[] callbackParamListBytes = FileUtil.readBytes(callbaclLogFile);
 
             // avoid empty file
             if(callbackParamListBytes == null || callbackParamListBytes.length < 1){

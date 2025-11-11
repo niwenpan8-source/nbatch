@@ -1,11 +1,13 @@
 package com.nbatch.job.admin.controller;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nbatch.job.admin.controller.interceptor.PermissionInterceptor;
-import com.nbatch.job.admin.core.model.XxlJobInfo;
-import com.nbatch.job.admin.core.model.XxlJobLogGlue;
+import com.nbatch.job.admin.core.domain.po.JobInfoPo;
+import com.nbatch.job.admin.core.domain.po.JobLoggluePo;
 import com.nbatch.job.admin.core.util.I18nUtil;
-import com.nbatch.job.admin.dao.XxlJobInfoDao;
-import com.nbatch.job.admin.dao.XxlJobLogGlueDao;
+import com.nbatch.job.admin.mapper.IJobInfoMapper;
+import com.nbatch.job.admin.mapper.IJobLogglueMapper;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.glue.GlueTypeEnum;
 import org.springframework.stereotype.Controller;
@@ -17,6 +19,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * job code controller
@@ -25,16 +28,17 @@ import java.util.List;
 @Controller
 @RequestMapping("/jobcode")
 public class JobCodeController {
-	
+
 	@Resource
-	private XxlJobInfoDao xxlJobInfoDao;
+	private IJobInfoMapper jobInfoMapper;
 	@Resource
-	private XxlJobLogGlueDao xxlJobLogGlueDao;
+	private IJobLogglueMapper jobLogglueMapper;
 
 	@RequestMapping
 	public String index(HttpServletRequest request, Model model, int jobId) {
-		XxlJobInfo jobInfo = xxlJobInfoDao.loadById(jobId);
-		List<XxlJobLogGlue> jobLogGlues = xxlJobLogGlueDao.findByJobId(jobId);
+		JobInfoPo jobInfo = jobInfoMapper.selectById(jobId);
+		List<JobLoggluePo> jobLogGlues = jobLogglueMapper.selectList(Wrappers.lambdaQuery(JobLoggluePo.class)
+				.eq(JobLoggluePo::getJobId, jobId).orderByDesc(JobLoggluePo::getId));
 
 		if (jobInfo == null) {
 			throw new RuntimeException(I18nUtil.getString("jobinfo_glue_jobid_unvalid"));
@@ -56,7 +60,7 @@ public class JobCodeController {
 	
 	@RequestMapping("/save")
 	@ResponseBody
-	public ReturnT<String> save(HttpServletRequest request, int id, String glueSource, String glueRemark) {
+	public ReturnT<String> save(HttpServletRequest request, String id, String glueSource, String glueRemark) {
 		// valid
 		if (glueRemark==null) {
 			return new ReturnT<>(500, (I18nUtil.getString("system_please_input") + I18nUtil.getString("jobinfo_glue_remark")));
@@ -64,7 +68,7 @@ public class JobCodeController {
 		if (glueRemark.length()<4 || glueRemark.length()>100) {
 			return new ReturnT<>(500, I18nUtil.getString("jobinfo_glue_remark_limit"));
 		}
-		XxlJobInfo existsJobInfo = xxlJobInfoDao.loadById(id);
+		JobInfoPo existsJobInfo = jobInfoMapper.selectById(id);
 		if (existsJobInfo == null) {
 			return new ReturnT<>(500, I18nUtil.getString("jobinfo_glue_jobid_unvalid"));
 		}
@@ -78,21 +82,27 @@ public class JobCodeController {
 		existsJobInfo.setGlueUpdatetime(new Date());
 
 		existsJobInfo.setUpdateTime(new Date());
-		xxlJobInfoDao.update(existsJobInfo);
+		jobInfoMapper.updateById(existsJobInfo);
 
 		// log old code
-		XxlJobLogGlue xxlJobLogGlue = new XxlJobLogGlue();
-		xxlJobLogGlue.setJobId(existsJobInfo.getId());
-		xxlJobLogGlue.setGlueType(existsJobInfo.getGlueType());
-		xxlJobLogGlue.setGlueSource(glueSource);
-		xxlJobLogGlue.setGlueRemark(glueRemark);
+		JobLoggluePo jobLoggluePo = new JobLoggluePo();
+		jobLoggluePo.setJobId(existsJobInfo.getId());
+		jobLoggluePo.setGlueType(existsJobInfo.getGlueType());
+		jobLoggluePo.setGlueSource(glueSource);
+		jobLoggluePo.setGlueRemark(glueRemark);
 
-		xxlJobLogGlue.setAddTime(new Date());
-		xxlJobLogGlue.setUpdateTime(new Date());
-		xxlJobLogGlueDao.save(xxlJobLogGlue);
+		jobLoggluePo.setAddTime(new Date());
+		jobLoggluePo.setUpdateTime(new Date());
+		jobLogglueMapper.insert(jobLoggluePo);
 
-		// remove code backup more than 30
-		xxlJobLogGlueDao.removeOld(existsJobInfo.getId(), 30);
+		Page<JobLoggluePo> jobLoggluePoPage = jobLogglueMapper.selectPage(new Page<>(1, 30),
+				Wrappers.lambdaQuery(JobLoggluePo.class).eq(JobLoggluePo::getJobId, existsJobInfo.getId()));
+		if (jobLoggluePoPage != null && jobLoggluePoPage.getTotal() > 0) {
+			List<String> jobLogglueIds = jobLoggluePoPage.getRecords().stream()
+					.map(JobLoggluePo::getId).collect(Collectors.toList());
+			jobLogglueMapper.delete(Wrappers.lambdaQuery(JobLoggluePo.class)
+					.in(JobLoggluePo::getId, jobLogglueIds));
+		}
 
 		return ReturnT.SUCCESS;
 	}

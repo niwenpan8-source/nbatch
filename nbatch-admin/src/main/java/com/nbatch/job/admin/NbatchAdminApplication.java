@@ -1,11 +1,18 @@
 package com.nbatch.job.admin;
 
+import lombok.extern.slf4j.Slf4j;
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
- * @author Mr.ni 2018-10-28 00:38:13
+ * 启动类
+ * @author Mr.ni
  */
+@Slf4j
+@EnableScheduling
+@MapperScan("com.nbatch.**.mapper")
 @SpringBootApplication
 public class NbatchAdminApplication {
 

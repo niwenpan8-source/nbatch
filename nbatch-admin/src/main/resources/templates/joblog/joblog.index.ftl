@@ -146,11 +146,7 @@
                                 <option value="2" >${I18n.joblog_clean_type_2}</option>
                                 <option value="3" >${I18n.joblog_clean_type_3}</option>
                                 <option value="4" >${I18n.joblog_clean_type_4}</option>
-                                <option value="5" >${I18n.joblog_clean_type_5}</option>
-                                <option value="6" >${I18n.joblog_clean_type_6}</option>
-                                <option value="7" >${I18n.joblog_clean_type_7}</option>
-                                <option value="8" >${I18n.joblog_clean_type_8}</option>
-                                <option value="9" >${I18n.joblog_clean_type_9}</option>
+                                <option value="5" >${I18n.joblog_clean_type_9}</option>
                             </select>
                         </div>
                     </div>

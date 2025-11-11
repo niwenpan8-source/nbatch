@@ -1,6 +1,7 @@
 package com.nbatch.job.core.util;
 
 import cn.hutool.core.text.StrPool;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,8 +18,8 @@ import java.util.regex.Pattern;
  *
  * @author Mr.ni 2016-5-22 11:38:05
  */
+@Slf4j
 public class IpUtil {
-    private static final Logger logger = LoggerFactory.getLogger(IpUtil.class);
 
     private static final String ANYHOST_VALUE = "0.0.0.0";
     private static final String LOCALHOST_VALUE = "127.0.0.1";
@@ -86,7 +87,7 @@ public class IpUtil {
                 return InetAddress.getByName(addr.substring(0, i) + '%' + address.getScopeId());
             } catch (UnknownHostException e) {
                 // ignore
-                logger.debug("Unknown IPV6 address: ", e);
+                log.debug("Unknown IPV6 address: ", e);
             }
         }
         return address;
@@ -104,7 +105,7 @@ public class IpUtil {
                 return addressItem;
             }
         } catch (Throwable e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
 
         try {
@@ -132,15 +133,15 @@ public class IpUtil {
                                 }
                             }
                         } catch (Throwable e) {
-                            logger.error(e.getMessage(), e);
+                            log.error(e.getMessage(), e);
                         }
                     }
                 } catch (Throwable e) {
-                    logger.error(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                 }
             }
         } catch (Throwable e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return localAddress;
     }

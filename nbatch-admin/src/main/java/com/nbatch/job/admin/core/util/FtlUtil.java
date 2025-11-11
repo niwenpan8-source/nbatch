@@ -4,6 +4,7 @@ import freemarker.ext.beans.BeansWrapper;
 import freemarker.ext.beans.BeansWrapperBuilder;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateHashModel;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,8 +13,8 @@ import org.slf4j.LoggerFactory;
  *
  * @author Mr.ni 2018-01-17 20:37:48
  */
+@Slf4j
 public class FtlUtil {
-    private static final Logger logger = LoggerFactory.getLogger(FtlUtil.class);
 
     //BeansWrapper.getDefaultInstance();
     private static final BeansWrapper WRAPPER = new BeansWrapperBuilder(Configuration.DEFAULT_INCOMPATIBLE_IMPROVEMENTS).build();
@@ -23,7 +24,7 @@ public class FtlUtil {
             TemplateHashModel staticModels = WRAPPER.getStaticModels();
             return (TemplateHashModel) staticModels.get(packageName);
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return null;
     }

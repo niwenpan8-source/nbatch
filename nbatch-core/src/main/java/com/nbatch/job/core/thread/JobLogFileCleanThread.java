@@ -1,9 +1,8 @@
 package com.nbatch.job.core.thread;
 
+import cn.hutool.core.io.FileUtil;
 import com.nbatch.job.core.log.XxlJobFileAppender;
-import com.nbatch.job.core.util.FileUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.text.ParseException;
@@ -17,8 +16,8 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Mr.ni 2017-12-29 16:23:43
  */
+@Slf4j
 public class JobLogFileCleanThread {
-    private static final Logger logger = LoggerFactory.getLogger(JobLogFileCleanThread.class);
 
     private static final JobLogFileCleanThread INSTANCE = new JobLogFileCleanThread();
     public static JobLogFileCleanThread getInstance(){
@@ -66,14 +65,14 @@ public class JobLogFileCleanThread {
                                 SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
                                 logFileCreateDate = simpleDateFormat.parse(childFile.getName());
                             } catch (ParseException e) {
-                                logger.error(e.getMessage(), e);
+                                log.error(e.getMessage(), e);
                             }
                             if (logFileCreateDate == null) {
                                 continue;
                             }
 
                             if ((todayDate.getTime()-logFileCreateDate.getTime()) >= logRetentionDays * (24 * 60 * 60 * 1000) ) {
-                                FileUtil.deleteRecursively(childFile);
+                                FileUtil.del(childFile);
                             }
 
                         }
@@ -81,7 +80,7 @@ public class JobLogFileCleanThread {
 
                 } catch (Throwable e) {
                     if (!toStop) {
-                        logger.error(e.getMessage(), e);
+                        log.error(e.getMessage(), e);
                     }
 
                 }
@@ -90,11 +89,11 @@ public class JobLogFileCleanThread {
                     TimeUnit.DAYS.sleep(1);
                 } catch (Throwable e) {
                     if (!toStop) {
-                        logger.error(e.getMessage(), e);
+                        log.error(e.getMessage(), e);
                     }
                 }
             }
-            logger.info(">>>>>>>>>>> xxl-job, executor JobLogFileCleanThread thread destroy.");
+            log.info(">>>>>>>>>>> xxl-job, executor JobLogFileCleanThread thread destroy.");
 
         });
         localThread.setDaemon(true);
@@ -114,7 +113,7 @@ public class JobLogFileCleanThread {
         try {
             localThread.join();
         } catch (InterruptedException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
     }
 

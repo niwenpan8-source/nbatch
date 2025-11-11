@@ -2,11 +2,12 @@ package com.nbatch.job.admin.core.conf;
 
 import com.nbatch.job.admin.core.alarm.JobAlarmer;
 import com.nbatch.job.admin.core.scheduler.XxlJobScheduler;
-import com.nbatch.job.admin.dao.XxlJobGroupDao;
-import com.nbatch.job.admin.dao.XxlJobInfoDao;
-import com.nbatch.job.admin.dao.XxlJobLogDao;
-import com.nbatch.job.admin.dao.XxlJobLogReportDao;
-import com.nbatch.job.admin.dao.XxlJobRegistryDao;
+import com.nbatch.job.admin.mapper.IJobGroupMapper;
+import com.nbatch.job.admin.mapper.IJobInfoMapper;
+import com.nbatch.job.admin.mapper.IJobLogMapper;
+import com.nbatch.job.admin.mapper.IJobLogReportMapper;
+import com.nbatch.job.admin.mapper.IJobRegistryMapper;
+import lombok.Getter;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,18 +19,15 @@ import javax.sql.DataSource;
 import java.util.Arrays;
 
 /**
- * xxl-job config
- *
- * @author Mr.ni 2017-04-28
+ * 配置类
+ * @author Mr.ni
  */
 
 @Component
 public class XxlJobAdminConfig implements InitializingBean, DisposableBean {
 
+    @Getter
     private static XxlJobAdminConfig adminConfig = null;
-    public static XxlJobAdminConfig getAdminConfig() {
-        return adminConfig;
-    }
 
 
     // ---------------------- XxlJobScheduler ----------------------
@@ -39,13 +37,12 @@ public class XxlJobAdminConfig implements InitializingBean, DisposableBean {
     @Override
     public void afterPropertiesSet() throws Exception {
         adminConfig = this;
-
         xxlJobScheduler = new XxlJobScheduler();
         xxlJobScheduler.init();
     }
 
     @Override
-    public void destroy() throws Exception {
+    public void destroy() {
         xxlJobScheduler.destroy();
     }
 
@@ -56,12 +53,15 @@ public class XxlJobAdminConfig implements InitializingBean, DisposableBean {
     @Value("${xxl.job.i18n}")
     private String i18n;
 
+    @Getter
     @Value("${xxl.job.accessToken}")
     private String accessToken;
 
+    @Getter
     @Value("${xxl.job.timeout}")
     private int timeout;
 
+    @Getter
     @Value("${spring.mail.from}")
     private String emailFrom;
 
@@ -75,21 +75,28 @@ public class XxlJobAdminConfig implements InitializingBean, DisposableBean {
     private int logretentiondays;
 
     // dao, service
-
+    @Getter
     @Resource
-    private XxlJobLogDao xxlJobLogDao;
+    private IJobLogMapper jobLogMapper;
+    @Getter
     @Resource
-    private XxlJobInfoDao xxlJobInfoDao;
+    private IJobInfoMapper jobInfoMapper;
+    @Getter
     @Resource
-    private XxlJobRegistryDao xxlJobRegistryDao;
+    private IJobRegistryMapper jobRegistryMapper;
+    @Getter
     @Resource
-    private XxlJobGroupDao xxlJobGroupDao;
+    private IJobGroupMapper jobGroupMapper;
+    @Getter
     @Resource
-    private XxlJobLogReportDao xxlJobLogReportDao;
+    private IJobLogReportMapper jobLogReportMapper;
+    @Getter
     @Resource
     private JavaMailSender mailSender;
+    @Getter
     @Resource
     private DataSource dataSource;
+    @Getter
     @Resource
     private JobAlarmer jobAlarmer;
 
@@ -99,18 +106,6 @@ public class XxlJobAdminConfig implements InitializingBean, DisposableBean {
             return "zh_CN";
         }
         return i18n;
-    }
-
-    public String getAccessToken() {
-        return accessToken;
-    }
-
-    public int getTimeout() {
-        return timeout;
-    }
-
-    public String getEmailFrom() {
-        return emailFrom;
     }
 
     public int getTriggerPoolFastMax() {
@@ -129,41 +124,10 @@ public class XxlJobAdminConfig implements InitializingBean, DisposableBean {
 
     public int getLogretentiondays() {
         if (logretentiondays < 7) {
-            return -1;  // Limit greater than or equal to 7, otherwise close
+            // Limit greater than or equal to 7, otherwise close
+            return -1;
         }
         return logretentiondays;
-    }
-
-    public XxlJobLogDao getXxlJobLogDao() {
-        return xxlJobLogDao;
-    }
-
-    public XxlJobInfoDao getXxlJobInfoDao() {
-        return xxlJobInfoDao;
-    }
-
-    public XxlJobRegistryDao getXxlJobRegistryDao() {
-        return xxlJobRegistryDao;
-    }
-
-    public XxlJobGroupDao getXxlJobGroupDao() {
-        return xxlJobGroupDao;
-    }
-
-    public XxlJobLogReportDao getXxlJobLogReportDao() {
-        return xxlJobLogReportDao;
-    }
-
-    public JavaMailSender getMailSender() {
-        return mailSender;
-    }
-
-    public DataSource getDataSource() {
-        return dataSource;
-    }
-
-    public JobAlarmer getJobAlarmer() {
-        return jobAlarmer;
     }
 
 }

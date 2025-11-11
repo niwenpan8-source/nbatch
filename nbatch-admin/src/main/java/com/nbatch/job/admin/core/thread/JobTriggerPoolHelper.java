@@ -3,10 +3,13 @@ package com.nbatch.job.admin.core.thread;
 import com.nbatch.job.admin.core.conf.XxlJobAdminConfig;
 import com.nbatch.job.admin.core.trigger.TriggerTypeEnum;
 import com.nbatch.job.admin.core.trigger.XxlJobTrigger;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -14,8 +17,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Mr.ni 2018-07-03 21:08:07
  */
+@Slf4j
 public class JobTriggerPoolHelper {
-    private static final Logger logger = LoggerFactory.getLogger(JobTriggerPoolHelper.class);
 
 
     // ---------------------- trigger pool ----------------------
@@ -32,7 +35,7 @@ public class JobTriggerPoolHelper {
                 TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(2000),
                 r -> new Thread(r, "xxl-job, admin JobTriggerPoolHelper-fastTriggerPool-" + r.hashCode()),
-                (r, executor) -> logger.error(">>>>>>>>>>> xxl-job, admin JobTriggerPoolHelper-fastTriggerPool execute too fast, Runnable={}", r.toString()));
+                (r, executor) -> log.error(">>>>>>>>>>> xxl-job, admin JobTriggerPoolHelper-fastTriggerPool execute too fast, Runnable={}", r.toString()));
 
         slowTriggerPool = new ThreadPoolExecutor(
                 10,
@@ -41,7 +44,7 @@ public class JobTriggerPoolHelper {
                 TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(5000),
                 r -> new Thread(r, "xxl-job, admin JobTriggerPoolHelper-slowTriggerPool-" + r.hashCode()),
-                (r, executor) -> logger.error(">>>>>>>>>>> xxl-job, admin JobTriggerPoolHelper-slowTriggerPool execute too fast, Runnable={}", r.toString()));
+                (r, executor) -> log.error(">>>>>>>>>>> xxl-job, admin JobTriggerPoolHelper-slowTriggerPool execute too fast, Runnable={}", r.toString()));
     }
 
 
@@ -49,20 +52,20 @@ public class JobTriggerPoolHelper {
         //triggerPool.shutdown();
         fastTriggerPool.shutdownNow();
         slowTriggerPool.shutdownNow();
-        logger.info(">>>>>>>>> xxl-job trigger thread pool shutdown success.");
+        log.info(">>>>>>>>> xxl-job trigger thread pool shutdown success.");
     }
 
 
     // job timeout count
     // ms > min
     private volatile long minTim = System.currentTimeMillis() / 60000;
-    private final ConcurrentMap<Integer, AtomicInteger> jobTimeoutCountMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, AtomicInteger> jobTimeoutCountMap = new ConcurrentHashMap<>();
 
 
     /**
      * add trigger
      */
-    public void addTrigger(final int jobId,
+    public void addTrigger(final String jobId,
                            final TriggerTypeEnum triggerType,
                            final int failRetryCount,
                            final String executorShardingParam,
@@ -72,7 +75,8 @@ public class JobTriggerPoolHelper {
         // choose thread pool
         ThreadPoolExecutor triggerPool = fastTriggerPool;
         AtomicInteger jobTimeoutCount = jobTimeoutCountMap.get(jobId);
-        if (jobTimeoutCount!=null && jobTimeoutCount.get() > 10) {      // job-timeout 10 times in 1 min
+        // job-timeout 10 times in 1 min
+        if (jobTimeoutCount!=null && jobTimeoutCount.get() > 10) {
             triggerPool = slowTriggerPool;
         }
 
@@ -87,7 +91,7 @@ public class JobTriggerPoolHelper {
                     // do trigger
                     XxlJobTrigger.trigger(jobId, triggerType, failRetryCount, executorShardingParam, executorParam, addressList);
                 } catch (Throwable e) {
-                    logger.error(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                 } finally {
 
                     // check timeout-count-map
@@ -140,7 +144,8 @@ public class JobTriggerPoolHelper {
      *          null: use job param
      *          not null: cover job param
      */
-    public static void trigger(int jobId, TriggerTypeEnum triggerType, int failRetryCount, String executorShardingParam, String executorParam, String addressList) {
+    public static void trigger(String jobId, TriggerTypeEnum triggerType, int failRetryCount, String executorShardingParam, String executorParam,
+                               String addressList) {
         HELPER.addTrigger(jobId, triggerType, failRetryCount, executorShardingParam, executorParam, addressList);
     }
 

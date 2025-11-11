@@ -4,61 +4,60 @@ import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.admin.core.conf.XxlJobAdminConfig;
-import com.nbatch.job.admin.core.model.XxlJobInfo;
-import com.nbatch.job.admin.core.model.XxlJobLog;
+import com.nbatch.job.admin.core.domain.po.JobInfoPo;
+import com.nbatch.job.admin.core.domain.po.JobLogPo;
 import com.nbatch.job.admin.core.thread.JobTriggerPoolHelper;
 import com.nbatch.job.admin.core.trigger.TriggerTypeEnum;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.context.XxlJobContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.text.MessageFormat;
 
 /**
- * @author Mr.ni 2020-10-30 20:43:10
+ * @author Mr.ni
  */
+@Slf4j
 public class XxlJobCompleter {
-    private static final Logger logger = LoggerFactory.getLogger(XxlJobCompleter.class);
 
     /**
      * common fresh handle entrance (limit only once)
      */
-    public static int updateHandleInfoAndFinish(XxlJobLog xxlJobLog) {
+    public static int updateHandleInfoAndFinish(JobLogPo jobLogPo) {
 
         // finish
-        finishJob(xxlJobLog);
+        finishJob(jobLogPo);
 
         // text最大64kb 避免长度过长
-        if (xxlJobLog.getHandleMsg().length() > 15000) {
-            xxlJobLog.setHandleMsg( xxlJobLog.getHandleMsg().substring(0, 15000) );
+        if (jobLogPo.getHandleMsg().length() > 15000) {
+            jobLogPo.setHandleMsg(jobLogPo.getHandleMsg().substring(0, 15000));
         }
 
         // fresh handle
-        return XxlJobAdminConfig.getAdminConfig().getXxlJobLogDao().updateHandleInfo(xxlJobLog);
+        return XxlJobAdminConfig.getAdminConfig().getJobLogMapper().updateById(jobLogPo);
     }
 
 
     /**
      * do somethind to finish job
      */
-    private static void finishJob(XxlJobLog xxlJobLog){
+    private static void finishJob(JobLogPo jobLogPo){
 
         // 1、handle success, to trigger child job
         StringBuilder triggerChildMsg = null;
-        if (XxlJobContext.HANDLE_CODE_SUCCESS == xxlJobLog.getHandleCode()) {
-            XxlJobInfo xxlJobInfo = XxlJobAdminConfig.getAdminConfig().getXxlJobInfoDao().loadById(xxlJobLog.getJobId());
-            if (xxlJobInfo != null && StrUtil.isNotBlank(xxlJobInfo.getChildJobId())) {
+        if (XxlJobContext.HANDLE_CODE_SUCCESS == jobLogPo.getHandleCode()) {
+            JobInfoPo xxlJobInfo = XxlJobAdminConfig.getAdminConfig().getJobInfoMapper().selectById(jobLogPo.getJobId());
+            if (xxlJobInfo != null && StrUtil.isNotBlank(xxlJobInfo.getChildJobid())) {
                 triggerChildMsg = new StringBuilder("<br><br><span style=\"color:#00c0ef;\" > >>>>>>>>>>>" + I18nUtil.getString("jobconf_trigger_child_run") + "<<<<<<<<<<< </span><br>");
 
-                String[] childJobIds = xxlJobInfo.getChildJobId().split(StrPool.COMMA);
+                String[] childJobIds = xxlJobInfo.getChildJobid().split(StrPool.COMMA);
                 for (int i = 0; i < childJobIds.length; i++) {
-                    int childJobId = (StrUtil.isNotBlank(childJobIds[i]) && isNumeric(childJobIds[i])) ? NumberUtil.parseInt(childJobIds[i]) :-1;
-                    if (childJobId > 0) {
+                    String childJobId = (StrUtil.isNotBlank(childJobIds[i]) && isNumeric(childJobIds[i])) ? childJobIds[i] : "-1";
+                    if (NumberUtil.parseInt(childJobId) > 0) {
                         // valid
-                        if (childJobId == xxlJobLog.getJobId()) {
-                            logger.debug(">>>>>>>>>>> xxl-job, XxlJobCompleter-finishJob ignore childJobId,  childJobId {} is self.", childJobId);
+                        if (StrUtil.equals(childJobId, jobLogPo.getJobId())) {
+                            log.debug(">>>>>>>>>>> xxl-job, XxlJobCompleter-finishJob ignore childJobId,  childJobId {} is self.", childJobId);
                             continue;
                         }
 
@@ -85,7 +84,7 @@ public class XxlJobCompleter {
         }
 
         if (triggerChildMsg != null) {
-            xxlJobLog.setHandleMsg( xxlJobLog.getHandleMsg() + triggerChildMsg );
+            jobLogPo.setHandleMsg(jobLogPo.getHandleMsg() + triggerChildMsg);
         }
 
         // 2、fix_delay trigger next

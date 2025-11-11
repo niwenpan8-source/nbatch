@@ -7,8 +7,7 @@ import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.enums.RegistryConfig;
 import com.nbatch.job.core.executor.XxlJobExecutor;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.TimeUnit;
 
@@ -17,8 +16,8 @@ import java.util.concurrent.TimeUnit;
  * @author Mr.ni
  * @date 2025/11/05
  */
+@Slf4j
 public class ExecutorRegistryThread {
-    private static final Logger logger = LoggerFactory.getLogger(ExecutorRegistryThread.class);
 
     @Getter
     private static final ExecutorRegistryThread INSTANCE = new ExecutorRegistryThread();
@@ -33,11 +32,11 @@ public class ExecutorRegistryThread {
 
         // valid
         if (StrUtil.isBlank(appname)) {
-            logger.warn(">>>>>>>>>>> xxl-job, executor registry config fail, appname is null.");
+            log.warn(">>>>>>>>>>> xxl-job, executor registry config fail, appname is null.");
             return;
         }
         if (XxlJobExecutor.getAdminBizList() == null) {
-            logger.warn(">>>>>>>>>>> xxl-job, executor registry config fail, adminAddresses is null.");
+            log.warn(">>>>>>>>>>> xxl-job, executor registry config fail, adminAddresses is null.");
             return;
         }
 
@@ -51,19 +50,19 @@ public class ExecutorRegistryThread {
                             ReturnT<String> registryResult = adminBiz.registry(registryParam);
                             if (registryResult!=null && ReturnT.SUCCESS_CODE == registryResult.getCode()) {
                                 registryResult = ReturnT.SUCCESS;
-                                logger.debug(">>>>>>>>>>> xxl-job registry success, registryParam:{}, registryResult:{}", registryParam, registryResult);
+                                log.debug(">>>>>>>>>>> xxl-job registry success, registryParam:{}, registryResult:{}", registryParam, registryResult);
                                 break;
                             } else {
-                                logger.info(">>>>>>>>>>> xxl-job registry fail, registryParam:{}, registryResult:{}", registryParam, registryResult);
+                                log.info(">>>>>>>>>>> xxl-job registry fail, registryParam:{}, registryResult:{}", registryParam, registryResult);
                             }
                         } catch (Throwable e) {
-                            logger.info(">>>>>>>>>>> xxl-job registry error, registryParam:{}", registryParam, e);
+                            log.info(">>>>>>>>>>> xxl-job registry error, registryParam:{}", registryParam, e);
                         }
 
                     }
                 } catch (Throwable e) {
                     if (!toStop) {
-                        logger.error(e.getMessage(), e);
+                        log.error(e.getMessage(), e);
                     }
 
                 }
@@ -74,7 +73,7 @@ public class ExecutorRegistryThread {
                     }
                 } catch (Throwable e) {
                     if (!toStop) {
-                        logger.warn(">>>>>>>>>>> xxl-job, executor registry thread interrupted, error msg:{}", e.getMessage());
+                        log.warn(">>>>>>>>>>> xxl-job, executor registry thread interrupted, error msg:{}", e.getMessage());
                     }
                 }
             }
@@ -87,14 +86,14 @@ public class ExecutorRegistryThread {
                         ReturnT<String> registryResult = adminBiz.registryRemove(registryParam);
                         if (registryResult!=null && ReturnT.SUCCESS_CODE == registryResult.getCode()) {
                             registryResult = ReturnT.SUCCESS;
-                            logger.info(">>>>>>>>>>> xxl-job registry-remove success, registryParam:{}, registryResult:{}", registryParam, registryResult);
+                            log.info(">>>>>>>>>>> xxl-job registry-remove success, registryParam:{}, registryResult:{}", registryParam, registryResult);
                             break;
                         } else {
-                            logger.info(">>>>>>>>>>> xxl-job registry-remove fail, registryParam:{}, registryResult:{}", registryParam, registryResult);
+                            log.info(">>>>>>>>>>> xxl-job registry-remove fail, registryParam:{}, registryResult:{}", registryParam, registryResult);
                         }
                     } catch (Throwable e) {
                         if (!toStop) {
-                            logger.info(">>>>>>>>>>> xxl-job registry-remove error, registryParam:{}", registryParam, e);
+                            log.info(">>>>>>>>>>> xxl-job registry-remove error, registryParam:{}", registryParam, e);
                         }
 
                     }
@@ -102,10 +101,10 @@ public class ExecutorRegistryThread {
                 }
             } catch (Throwable e) {
                 if (!toStop) {
-                    logger.error(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                 }
             }
-            logger.info(">>>>>>>>>>> xxl-job, executor registry thread destroy.");
+            log.info(">>>>>>>>>>> xxl-job, executor registry thread destroy.");
 
         });
         registryThread.setDaemon(true);
@@ -122,7 +121,7 @@ public class ExecutorRegistryThread {
             try {
                 registryThread.join();
             } catch (Throwable e) {
-                logger.error(e.getMessage(), e);
+                log.error(e.getMessage(), e);
             }
         }
 

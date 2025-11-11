@@ -1,0 +1,103 @@
+### web
+server:
+  port: 8080
+  servlet:
+    context-path: /xxl-job-admin
+
+### actuator
+management:
+  server:
+    base-path: /actuator
+  health:
+    mail:
+      enabled: false
+
+### resources
+spring:
+  mvc:
+    servlet:
+      load-on-startup: 0
+    static-path-pattern: /static/**
+  web:
+    resources:
+      static-locations: classpath:/static/
+  ### freemarker
+  freemarker:
+    templateLoaderPath: classpath:/templates/
+    suffix: .ftl
+    charset: UTF-8
+    request-context-attribute: request
+    settings:
+      number_format: 0.##########
+      new_builtin_class_resolver: safer
+  ### datasource-pool
+  ### xxl-job, datasource
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    url: jdbc:mysql://localhost:3306/batch_dev?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true
+    username: root
+    password: ni141516
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      pool-name: HikariCP
+      minimum-idle: 10
+      maximum-pool-size: 30
+      auto-commit: true
+      idle-timeout: 30000
+      max-lifetime: 900000
+      connection-timeout: 10000
+      connection-test-query: SELECT 1
+      validation-timeout: 1000
+  mail:
+    host: smtp.qq.com
+    port: 25
+    username: xxx@qq.com
+    from: xxx@qq.com
+    password: xxx
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          socketFactory:
+            class: javax.net.ssl.SSLSocketFactory
+# application.yml
+logging:
+  file:
+    name: nbatch-admin.log       # 日志文件名
+    path: /log/nbatch
+  level:
+    root: debug
+  config: classpath:logback-spring.xml
+
+### mybatis
+mybatis-plus:
+  mapper-locations: classpath:/sqlmap/**/*Mapper.xml
+  # 搜索指定包别名
+  type-aliases-package: com.nbatch.**.domain.po
+  configuration:
+    #开启日志打印
+    #log-impl: org.apache.ibatis.logging.log4j2.Log4j2Impl
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    #关闭日志打印
+    #log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+    #是否开启 MyBatis 二级缓存。
+    cache-enabled: false
+    #允许JDBC 支持自动生成主键
+    use-generated-keys: true
+    #是否开启驼峰命名转换
+    map-underscore-to-camel-case: true
+
+xxl:
+  job:
+    accessToken: default_token
+    timeout: 3
+    i18n: zh_CN
+    triggerpool:
+      fast:
+        max: 200
+      slow:
+        max: 100
+    logretentiondays: 30

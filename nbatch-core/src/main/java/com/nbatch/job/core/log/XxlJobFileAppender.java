@@ -4,10 +4,14 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.core.biz.model.LogResult;
 import lombok.Getter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
@@ -17,9 +21,8 @@ import java.util.Date;
  * store trigger log in each log-file
  * @author Mr.ni 2016-3-12 19:25:12
  */
+@Slf4j
 public class XxlJobFileAppender {
-
-	private static final Logger logger = LoggerFactory.getLogger(XxlJobFileAppender.class);
 
 	/**
 	 * log base path
@@ -69,7 +72,7 @@ public class XxlJobFileAppender {
 	 * @param triggerDate 任务调度时间
 	 * @param logId 日志ID
 	 */
-	public static String makeLogFileName(Date triggerDate, long logId) {
+	public static String makeLogFileName(Date triggerDate, String logId) {
 
 		// filePath/yyyy-MM-dd
 		// avoid concurrent problem, can not be static
@@ -82,7 +85,7 @@ public class XxlJobFileAppender {
 		// filePath/yyyy-MM-dd/9999.log
         return logFilePath.getPath()
                 .concat(File.separator)
-                .concat(String.valueOf(logId))
+                .concat(logId)
                 .concat(".log");
 	}
 
@@ -115,7 +118,7 @@ public class XxlJobFileAppender {
             fos.write(appendLog.getBytes(StandardCharsets.UTF_8));
             fos.flush();
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
 		
 	}
@@ -152,7 +155,7 @@ public class XxlJobFileAppender {
                 }
             }
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
 
 		// result
@@ -174,7 +177,7 @@ public class XxlJobFileAppender {
             }
             return sb.toString();
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
 		return null;
 	}

@@ -2,6 +2,7 @@ package com.nbatch.job.core.executor.impl;
 
 import com.nbatch.job.core.executor.XxlJobExecutor;
 import com.nbatch.job.core.handler.annotation.XxlJob;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,8 +16,8 @@ import java.util.List;
  *
  * @author Mr.ni 2020-11-05
  */
+@Slf4j
 public class XxlJobSimpleExecutor extends XxlJobExecutor {
-    private static final Logger logger = LoggerFactory.getLogger(XxlJobSimpleExecutor.class);
 
 
     private List<Object> xxlJobBeanList = new ArrayList<>();

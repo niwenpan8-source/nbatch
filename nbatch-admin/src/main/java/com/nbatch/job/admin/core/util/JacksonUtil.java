@@ -4,8 +4,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 
@@ -16,8 +15,8 @@ import java.io.IOException;
  * 
  * @author Mr.ni 2015-9-25 18:02:56
  */
+@Slf4j
 public class JacksonUtil {
-	private static final Logger logger = LoggerFactory.getLogger(JacksonUtil.class);
 
     private final static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     public static ObjectMapper getInstance() {
@@ -34,7 +33,7 @@ public class JacksonUtil {
     	try {
 			return getInstance().writeValueAsString(obj);
 		} catch (IOException e) {
-			logger.error(e.getMessage(), e);
+			log.error(e.getMessage(), e);
 		}
         return null;
     }
@@ -50,11 +49,11 @@ public class JacksonUtil {
     	try {
 			return getInstance().readValue(jsonStr, clazz);
 		} catch (JsonParseException e) {
-			logger.error(e.getMessage(), e);
+			log.error(e.getMessage(), e);
 		} catch (JsonMappingException e) {
-			logger.error(e.getMessage(), e);
+			log.error(e.getMessage(), e);
 		} catch (IOException e) {
-			logger.error(e.getMessage(), e);
+			log.error(e.getMessage(), e);
 		}
     	return null;
     }
@@ -72,11 +71,11 @@ public class JacksonUtil {
 			JavaType javaType = getInstance().getTypeFactory().constructParametricType(parametrized, parameterClasses);
 			return getInstance().readValue(jsonStr, javaType);
 		} catch (JsonParseException e) {
-			logger.error(e.getMessage(), e);
+			log.error(e.getMessage(), e);
 		} catch (JsonMappingException e) {
-			logger.error(e.getMessage(), e);
+			log.error(e.getMessage(), e);
 		} catch (IOException e) {
-			logger.error(e.getMessage(), e);
+			log.error(e.getMessage(), e);
 		}
 		return null;
 	}

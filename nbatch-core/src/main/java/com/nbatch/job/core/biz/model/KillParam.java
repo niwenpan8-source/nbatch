@@ -13,11 +13,11 @@ import java.io.Serializable;
 public class KillParam implements Serializable {
     private static final long serialVersionUID = 42L;
 
-    public KillParam(int jobId) {
+    public KillParam(String jobId) {
         this.jobId = jobId;
     }
 
-    private int jobId;
+    private String jobId;
 
 
 }

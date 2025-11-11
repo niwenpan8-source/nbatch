@@ -3,13 +3,12 @@ package com.nbatch.job.admin.core.alarm.impl;
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.admin.core.alarm.JobAlarm;
 import com.nbatch.job.admin.core.conf.XxlJobAdminConfig;
-import com.nbatch.job.admin.core.model.XxlJobGroup;
-import com.nbatch.job.admin.core.model.XxlJobInfo;
-import com.nbatch.job.admin.core.model.XxlJobLog;
+import com.nbatch.job.admin.core.domain.po.JobGroupPo;
+import com.nbatch.job.admin.core.domain.po.JobInfoPo;
+import com.nbatch.job.admin.core.domain.po.JobLogPo;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.model.ReturnT;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
@@ -24,9 +23,9 @@ import java.util.Set;
  *
  * @author Mr.ni 2020-01-19
  */
+@Slf4j
 @Component
 public class EmailJobAlarm implements JobAlarm {
-    private static final Logger logger = LoggerFactory.getLogger(EmailJobAlarm.class);
 
     /**
      * fail alarm
@@ -34,7 +33,7 @@ public class EmailJobAlarm implements JobAlarm {
      * @param jobLog job对象
      */
     @Override
-    public boolean doAlarm(XxlJobInfo info, XxlJobLog jobLog){
+    public boolean doAlarm(JobInfoPo info, JobLogPo jobLog){
         boolean alarmResult = true;
 
         // send monitor email
@@ -50,7 +49,7 @@ public class EmailJobAlarm implements JobAlarm {
             }
 
             // email info
-            XxlJobGroup group = XxlJobAdminConfig.getAdminConfig().getXxlJobGroupDao().load(info.getJobGroup());
+            JobGroupPo group = XxlJobAdminConfig.getAdminConfig().getJobGroupMapper().selectById(info.getJobGroup());
             String personal = I18nUtil.getString("admin_name_full");
             String title = I18nUtil.getString("jobconf_monitor");
             String content = MessageFormat.format(loadEmailJobAlarmTemplate(),
@@ -74,7 +73,7 @@ public class EmailJobAlarm implements JobAlarm {
 
                     XxlJobAdminConfig.getAdminConfig().getMailSender().send(mimeMessage);
                 } catch (Exception e) {
-                    logger.error(">>>>>>>>>>> xxl-job, job fail alarm email send error, JobLogId:{}", jobLog.getId(), e);
+                    log.error(">>>>>>>>>>> xxl-job, job fail alarm email send error, JobLogId:{}", jobLog.getId(), e);
 
                     alarmResult = false;
                 }

@@ -11,14 +11,15 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
+ * 轮询策略
  * @author Mr.ni
  */
 public class ExecutorRouteRound extends ExecutorRouter {
 
-    private static final ConcurrentMap<Integer, AtomicInteger> ROUTE_COUNT_EACH_JOB = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, AtomicInteger> ROUTE_COUNT_EACH_JOB = new ConcurrentHashMap<>();
     private static long CACHE_VALID_TIME = 0;
 
-    private static int count(int jobId) {
+    private static int count(String jobId) {
         // cache clear
         if (System.currentTimeMillis() > CACHE_VALID_TIME) {
             ROUTE_COUNT_EACH_JOB.clear();
@@ -39,7 +40,7 @@ public class ExecutorRouteRound extends ExecutorRouter {
 
     @Override
     public ReturnT<String> route(TriggerParam triggerParam, List<String> addressList) {
-        String address = addressList.get(count(triggerParam.getJobId())%addressList.size());
+        String address = addressList.get(count(triggerParam.getJobId()) % addressList.size());
         return new ReturnT<>(address);
     }
 

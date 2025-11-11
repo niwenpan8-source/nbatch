@@ -13,14 +13,14 @@ import java.io.Serializable;
 public class LogParam implements Serializable {
     private static final long serialVersionUID = 42L;
 
-    public LogParam(long logDateTim, long logId, int fromLineNum) {
+    public LogParam(long logDateTim, String logId, int fromLineNum) {
         this.logDateTim = logDateTim;
         this.logId = logId;
         this.fromLineNum = fromLineNum;
     }
 
     private long logDateTim;
-    private long logId;
+    private String logId;
     private int fromLineNum;
 
 }

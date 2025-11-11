@@ -17,8 +17,7 @@ import com.nbatch.job.core.util.IpUtil;
 import com.nbatch.job.core.util.NetUtil;
 import lombok.Getter;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -30,8 +29,8 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Created by nbatch on 2016/3/2 21:14.
  */
+@Slf4j
 public class XxlJobExecutor  {
-    private static final Logger logger = LoggerFactory.getLogger(XxlJobExecutor.class);
 
     // ---------------------- param ----------------------
     @Setter
@@ -80,14 +79,14 @@ public class XxlJobExecutor  {
 
         // destroy jobThreadRepository
         if (CollUtil.isNotEmpty(JOB_THREAD_REPOSITORY)) {
-            for (Map.Entry<Integer, JobThread> item : JOB_THREAD_REPOSITORY.entrySet()) {
+            for (Map.Entry<String, JobThread> item : JOB_THREAD_REPOSITORY.entrySet()) {
                 JobThread oldJobThread = removeJobThread(item.getKey(), "web container destroy and kill the job.");
                 // wait for job thread push result to callback queue
                 if (oldJobThread != null) {
                     try {
                         oldJobThread.join();
                     } catch (InterruptedException e) {
-                        logger.error(">>>>>>>>>>> xxl-job, JobThread destroy(join) error, jobId:{}", item.getKey(), e);
+                        log.error(">>>>>>>>>>> xxl-job, JobThread destroy(join) error, jobId:{}", item.getKey(), e);
                     }
                 }
             }
@@ -142,7 +141,7 @@ public class XxlJobExecutor  {
 
         // accessToken
         if (StrUtil.isBlank(accessToken)) {
-            logger.warn(">>>>>>>>>>> xxl-job accessToken is empty. To ensure system security, please set the accessToken.");
+            log.warn(">>>>>>>>>>> xxl-job accessToken is empty. To ensure system security, please set the accessToken.");
         }
 
         // start
@@ -156,7 +155,7 @@ public class XxlJobExecutor  {
             try {
                 embedServer.stop();
             } catch (Exception e) {
-                logger.error(e.getMessage(), e);
+                log.error(e.getMessage(), e);
             }
         }
     }
@@ -168,7 +167,7 @@ public class XxlJobExecutor  {
         return JOB_HANDLER_REPOSITORY.get(name);
     }
     public static IJobHandler registJobHandler(String name, IJobHandler jobHandler){
-        logger.info(">>>>>>>>>>> xxl-job register jobhandler success, name:{}, jobHandler:{}", name, jobHandler);
+        log.info(">>>>>>>>>>> xxl-job register jobhandler success, name:{}, jobHandler:{}", name, jobHandler);
         return JOB_HANDLER_REPOSITORY.put(name, jobHandler);
     }
     protected void registJobHandler(XxlJob xxlJob, Object bean, Method executeMethod){
@@ -217,11 +216,11 @@ public class XxlJobExecutor  {
 
 
     // ---------------------- job thread repository ----------------------
-    private static final ConcurrentMap<Integer, JobThread> JOB_THREAD_REPOSITORY = new ConcurrentHashMap<>();
-    public static JobThread registJobThread(int jobId, IJobHandler handler, String removeOldReason){
+    private static final ConcurrentMap<String, JobThread> JOB_THREAD_REPOSITORY = new ConcurrentHashMap<>();
+    public static JobThread registJobThread(String jobId, IJobHandler handler, String removeOldReason){
         JobThread newJobThread = new JobThread(jobId, handler);
         newJobThread.start();
-        logger.info(">>>>>>>>>>> xxl-job regist JobThread success, jobId:{}, handler:{}", jobId, handler);
+        log.info(">>>>>>>>>>> xxl-job regist JobThread success, jobId:{}, handler:{}", jobId, handler);
         // putIfAbsent | oh my god, map's put method return the old value!!!
         JobThread oldJobThread = JOB_THREAD_REPOSITORY.put(jobId, newJobThread);
         if (oldJobThread != null) {
@@ -232,7 +231,7 @@ public class XxlJobExecutor  {
         return newJobThread;
     }
 
-    public static JobThread removeJobThread(int jobId, String removeOldReason){
+    public static JobThread removeJobThread(String jobId, String removeOldReason){
         JobThread oldJobThread = JOB_THREAD_REPOSITORY.remove(jobId);
         if (oldJobThread != null) {
             oldJobThread.toStop(removeOldReason);
@@ -243,7 +242,7 @@ public class XxlJobExecutor  {
         return null;
     }
 
-    public static JobThread loadJobThread(int jobId){
+    public static JobThread loadJobThread(String jobId){
         return JOB_THREAD_REPOSITORY.get(jobId);
     }
 }

@@ -1,63 +1,72 @@
 package com.nbatch.job.admin.core.thread;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nbatch.job.admin.core.complete.XxlJobCompleter;
 import com.nbatch.job.admin.core.conf.XxlJobAdminConfig;
-import com.nbatch.job.admin.core.model.XxlJobLog;
+import com.nbatch.job.admin.core.domain.po.JobLogPo;
+import com.nbatch.job.admin.core.domain.po.JobRegistryPo;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.ReturnT;
-import com.nbatch.job.core.util.DateUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.Objects;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * job lose-monitor instance
  *
- * @author Mr.ni 2015-9-1 18:05:56
+ * @author Mr.ni
  */
+@Slf4j
 public class JobCompleteHelper {
-	private static final Logger logger = LoggerFactory.getLogger(JobCompleteHelper.class);
-	
-	private static final JobCompleteHelper INSTANCE = new JobCompleteHelper();
-	public static JobCompleteHelper getInstance(){
-		return INSTANCE;
-	}
 
-	// ---------------------- monitor ----------------------
+    private static final JobCompleteHelper INSTANCE = new JobCompleteHelper();
 
-	private ThreadPoolExecutor callbackThreadPool = null;
-	private Thread monitorThread;
-	private volatile boolean toStop = false;
-	public void start(){
+    public static JobCompleteHelper getInstance() {
+        return INSTANCE;
+    }
 
-		// for callback
-		callbackThreadPool = new ThreadPoolExecutor(
-				2,
-				20,
-				30L,
-				TimeUnit.SECONDS,
+    // ---------------------- monitor ----------------------
+
+    private ThreadPoolExecutor callbackThreadPool = null;
+    private Thread monitorThread;
+    private volatile boolean toStop = false;
+
+    public void start() {
+
+        // for callback
+        callbackThreadPool = new ThreadPoolExecutor(
+                2,
+                20,
+                30L,
+                TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(3000),
                 r -> new Thread(r, "xxl-job, admin JobLosedMonitorHelper-callbackThreadPool-" + r.hashCode()),
                 (r, executor) -> {
                     r.run();
-                    logger.warn(">>>>>>>>>>> xxl-job, callback too fast, match threadpool rejected handler(run now).");
+                    log.warn(">>>>>>>>>>> xxl-job, callback too fast, match threadpool rejected handler(run now).");
                 });
 
 
-		// for monitor
-		monitorThread = new Thread(() -> {
+        // for monitor
+        monitorThread = new Thread(() -> {
 
             // wait for JobTriggerPoolHelper-init
             try {
                 TimeUnit.MILLISECONDS.sleep(50);
             } catch (Throwable e) {
                 if (!toStop) {
-                    logger.error(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                 }
             }
 
@@ -65,18 +74,31 @@ public class JobCompleteHelper {
             while (!toStop) {
                 try {
                     // 任务结果丢失处理：调度记录停留在 "运行中" 状态超过10min，且对应执行器心跳注册失败不在线，则将本地调度主动标记失败；
-                    Date losedTime = DateUtil.addMinutes(new Date(), -10);
-                    List<Long> losedJobIds  = XxlJobAdminConfig.getAdminConfig().getXxlJobLogDao().findLostJobIds(losedTime);
+                    Date losedTime = DateUtil.offsetMinute(new Date(), -10);
+
+                    List<JobLogPo> jobLogList = XxlJobAdminConfig.getAdminConfig().getJobLogMapper()
+                            .selectList(Wrappers.lambdaQuery(JobLogPo.class)
+                                    .eq(JobLogPo::getTriggerCode, 200)
+                                    .eq(JobLogPo::getHandleCode, 0)
+                                    .le(JobLogPo::getTriggerTime, losedTime));
+                    List<JobRegistryPo> jobRegistryPos = XxlJobAdminConfig.getAdminConfig().getJobRegistryMapper()
+                            .selectList(Wrappers.lambdaQuery(JobRegistryPo.class));
+                    List<String> registryValueList = jobRegistryPos.stream().map(JobRegistryPo::getRegistryValue)
+                            .filter(Objects::nonNull).collect(Collectors.toList());
+                    List<String> losedJobIds = jobLogList.stream()
+                            .filter(jobLogPo -> !registryValueList.contains(jobLogPo.getExecutorAddress()))
+                            .map(JobLogPo::getId).collect(Collectors.toList());
+
 
                     if (CollUtil.isNotEmpty(losedJobIds)) {
-                        for (Long logId: losedJobIds) {
+                        for (String logId : losedJobIds) {
 
-                            XxlJobLog jobLog = new XxlJobLog();
+                            JobLogPo jobLog = new JobLogPo();
                             jobLog.setId(logId);
 
                             jobLog.setHandleTime(new Date());
                             jobLog.setHandleCode(ReturnT.FAIL_CODE);
-                            jobLog.setHandleMsg( I18nUtil.getString("joblog_lost_fail") );
+                            jobLog.setHandleMsg(I18nUtil.getString("joblog_lost_fail"));
 
                             XxlJobCompleter.updateHandleInfoAndFinish(jobLog);
                         }
@@ -84,88 +106,87 @@ public class JobCompleteHelper {
                     }
                 } catch (Throwable e) {
                     if (!toStop) {
-                        logger.error(">>>>>>>>>>> xxl-job, job fail monitor thread error:", e);
+                        log.error(">>>>>>>>>>> xxl-job, job fail monitor thread error:", e);
                     }
                 }
 
-try {
-TimeUnit.SECONDS.sleep(60);
-} catch (Throwable e) {
-if (!toStop) {
-logger.error(e.getMessage(), e);
-}
-}
+                try {
+                    TimeUnit.SECONDS.sleep(60);
+                } catch (Throwable e) {
+                    if (!toStop) {
+                        log.error(e.getMessage(), e);
+                    }
+                }
 
-}
+            }
 
-            logger.info(">>>>>>>>>>> xxl-job, JobLosedMonitorHelper stop");
+            log.info(">>>>>>>>>>> xxl-job, JobLosedMonitorHelper stop");
 
         });
-		monitorThread.setDaemon(true);
-		monitorThread.setName("xxl-job, admin JobLosedMonitorHelper");
-		monitorThread.start();
-	}
+        monitorThread.setDaemon(true);
+        monitorThread.setName("xxl-job, admin JobLosedMonitorHelper");
+        monitorThread.start();
+    }
 
-	public void toStop(){
-		toStop = true;
+    public void toStop() {
+        toStop = true;
 
-		// stop registryOrRemoveThreadPool
-		callbackThreadPool.shutdownNow();
+        // stop registryOrRemoveThreadPool
+        callbackThreadPool.shutdownNow();
 
-		// stop monitorThread (interrupt and wait)
-		monitorThread.interrupt();
-		try {
-			monitorThread.join();
-		} catch (Throwable e) {
-			logger.error(e.getMessage(), e);
-		}
-	}
+        // stop monitorThread (interrupt and wait)
+        monitorThread.interrupt();
+        try {
+            monitorThread.join();
+        } catch (Throwable e) {
+            log.error(e.getMessage(), e);
+        }
+    }
 
 
-	// ---------------------- helper ----------------------
+    // ---------------------- helper ----------------------
 
-	public ReturnT<String> callback(List<HandleCallbackParam> callbackParamList) {
+    public ReturnT<String> callback(List<HandleCallbackParam> callbackParamList) {
 
-		callbackThreadPool.execute(() -> {
-            for (HandleCallbackParam handleCallbackParam: callbackParamList) {
+        callbackThreadPool.execute(() -> {
+            for (HandleCallbackParam handleCallbackParam : callbackParamList) {
                 ReturnT<String> callbackResult = callback(handleCallbackParam);
-                logger.debug(">>>>>>>>> JobApiController.callback {}, handleCallbackParam={}, callbackResult={}",
-                        (callbackResult.getCode()== ReturnT.SUCCESS_CODE?"success":"fail"), handleCallbackParam, callbackResult);
+                log.debug(">>>>>>>>> JobApiController.callback {}, handleCallbackParam={}, callbackResult={}",
+                        (callbackResult.getCode() == ReturnT.SUCCESS_CODE ? "success" : "fail"), handleCallbackParam, callbackResult);
             }
         });
 
-		return ReturnT.SUCCESS;
-	}
+        return ReturnT.SUCCESS;
+    }
 
-	private ReturnT<String> callback(HandleCallbackParam handleCallbackParam) {
-		// valid log item
-		XxlJobLog log = XxlJobAdminConfig.getAdminConfig().getXxlJobLogDao().load(handleCallbackParam.getLogId());
-		if (log == null) {
-			return new ReturnT<>(ReturnT.FAIL_CODE, "log item not found.");
-		}
-		if (log.getHandleCode() > 0) {
-			// avoid repeat callback, trigger child job etc
-			return new ReturnT<>(ReturnT.FAIL_CODE, "log repeate callback.");
-		}
+    private ReturnT<String> callback(HandleCallbackParam handleCallbackParam) {
+        // valid log item
+        JobLogPo logInfo = XxlJobAdminConfig.getAdminConfig().getJobLogMapper().selectById(handleCallbackParam.getLogId());
+        if (logInfo == null) {
+            return new ReturnT<>(ReturnT.FAIL_CODE, "log item not found.");
+        }
+        if (logInfo.getHandleCode() > 0) {
+            // avoid repeat callback, trigger child job etc
+            return new ReturnT<>(ReturnT.FAIL_CODE, "log repeate callback.");
+        }
 
-		// handle msg
-		StringBuilder handleMsg = new StringBuilder();
-		if (log.getHandleMsg()!=null) {
-			handleMsg.append(log.getHandleMsg()).append("<br>");
-		}
-		if (handleCallbackParam.getHandleMsg() != null) {
-			handleMsg.append(handleCallbackParam.getHandleMsg());
-		}
+        // handle msg
+        StringBuilder handleMsg = new StringBuilder();
+        if (logInfo.getHandleMsg() != null) {
+            handleMsg.append(logInfo.getHandleMsg()).append("<br>");
+        }
+        if (handleCallbackParam.getHandleMsg() != null) {
+            handleMsg.append(handleCallbackParam.getHandleMsg());
+        }
 
-		// success, save log
-		log.setHandleTime(new Date());
-		log.setHandleCode(handleCallbackParam.getHandleCode());
-		log.setHandleMsg(handleMsg.toString());
-		XxlJobCompleter.updateHandleInfoAndFinish(log);
+        // success, save log
+        logInfo.setHandleTime(new Date());
+        logInfo.setHandleCode(handleCallbackParam.getHandleCode());
+        logInfo.setHandleMsg(handleMsg.toString());
+        XxlJobCompleter.updateHandleInfoAndFinish(logInfo);
 
-		return ReturnT.SUCCESS;
-	}
-
+        return ReturnT.SUCCESS;
+    }
 
 
 }

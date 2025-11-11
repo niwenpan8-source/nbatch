@@ -1,15 +1,18 @@
 package com.nbatch.job.core.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 /**
- * @author Mr.ni 2020-04-12 0:14:00
+ * @author Mr.ni
  */
+@Slf4j
 public class JdkSerializeTool {
-    private static final Logger logger = LoggerFactory.getLogger(JdkSerializeTool.class);
 
 
     // ------------------------ serialize and unserialize ------------------------
@@ -29,14 +32,14 @@ public class JdkSerializeTool {
             oos.writeObject(object);
             return baos.toByteArray();
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         } finally {
             try {
                 assert oos != null;
                 oos.close();
                 baos.close();
             } catch (IOException e) {
-                logger.error(e.getMessage(), e);
+                log.error(e.getMessage(), e);
             }
         }
         return null;
@@ -57,14 +60,14 @@ public class JdkSerializeTool {
             ois = new ObjectInputStream(bais);
             return ois.readObject();
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         } finally {
             try {
                 assert ois != null;
                 ois.close();
                 bais.close();
             } catch (IOException e) {
-                logger.error(e.getMessage(), e);
+                log.error(e.getMessage(), e);
             }
         }
         return null;

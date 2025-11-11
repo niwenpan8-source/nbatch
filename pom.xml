@@ -34,7 +34,7 @@
 		<netty.version>4.1.116.Final</netty.version>
 		<gson.version>2.11.0</gson.version>
 		<!-- spring -->
-		<spring.version>5.3.39</spring.version>
+		<spring.version>5.3.31</spring.version>
 		<spring-boot.version>2.7.18</spring-boot.version>
 		<!-- db -->
 		<mybatis-spring-boot-starter.version>2.3.2</mybatis-spring-boot-starter.version>
@@ -45,17 +45,69 @@
 		<hutool.version>5.8.41</hutool.version>
 		<junit.version>4.13.2</junit.version>
 		<lombok.version>1.18.12</lombok.version>
+		<mybatisplus.version>3.4.3.1</mybatisplus.version>
 	</properties>
 
 	<dependencyManagement>
 		<dependencies>
+
 			<dependency>
-				<!-- Import dependency management from Spring Boot (依赖管理：继承一些默认的依赖，工程需要依赖的jar包的管理，申明其他dependency的时候就不需要version) -->
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-context</artifactId>
+				<version>${spring.version}</version>
+			</dependency>
+
+			<!-- spring-boot -->
+			<dependency>
 				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-starter-parent</artifactId>
+				<artifactId>spring-boot-starter-web</artifactId>
 				<version>${spring-boot.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
+			</dependency>
+
+			<!-- starter-test：junit + spring-test + mockito -->
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-test</artifactId>
+				<version>${spring-boot.version}</version>
+			</dependency>
+
+			<!-- freemarker-starter -->
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-freemarker</artifactId>
+				<version>${spring-boot.version}</version>
+			</dependency>
+
+			<!-- mail-starter -->
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-mail</artifactId>
+				<version>${spring-boot.version}</version>
+			</dependency>
+
+			<!-- starter-actuator -->
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-actuator</artifactId>
+				<version>${spring-boot.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-logging</artifactId>
+				<version>${spring-boot.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-jdbc</artifactId>
+				<version>${spring-boot.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-autoconfigure</artifactId>
+				<version>${spring-boot.version}</version>
 			</dependency>
 
 			<!-- ********************** embed server: netty + gson ********************** -->
@@ -78,14 +130,6 @@
 				<version>${groovy.version}</version>
 			</dependency>
 
-			<!-- spring-context -->
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-context</artifactId>
-				<version>${spring.version}</version>
-				<scope>provided</scope>
-			</dependency>
-
 			<!-- ********************** base ********************** -->
 			<!-- slf4j -->
 			<dependency>
@@ -102,11 +146,10 @@
 				<scope>provided</scope>
 			</dependency>
 
-			<!-- mybatis-starter：mybatis + mybatis-spring + hikari（default） -->
 			<dependency>
-				<groupId>org.mybatis.spring.boot</groupId>
-				<artifactId>mybatis-spring-boot-starter</artifactId>
-				<version>${mybatis-spring-boot-starter.version}</version>
+				<groupId>com.baomidou</groupId>
+				<artifactId>mybatis-plus-boot-starter</artifactId>
+				<version>${mybatisplus.version}</version>
 			</dependency>
 
 			<!-- mysql -->
@@ -132,7 +175,6 @@
 				<groupId>junit</groupId>
 				<artifactId>junit</artifactId>
 				<version>${junit.version}</version>
-				<scope>compile</scope>
 			</dependency>
 
 			<dependency>

@@ -1,6 +1,7 @@
 package com.nbatch.job.admin.core.util;
 
 import com.nbatch.job.admin.core.conf.XxlJobAdminConfig;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -19,8 +20,8 @@ import java.util.Properties;
  *
  * @author Mr.ni 2018-01-17 20:39:06
  */
+@Slf4j
 public class I18nUtil {
-    private static final Logger logger = LoggerFactory.getLogger(I18nUtil.class);
 
     private static Properties prop = null;
     public static Properties loadI18nProp(){
@@ -37,7 +38,7 @@ public class I18nUtil {
             EncodedResource encodedResource = new EncodedResource(resource,"UTF-8");
             prop = PropertiesLoaderUtils.loadProperties(encodedResource);
         } catch (IOException e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
         return prop;
     }

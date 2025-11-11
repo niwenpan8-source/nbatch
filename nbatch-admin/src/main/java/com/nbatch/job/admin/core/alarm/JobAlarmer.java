@@ -1,10 +1,9 @@
 package com.nbatch.job.admin.core.alarm;
 
 import cn.hutool.core.collection.CollUtil;
-import com.nbatch.job.admin.core.model.XxlJobInfo;
-import com.nbatch.job.admin.core.model.XxlJobLog;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.nbatch.job.admin.core.domain.po.JobInfoPo;
+import com.nbatch.job.admin.core.domain.po.JobLogPo;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
@@ -19,10 +18,9 @@ import java.util.Map;
  * job alarm
  * @author Mr.ni
  */
+@Slf4j
 @Component
 public class JobAlarmer implements ApplicationContextAware, InitializingBean {
-
-    private static final Logger logger = LoggerFactory.getLogger(JobAlarmer.class);
 
     private ApplicationContext applicationContext;
     private List<JobAlarm> jobAlarmList;
@@ -43,7 +41,7 @@ public class JobAlarmer implements ApplicationContextAware, InitializingBean {
     /**
      * job alarm
      */
-    public boolean alarm(XxlJobInfo info, XxlJobLog jobLog) {
+    public boolean alarm(JobInfoPo info, JobLogPo jobLog) {
 
         boolean result = false;
         if (CollUtil.isNotEmpty(jobAlarmList)) {
@@ -54,7 +52,7 @@ public class JobAlarmer implements ApplicationContextAware, InitializingBean {
                 try {
                     resultItem = alarm.doAlarm(info, jobLog);
                 } catch (Exception e) {
-                    logger.error(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                 }
                 if (!resultItem) {
                     result = false;

@@ -1,24 +1,27 @@
 package com.nbatch.job.admin.controller;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nbatch.job.admin.controller.interceptor.PermissionInterceptor;
 import com.nbatch.job.admin.core.complete.XxlJobCompleter;
+import com.nbatch.job.admin.core.domain.po.JobGroupPo;
+import com.nbatch.job.admin.core.domain.po.JobInfoPo;
+import com.nbatch.job.admin.core.domain.po.JobLogPo;
 import com.nbatch.job.admin.core.exception.XxlJobException;
-import com.nbatch.job.admin.core.model.XxlJobGroup;
-import com.nbatch.job.admin.core.model.XxlJobInfo;
-import com.nbatch.job.admin.core.model.XxlJobLog;
 import com.nbatch.job.admin.core.scheduler.XxlJobScheduler;
 import com.nbatch.job.admin.core.util.I18nUtil;
-import com.nbatch.job.admin.dao.XxlJobGroupDao;
-import com.nbatch.job.admin.dao.XxlJobInfoDao;
-import com.nbatch.job.admin.dao.XxlJobLogDao;
+import com.nbatch.job.admin.mapper.IJobGroupMapper;
+import com.nbatch.job.admin.mapper.IJobInfoMapper;
+import com.nbatch.job.admin.mapper.IJobLogMapper;
 import com.nbatch.job.core.biz.ExecutorBiz;
 import com.nbatch.job.core.biz.model.KillParam;
 import com.nbatch.job.core.biz.model.LogParam;
 import com.nbatch.job.core.biz.model.LogResult;
 import com.nbatch.job.core.biz.model.ReturnT;
-import com.nbatch.job.core.util.DateUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -35,33 +38,34 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * index controller
  *
  * @author Mr.ni 2015-12-19 16:13:16
  */
+@Slf4j
 @Controller
 @RequestMapping("/joblog")
 public class JobLogController {
 
-    private static final Logger logger = LoggerFactory.getLogger(JobLogController.class);
-
     @Resource
-    private XxlJobGroupDao xxlJobGroupDao;
+    private IJobGroupMapper jobGroupMapper;
     @Resource
-    public XxlJobInfoDao xxlJobInfoDao;
+    public IJobLogMapper jobLogMapper;
     @Resource
-    public XxlJobLogDao xxlJobLogDao;
+    public IJobInfoMapper jobInfoMapper;
 
     @RequestMapping
     public String index(HttpServletRequest request, Model model, @RequestParam(required = false, defaultValue = "0") Integer jobId) {
 
-        // 执行器列表
-        List<XxlJobGroup> jobGroupListAll = xxlJobGroupDao.findAll();
+        List<JobGroupPo> jobGroupListAll = jobGroupMapper.selectList(Wrappers.lambdaQuery(JobGroupPo.class)
+                .orderByDesc(JobGroupPo::getAppName).orderByDesc(JobGroupPo::getTitle)
+                .orderByAsc(JobGroupPo::getId));
 
         // filter group
-        List<XxlJobGroup> jobGroupList = PermissionInterceptor.filterJobGroupByRole(request, jobGroupListAll);
+        List<JobGroupPo> jobGroupList = PermissionInterceptor.filterJobGroupByRole(request, jobGroupListAll);
         if (CollUtil.isEmpty(jobGroupList)) {
             throw new XxlJobException(I18nUtil.getString("jobgroup_empty"));
         }
@@ -70,7 +74,7 @@ public class JobLogController {
 
         // 任务
         if (jobId > 0) {
-            XxlJobInfo jobInfo = xxlJobInfoDao.loadById(jobId);
+            JobInfoPo jobInfo = jobInfoMapper.selectById(jobId);
             if (jobInfo == null) {
                 throw new RuntimeException(I18nUtil.getString("jobinfo_field_id") + I18nUtil.getString("system_unvalid"));
             }
@@ -86,8 +90,9 @@ public class JobLogController {
 
     @RequestMapping("/getJobsByGroup")
     @ResponseBody
-    public ReturnT<List<XxlJobInfo>> getJobsByGroup(int jobGroup) {
-        List<XxlJobInfo> list = xxlJobInfoDao.getJobsByGroup(jobGroup);
+    public ReturnT<List<JobInfoPo>> getJobsByGroup(int jobGroup) {
+        List<JobInfoPo> list = jobInfoMapper.selectList(Wrappers.lambdaQuery(JobInfoPo.class)
+                .eq(JobInfoPo::getJobGroup, jobGroup));
         return new ReturnT<>(list);
     }
 
@@ -96,7 +101,7 @@ public class JobLogController {
     public Map<String, Object> pageList(HttpServletRequest request,
                                         @RequestParam(required = false, defaultValue = "0") int start,
                                         @RequestParam(required = false, defaultValue = "10") int length,
-                                        int jobGroup, int jobId, int logStatus, String filterTime) {
+                                        String jobGroup, String jobId, int logStatus, String filterTime) {
 
         // valid permission
         // 仅管理员支持查询全部；普通用户仅支持查询有权限的 jobGroup
@@ -113,24 +118,39 @@ public class JobLogController {
             }
         }
 
-        // page query
-        List<XxlJobLog> list = xxlJobLogDao.pageList(start, length, jobGroup, jobId, triggerTimeStart, triggerTimeEnd, logStatus);
-        int listCount = xxlJobLogDao.pageListCount(start, length, jobGroup, jobId, triggerTimeStart, triggerTimeEnd, logStatus);
-
+        Page<JobLogPo> jobLogPage = jobLogMapper.selectPage(new Page<>(start, length), Wrappers.lambdaQuery(JobLogPo.class)
+                .eq(StrUtil.isNotEmpty(jobId) && StrUtil.isNotEmpty(jobGroup), JobLogPo::getJobGroup, jobGroup)
+                .eq(StrUtil.isNotEmpty(jobId), JobLogPo::getJobId, jobId)
+                .ge(triggerTimeStart != null, JobLogPo::getTriggerTime, triggerTimeStart)
+                .le(triggerTimeEnd != null, JobLogPo::getTriggerTime, triggerTimeEnd)
+                .eq(logStatus == 1, JobLogPo::getTriggerCode, 200)
+                .and(logStatus == 2, wrapper -> wrapper.in(JobLogPo::getTriggerCode, 0, 200).or()
+                        .in(JobLogPo::getHandleCode, 0, 200))
+                .and(logStatus == 3, wrapper -> wrapper.eq(JobLogPo::getTriggerCode, 200).or()
+                        .eq(JobLogPo::getHandleCode, 0))
+        );
         // package result
         Map<String, Object> maps = new HashMap<>();
-        // 总记录数
-        maps.put("recordsTotal", listCount);
-        // 过滤后的总记录数
-        maps.put("recordsFiltered", listCount);
-        // 分页列表
-        maps.put("data", list);
+        if (jobLogPage != null && CollUtil.isNotEmpty(jobLogPage.getRecords())) {
+            // 总记录数
+            maps.put("recordsTotal", jobLogPage.getTotal());
+            // 过滤后的总记录数
+            maps.put("recordsFiltered", jobLogPage.getTotal());
+            // 分页列表
+            maps.put("data", jobLogPage.getRecords());
+        } else {
+            // 总记录数
+            maps.put("recordsTotal", 0);
+            // 过滤后的总记录数
+            maps.put("recordsFiltered", 0);
+        }
+
         return maps;
     }
 
     @RequestMapping("/logDetailPage")
     public String logDetailPage(int id, Model model) {
-        XxlJobLog jobLog = xxlJobLogDao.load(id);
+        JobLogPo jobLog = jobLogMapper.selectById(id);
         if (jobLog == null) {
             throw new RuntimeException(I18nUtil.getString("joblog_logid_unvalid"));
         }
@@ -143,11 +163,11 @@ public class JobLogController {
 
     @RequestMapping("/logDetailCat")
     @ResponseBody
-    public ReturnT<LogResult> logDetailCat(long logId, int fromLineNum) {
+    public ReturnT<LogResult> logDetailCat(String logId, int fromLineNum) {
         try {
             // valid
             // todo, need to improve performance
-            XxlJobLog jobLog = xxlJobLogDao.load(logId);
+            JobLogPo jobLog = jobLogMapper.selectById(logId);
             if (jobLog == null) {
                 return new ReturnT<>(ReturnT.FAIL_CODE, I18nUtil.getString("joblog_logid_unvalid"));
             }
@@ -173,7 +193,7 @@ public class JobLogController {
 
             return logResult;
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             return new ReturnT<>(ReturnT.FAIL_CODE, e.getMessage());
         }
     }
@@ -182,31 +202,31 @@ public class JobLogController {
     @ResponseBody
     public ReturnT<String> logKill(int id) {
         // base check
-        XxlJobLog log = xxlJobLogDao.load(id);
-        XxlJobInfo jobInfo = xxlJobInfoDao.loadById(log.getJobId());
+        JobLogPo logInfo = jobLogMapper.selectById(id);
+        JobInfoPo jobInfo = jobInfoMapper.selectById(logInfo.getJobId());
         if (jobInfo == null) {
             return new ReturnT<>(500, I18nUtil.getString("jobinfo_glue_jobid_unvalid"));
         }
-        if (ReturnT.SUCCESS_CODE != log.getTriggerCode()) {
+        if (ReturnT.SUCCESS_CODE != logInfo.getTriggerCode()) {
             return new ReturnT<>(500, I18nUtil.getString("joblog_kill_log_limit"));
         }
 
         // request of kill
         ReturnT<String> runResult;
         try {
-            ExecutorBiz executorBiz = XxlJobScheduler.getExecutorBiz(log.getExecutorAddress());
+            ExecutorBiz executorBiz = XxlJobScheduler.getExecutorBiz(logInfo.getExecutorAddress());
             assert executorBiz != null;
             runResult = executorBiz.kill(new KillParam(jobInfo.getId()));
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            log.error(e.getMessage(), e);
             runResult = new ReturnT<>(500, e.getMessage());
         }
 
         if (ReturnT.SUCCESS_CODE == runResult.getCode()) {
-            log.setHandleCode(ReturnT.FAIL_CODE);
-            log.setHandleMsg(I18nUtil.getString("joblog_kill_log_byman") + ":" + (runResult.getMsg() != null ? runResult.getMsg() : ""));
-            log.setHandleTime(new Date());
-            XxlJobCompleter.updateHandleInfoAndFinish(log);
+            logInfo.setHandleCode(ReturnT.FAIL_CODE);
+            logInfo.setHandleMsg(I18nUtil.getString("joblog_kill_log_byman") + ":" + (runResult.getMsg() != null ? runResult.getMsg() : ""));
+            logInfo.setHandleTime(new Date());
+            XxlJobCompleter.updateHandleInfoAndFinish(logInfo);
             return new ReturnT<>(runResult.getMsg());
         } else {
             return new ReturnT<>(500, runResult.getMsg());
@@ -215,49 +235,38 @@ public class JobLogController {
 
     @RequestMapping("/clearLog")
     @ResponseBody
-    public ReturnT<String> clearLog(HttpServletRequest request, int jobGroup, int jobId, int type) {
+    public ReturnT<String> clearLog(HttpServletRequest request, String jobGroup, String jobId, int type) {
         // valid permission
         PermissionInterceptor.validJobGroupPermission(request, jobGroup);
 
         // opt
-        Date clearBeforeTime = null;
-        int clearBeforeNum = 0;
+        Date clearBeforeTime;
         if (type == 1) {
             // 清理一个月之前日志数据
-            clearBeforeTime = DateUtil.addMonths(new Date(), -1);
+            clearBeforeTime = DateUtil.offsetMonth(new Date(), -1);
         } else if (type == 2) {
             // 清理三个月之前日志数据
-            clearBeforeTime = DateUtil.addMonths(new Date(), -3);
+            clearBeforeTime = DateUtil.offsetMonth(new Date(), -3);
         } else if (type == 3) {
             // 清理六个月之前日志数据
-            clearBeforeTime = DateUtil.addMonths(new Date(), -6);
+            clearBeforeTime = DateUtil.offsetMonth(new Date(), -6);
         } else if (type == 4) {
             // 清理一年之前日志数据
-            clearBeforeTime = DateUtil.addYears(new Date(), -1);
-        } else if (type == 5) {
-            // 清理一千条以前日志数据
-            clearBeforeNum = 1000;
-        } else if (type == 6) {
-            // 清理一万条以前日志数据
-            clearBeforeNum = 10000;
-        } else if (type == 7) {
-            // 清理三万条以前日志数据
-            clearBeforeNum = 30000;
-        } else if (type == 8) {
-            // 清理十万条以前日志数据
-            clearBeforeNum = 100000;
-        } else if (type == 9) {
-            // 清理所有日志数据
-            clearBeforeNum = 0;
+            clearBeforeTime = DateUtil.offsetYear(new Date(), -1);
         } else {
             return new ReturnT<>(ReturnT.FAIL_CODE, I18nUtil.getString("joblog_clean_type_unvalid"));
         }
 
-        List<Long> logIds;
+        List<String> logIds = null;
         do {
-            logIds = xxlJobLogDao.findClearLogIds(jobGroup, jobId, clearBeforeTime, clearBeforeNum, 1000);
-            if (CollUtil.isNotEmpty(logIds)) {
-                xxlJobLogDao.clearLog(logIds);
+            Page<JobLogPo> jobLogPoPage = jobLogMapper.selectPage(new Page<>(0, 1000L), Wrappers.lambdaQuery(JobLogPo.class)
+                    .eq(StrUtil.isNotEmpty(jobGroup), JobLogPo::getJobGroup, jobGroup)
+                    .eq(StrUtil.isNotEmpty(jobId), JobLogPo::getJobId, jobId)
+                    .eq(clearBeforeTime != null, JobLogPo::getTriggerTime, clearBeforeTime)
+            );
+            if (jobLogPoPage != null && CollUtil.isNotEmpty(jobLogPoPage.getRecords())) {
+                logIds = jobLogPoPage.getRecords().stream().map(JobLogPo::getId).collect(Collectors.toList());
+                jobLogMapper.deleteBatchIds(logIds);
             }
         } while (CollUtil.isNotEmpty(logIds));
 

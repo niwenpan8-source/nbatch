@@ -1,7 +1,6 @@
 package com.nbatch.job.core.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -11,8 +10,8 @@ import java.net.ServerSocket;
  *
  * @author Mr.ni 2017-11-29 17:00:25
  */
+@Slf4j
 public class NetUtil {
-    private static final Logger logger = LoggerFactory.getLogger(NetUtil.class);
 
     /**
      * find avaliable port
@@ -49,7 +48,7 @@ public class NetUtil {
         try (ServerSocket ignored = new ServerSocket(port)) {
             used = false;
         } catch (IOException e) {
-            logger.info(">>>>>>>>>>> xxl-job, port[{}] is in use.", port);
+            log.info(">>>>>>>>>>> xxl-job, port[{}] is in use.", port);
             used = true;
         }
         return used;

@@ -4,8 +4,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.admin.controller.annotation.PermissionLimit;
-import com.nbatch.job.admin.core.model.XxlJobGroup;
-import com.nbatch.job.admin.core.model.XxlJobUser;
+import com.nbatch.job.admin.core.domain.po.JobGroupPo;
+import com.nbatch.job.admin.core.domain.po.JobUserPo;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.admin.service.impl.LoginService;
 import org.springframework.stereotype.Component;
@@ -49,7 +49,7 @@ public class PermissionInterceptor implements AsyncHandlerInterceptor {
 		}
 
 		if (needLogin) {
-			XxlJobUser loginUser = loginService.ifLogin(request, response);
+			JobUserPo loginUser = loginService.ifLogin(request, response);
 			if (loginUser == null) {
 				response.setStatus(302);
 				response.setHeader("location", request.getContextPath()+"/toLogin");
@@ -73,9 +73,9 @@ public class PermissionInterceptor implements AsyncHandlerInterceptor {
 	 *
 	 * @param request 请求
 	 */
-	public static XxlJobUser getLoginUser(HttpServletRequest request){
+	public static JobUserPo getLoginUser(HttpServletRequest request){
         // get loginUser, with request
-        return (XxlJobUser) request.getAttribute(LoginService.LOGIN_IDENTITY_KEY);
+        return (JobUserPo) request.getAttribute(LoginService.LOGIN_IDENTITY_KEY);
 	}
 
 	/**
@@ -84,8 +84,8 @@ public class PermissionInterceptor implements AsyncHandlerInterceptor {
 	 * @param request 请求
 	 * @param jobGroup 群组ID
 	 */
-	public static void validJobGroupPermission(HttpServletRequest request, int jobGroup) {
-		XxlJobUser loginUser = getLoginUser(request);
+	public static void validJobGroupPermission(HttpServletRequest request, String jobGroup) {
+		JobUserPo loginUser = getLoginUser(request);
 		if (!loginUser.validPermission(jobGroup)) {
 			throw new RuntimeException(I18nUtil.getString("system_permission_limit") + "[username="+ loginUser.getUsername() +"]");
 		}
@@ -97,10 +97,10 @@ public class PermissionInterceptor implements AsyncHandlerInterceptor {
 	 * @param request 请求
 	 * @param jobGroupListAll 所有群组
 	 */
-	public static List<XxlJobGroup> filterJobGroupByRole(HttpServletRequest request, List<XxlJobGroup> jobGroupListAll){
-		List<XxlJobGroup> jobGroupList = new ArrayList<>();
+	public static List<JobGroupPo> filterJobGroupByRole(HttpServletRequest request, List<JobGroupPo> jobGroupListAll){
+		List<JobGroupPo> jobGroupList = new ArrayList<>();
 		if (CollUtil.isNotEmpty(jobGroupListAll)) {
-			XxlJobUser loginUser = PermissionInterceptor.getLoginUser(request);
+			JobUserPo loginUser = PermissionInterceptor.getLoginUser(request);
 			if (loginUser.getRole() == 1) {
 				jobGroupList = jobGroupListAll;
 			} else {
@@ -108,7 +108,7 @@ public class PermissionInterceptor implements AsyncHandlerInterceptor {
 				if (StrUtil.isNotBlank(loginUser.getPermission())) {
 					groupIdStrs = Arrays.asList(loginUser.getPermission().trim().split(StrPool.COMMA));
 				}
-				for (XxlJobGroup groupItem : jobGroupListAll) {
+				for (JobGroupPo groupItem : jobGroupListAll) {
 					if (groupIdStrs.contains(String.valueOf(groupItem.getId()))) {
 						jobGroupList.add(groupItem);
 					}

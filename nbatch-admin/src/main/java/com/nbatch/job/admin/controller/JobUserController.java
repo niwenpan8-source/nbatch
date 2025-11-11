@@ -1,14 +1,18 @@
 package com.nbatch.job.admin.controller;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nbatch.job.admin.controller.annotation.PermissionLimit;
 import com.nbatch.job.admin.controller.interceptor.PermissionInterceptor;
-import com.nbatch.job.admin.core.model.XxlJobGroup;
-import com.nbatch.job.admin.core.model.XxlJobUser;
+import com.nbatch.job.admin.core.domain.param.JobUserParam;
+import com.nbatch.job.admin.core.domain.po.JobGroupPo;
+import com.nbatch.job.admin.core.domain.po.JobUserPo;
 import com.nbatch.job.admin.core.util.I18nUtil;
-import com.nbatch.job.admin.dao.XxlJobGroupDao;
-import com.nbatch.job.admin.dao.XxlJobUserDao;
+import com.nbatch.job.admin.mapper.IJobGroupMapper;
+import com.nbatch.job.admin.mapper.IJobUserMapper;
 import com.nbatch.job.core.biz.model.ReturnT;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -32,16 +36,19 @@ import java.util.Map;
 public class JobUserController {
 
     @Resource
-    private XxlJobUserDao xxlJobUserDao;
+    private IJobUserMapper jobUserMapper;
     @Resource
-    private XxlJobGroupDao xxlJobGroupDao;
+    private IJobGroupMapper jobGroupMapper;
 
     @RequestMapping
     @PermissionLimit(adminuser = true)
     public String index(Model model) {
 
         // 执行器列表
-        List<XxlJobGroup> groupList = xxlJobGroupDao.findAll();
+        List<JobGroupPo> groupList = jobGroupMapper.selectList(Wrappers.lambdaQuery(JobGroupPo.class)
+                .orderByDesc(JobGroupPo::getAppName).orderByDesc(JobGroupPo::getTitle)
+                .orderByAsc(JobGroupPo::getId));
+
         model.addAttribute("groupList", groupList);
 
         return "user/user.index";
@@ -54,103 +61,111 @@ public class JobUserController {
                                         @RequestParam(required = false, defaultValue = "10") int length,
                                         String username, int role) {
 
-        // page list
-        List<XxlJobUser> list = xxlJobUserDao.pageList(start, length, username, role);
-        int listCount = xxlJobUserDao.pageListCount(start, length, username, role);
+        Page<JobUserPo> jobUserPoPage = jobUserMapper.selectPage(new Page<>(start, length), Wrappers.lambdaQuery(JobUserPo.class)
+                .eq(StrUtil.isNotEmpty(username), JobUserPo::getUsername, username)
+                .eq(role != -1, JobUserPo::getRole, role)
+        );
 
         // filter
-        if (CollUtil.isNotEmpty(list)) {
-            for (XxlJobUser item : list) {
+        if (jobUserPoPage != null && CollUtil.isNotEmpty(jobUserPoPage.getRecords())) {
+            for (JobUserPo item : jobUserPoPage.getRecords()) {
                 item.setPassword(null);
             }
         }
 
         // package result
-        Map<String, Object> maps = new HashMap<String, Object>();
-        // 总记录数
-        maps.put("recordsTotal", listCount);
-        // 过滤后的总记录数
-        maps.put("recordsFiltered", listCount);
-        // 分页列表
-        maps.put("data", list);
+        Map<String, Object> maps = new HashMap<>();
+        if (jobUserPoPage == null) {
+            // 总记录数
+            maps.put("recordsTotal", 0);
+            // 过滤后的总记录数
+            maps.put("recordsFiltered", 0);
+        } else {
+            // 总记录数
+            maps.put("recordsTotal", jobUserPoPage.getTotal());
+            // 过滤后的总记录数
+            maps.put("recordsFiltered", jobUserPoPage.getTotal());
+            // 分页列表
+            maps.put("data", jobUserPoPage.getRecords());
+        }
+
         return maps;
     }
 
     @RequestMapping("/add")
     @ResponseBody
     @PermissionLimit(adminuser = true)
-    public ReturnT<String> add(XxlJobUser xxlJobUser) {
+    public ReturnT<String> add(JobUserParam param) {
 
         // valid username
-        if (!StringUtils.hasText(xxlJobUser.getUsername())) {
+        if (!StringUtils.hasText(param.getUsername())) {
             return new ReturnT<>(ReturnT.FAIL_CODE, I18nUtil.getString("system_please_input") + I18nUtil.getString("user_username"));
         }
-        xxlJobUser.setUsername(xxlJobUser.getUsername().trim());
-        if (!(xxlJobUser.getUsername().length() >= 4 && xxlJobUser.getUsername().length() <= 20)) {
+        param.setUsername(param.getUsername().trim());
+        if (!(param.getUsername().length() >= 4 && param.getUsername().length() <= 20)) {
             return new ReturnT<>(ReturnT.FAIL_CODE, I18nUtil.getString("system_lengh_limit") + "[4-20]");
         }
         // valid password
-        if (!StringUtils.hasText(xxlJobUser.getPassword())) {
+        if (!StringUtils.hasText(param.getPassword())) {
             return new ReturnT<>(ReturnT.FAIL_CODE, I18nUtil.getString("system_please_input") + I18nUtil.getString("user_password"));
         }
-        xxlJobUser.setPassword(xxlJobUser.getPassword().trim());
-        if (!(xxlJobUser.getPassword().length() >= 4 && xxlJobUser.getPassword().length() <= 20)) {
+        param.setPassword(param.getPassword().trim());
+        if (!(param.getPassword().length() >= 4 && param.getPassword().length() <= 20)) {
             return new ReturnT<>(ReturnT.FAIL_CODE, I18nUtil.getString("system_lengh_limit") + "[4-20]");
         }
         // md5 password
-        xxlJobUser.setPassword(DigestUtils.md5DigestAsHex(xxlJobUser.getPassword().getBytes()));
-
-        // check repeat
-        XxlJobUser existUser = xxlJobUserDao.loadByUserName(xxlJobUser.getUsername());
+        param.setPassword(DigestUtils.md5DigestAsHex(param.getPassword().getBytes()));
+        JobUserPo existUser = jobUserMapper.selectOne(Wrappers.lambdaQuery(JobUserPo.class)
+                .eq(JobUserPo::getUsername, param.getUsername()));
         if (existUser != null) {
-            return new ReturnT<String>(ReturnT.FAIL_CODE, I18nUtil.getString("user_username_repeat"));
+            return new ReturnT<>(ReturnT.FAIL_CODE, I18nUtil.getString("user_username_repeat"));
         }
 
         // write
-        xxlJobUserDao.save(xxlJobUser);
+        jobUserMapper.insert(BeanUtil.toBean(param, JobUserPo.class));
         return ReturnT.SUCCESS;
     }
 
     @RequestMapping("/update")
     @ResponseBody
     @PermissionLimit(adminuser = true)
-    public ReturnT<String> update(HttpServletRequest request, XxlJobUser xxlJobUser) {
+    public ReturnT<String> update(HttpServletRequest request, JobUserParam param) {
 
         // avoid opt login seft
-        XxlJobUser loginUser = PermissionInterceptor.getLoginUser(request);
-        if (loginUser.getUsername().equals(xxlJobUser.getUsername())) {
+        JobUserPo loginUser = PermissionInterceptor.getLoginUser(request);
+        if (loginUser.getUsername().equals(param.getUsername())) {
             return new ReturnT<>(ReturnT.FAIL.getCode(), I18nUtil.getString("user_update_loginuser_limit"));
         }
 
         // valid password
-        if (StringUtils.hasText(xxlJobUser.getPassword())) {
-            xxlJobUser.setPassword(xxlJobUser.getPassword().trim());
-            if (!(xxlJobUser.getPassword().length() >= 4 && xxlJobUser.getPassword().length() <= 20)) {
+        if (StringUtils.hasText(param.getPassword())) {
+            param.setPassword(param.getPassword().trim());
+            if (!(param.getPassword().length() >= 4 && param.getPassword().length() <= 20)) {
                 return new ReturnT<>(ReturnT.FAIL_CODE, I18nUtil.getString("system_lengh_limit") + "[4-20]");
             }
             // md5 password
-            xxlJobUser.setPassword(DigestUtils.md5DigestAsHex(xxlJobUser.getPassword().getBytes()));
+            param.setPassword(DigestUtils.md5DigestAsHex(param.getPassword().getBytes()));
         } else {
-            xxlJobUser.setPassword(null);
+            param.setPassword(null);
         }
 
-        // write
-        xxlJobUserDao.update(xxlJobUser);
+        // update
+        jobUserMapper.updateById(BeanUtil.toBean(param, JobUserPo.class));
         return ReturnT.SUCCESS;
     }
 
     @RequestMapping("/remove")
     @ResponseBody
     @PermissionLimit(adminuser = true)
-    public ReturnT<String> remove(HttpServletRequest request, int id) {
+    public ReturnT<String> remove(HttpServletRequest request, String id) {
 
         // avoid opt login seft
-        XxlJobUser loginUser = PermissionInterceptor.getLoginUser(request);
-        if (loginUser.getId() == id) {
+        JobUserPo loginUser = PermissionInterceptor.getLoginUser(request);
+        if (StrUtil.equals(loginUser.getId(), id)) {
             return new ReturnT<>(ReturnT.FAIL.getCode(), I18nUtil.getString("user_update_loginuser_limit"));
         }
 
-        xxlJobUserDao.delete(id);
+        jobUserMapper.deleteById(id);
         return ReturnT.SUCCESS;
     }
 
@@ -175,15 +190,19 @@ public class JobUserController {
         String md5Password = DigestUtils.md5DigestAsHex(password.getBytes());
 
         // valid old pwd
-        XxlJobUser loginUser = PermissionInterceptor.getLoginUser(request);
-        XxlJobUser existUser = xxlJobUserDao.loadByUserName(loginUser.getUsername());
+        JobUserPo loginUser = PermissionInterceptor.getLoginUser(request);
+        //WHERE t.username = #{username}
+        JobUserPo existUser = jobUserMapper.selectOne(Wrappers.lambdaQuery(JobUserPo.class)
+                .eq(JobUserPo::getUsername, loginUser.getUsername()));
+
+
         if (!md5OldPassword.equals(existUser.getPassword())) {
             return new ReturnT<>(ReturnT.FAIL.getCode(), I18nUtil.getString("change_pwd_field_oldpwd") + I18nUtil.getString("system_unvalid"));
         }
 
         // write new
         existUser.setPassword(md5Password);
-        xxlJobUserDao.update(existUser);
+        jobUserMapper.updateById(existUser);
 
         return ReturnT.SUCCESS;
     }

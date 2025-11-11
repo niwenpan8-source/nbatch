@@ -17,13 +17,13 @@ import java.io.Serializable;
 public class HandleCallbackParam implements Serializable {
     private static final long serialVersionUID = 42L;
 
-    private long logId;
+    private String logId;
     private long logDateTim;
 
     private int handleCode;
     private String handleMsg;
 
-    public HandleCallbackParam(long logId, long logDateTim, int handleCode, String handleMsg) {
+    public HandleCallbackParam(String logId, long logDateTim, int handleCode, String handleMsg) {
         this.logId = logId;
         this.logDateTim = logDateTim;
         this.handleCode = handleCode;

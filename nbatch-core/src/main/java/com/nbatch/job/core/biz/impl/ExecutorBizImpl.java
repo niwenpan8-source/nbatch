@@ -16,18 +16,17 @@ import com.nbatch.job.core.handler.impl.GlueJobHandler;
 import com.nbatch.job.core.handler.impl.ScriptJobHandler;
 import com.nbatch.job.core.log.XxlJobFileAppender;
 import com.nbatch.job.core.thread.JobThread;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Date;
 
 /**
  *
- * @author nbatch
+ * @author 执行器业务逻辑
  * @date 2025/11/05
  */
+@Slf4j
 public class ExecutorBizImpl implements ExecutorBiz {
-    private static final Logger logger = LoggerFactory.getLogger(ExecutorBizImpl.class);
 
     @Override
     public ReturnT<String> beat() {
@@ -100,7 +99,7 @@ public class ExecutorBizImpl implements ExecutorBiz {
                     IJobHandler originJobHandler = GlueFactory.getInstance().loadNewInstance(triggerParam.getGlueSource());
                     jobHandler = new GlueJobHandler(originJobHandler, triggerParam.getGlueUpdatetime());
                 } catch (Exception e) {
-                    logger.error(e.getMessage(), e);
+                    log.error(e.getMessage(), e);
                     return new ReturnT<>(ReturnT.FAIL_CODE, e.getMessage());
                 }
             }
