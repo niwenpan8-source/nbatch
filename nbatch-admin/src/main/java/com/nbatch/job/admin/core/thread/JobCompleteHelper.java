@@ -3,16 +3,14 @@ package com.nbatch.job.admin.core.thread;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.nbatch.job.admin.core.complete.XxlJobCompleter;
-import com.nbatch.job.admin.core.conf.XxlJobAdminConfig;
+import com.nbatch.job.admin.core.complete.JobCompleter;
+import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
 import com.nbatch.job.admin.core.domain.po.JobRegistryPo;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.ReturnT;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 import java.util.List;
@@ -76,12 +74,12 @@ public class JobCompleteHelper {
                     // 任务结果丢失处理：调度记录停留在 "运行中" 状态超过10min，且对应执行器心跳注册失败不在线，则将本地调度主动标记失败；
                     Date losedTime = DateUtil.offsetMinute(new Date(), -10);
 
-                    List<JobLogPo> jobLogList = XxlJobAdminConfig.getAdminConfig().getJobLogMapper()
+                    List<JobLogPo> jobLogList = JobAdminConfig.getAdminConfig().getJobLogMapper()
                             .selectList(Wrappers.lambdaQuery(JobLogPo.class)
                                     .eq(JobLogPo::getTriggerCode, 200)
                                     .eq(JobLogPo::getHandleCode, 0)
                                     .le(JobLogPo::getTriggerTime, losedTime));
-                    List<JobRegistryPo> jobRegistryPos = XxlJobAdminConfig.getAdminConfig().getJobRegistryMapper()
+                    List<JobRegistryPo> jobRegistryPos = JobAdminConfig.getAdminConfig().getJobRegistryMapper()
                             .selectList(Wrappers.lambdaQuery(JobRegistryPo.class));
                     List<String> registryValueList = jobRegistryPos.stream().map(JobRegistryPo::getRegistryValue)
                             .filter(Objects::nonNull).collect(Collectors.toList());
@@ -100,7 +98,7 @@ public class JobCompleteHelper {
                             jobLog.setHandleCode(ReturnT.FAIL_CODE);
                             jobLog.setHandleMsg(I18nUtil.getString("joblog_lost_fail"));
 
-                            XxlJobCompleter.updateHandleInfoAndFinish(jobLog);
+                            JobCompleter.updateHandleInfoAndFinish(jobLog);
                         }
 
                     }
@@ -161,7 +159,7 @@ public class JobCompleteHelper {
 
     private ReturnT<String> callback(HandleCallbackParam handleCallbackParam) {
         // valid log item
-        JobLogPo logInfo = XxlJobAdminConfig.getAdminConfig().getJobLogMapper().selectById(handleCallbackParam.getLogId());
+        JobLogPo logInfo = JobAdminConfig.getAdminConfig().getJobLogMapper().selectById(handleCallbackParam.getLogId());
         if (logInfo == null) {
             return new ReturnT<>(ReturnT.FAIL_CODE, "log item not found.");
         }
@@ -183,7 +181,7 @@ public class JobCompleteHelper {
         logInfo.setHandleTime(new Date());
         logInfo.setHandleCode(handleCallbackParam.getHandleCode());
         logInfo.setHandleMsg(handleMsg.toString());
-        XxlJobCompleter.updateHandleInfoAndFinish(logInfo);
+        JobCompleter.updateHandleInfoAndFinish(logInfo);
 
         return ReturnT.SUCCESS;
     }

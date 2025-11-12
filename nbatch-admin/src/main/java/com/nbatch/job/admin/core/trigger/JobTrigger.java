@@ -3,7 +3,7 @@ package com.nbatch.job.admin.core.trigger;
 import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
-import com.nbatch.job.admin.core.conf.XxlJobAdminConfig;
+import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.domain.po.JobGroupPo;
 import com.nbatch.job.admin.core.domain.po.JobInfoPo;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
@@ -17,8 +17,6 @@ import com.nbatch.job.core.enums.ExecutorBlockStrategyEnum;
 import com.nbatch.job.core.util.IpUtil;
 import com.nbatch.job.core.util.ThrowableUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Date;
 
@@ -29,7 +27,7 @@ import java.util.Date;
  * @date 2025/11/05
  */
 @Slf4j
-public class XxlJobTrigger {
+public class JobTrigger {
 
     /**
      * trigger job
@@ -55,7 +53,7 @@ public class XxlJobTrigger {
                                String addressList) {
 
         // load data
-        JobInfoPo jobInfo = XxlJobAdminConfig.getAdminConfig().getJobInfoMapper().selectById(jobId);
+        JobInfoPo jobInfo = JobAdminConfig.getAdminConfig().getJobInfoMapper().selectById(jobId);
         if (jobInfo == null) {
             log.warn(">>>>>>>>>>>> trigger fail, jobId invalid，jobId={}", jobId);
             return;
@@ -64,7 +62,7 @@ public class XxlJobTrigger {
             jobInfo.setExecutorParam(executorParam);
         }
         int finalFailRetryCount = failRetryCount >= 0 ? failRetryCount : jobInfo.getExecutorFailRetryCount();
-        JobGroupPo group = XxlJobAdminConfig.getAdminConfig().getJobGroupMapper().selectById(jobInfo.getJobGroup());
+        JobGroupPo group = JobAdminConfig.getAdminConfig().getJobGroupMapper().selectById(jobInfo.getJobGroup());
 
         // cover addressList
         if (StrUtil.isNotBlank(addressList)) {
@@ -128,7 +126,7 @@ public class XxlJobTrigger {
         jobLog.setJobGroup(jobInfo.getJobGroup());
         jobLog.setJobId(jobInfo.getId());
         jobLog.setTriggerTime(new Date());
-        XxlJobAdminConfig.getAdminConfig().getJobLogMapper().insert(jobLog);
+        JobAdminConfig.getAdminConfig().getJobLogMapper().insert(jobLog);
         log.debug(">>>>>>>>>>> xxl-job trigger start, jobId:{}", jobLog.getId());
 
         // 2、init trigger-param
@@ -201,7 +199,7 @@ public class XxlJobTrigger {
         //jobLog.setTriggerTime();
         jobLog.setTriggerCode(triggerResult.getCode());
         jobLog.setTriggerMsg(triggerMsgSb.toString());
-        XxlJobAdminConfig.getAdminConfig().getJobLogMapper().updateById(jobLog);
+        JobAdminConfig.getAdminConfig().getJobLogMapper().updateById(jobLog);
 
         log.debug(">>>>>>>>>>> xxl-job trigger end, jobId:{}", jobLog.getId());
     }
@@ -222,11 +220,11 @@ public class XxlJobTrigger {
             runResult = new ReturnT<>(ReturnT.FAIL_CODE, ThrowableUtil.toString(e));
         }
 
-        String runResultSB = I18nUtil.getString("jobconf_trigger_run") + "：" + "<br>address：" + address +
+        String runResultStr = I18nUtil.getString("jobconf_trigger_run") + "：" + "<br>address：" + address +
                 "<br>code：" + runResult.getCode() +
                 "<br>msg：" + runResult.getMsg();
 
-        runResult.setMsg(runResultSB);
+        runResult.setMsg(runResultStr);
         return runResult;
     }
 

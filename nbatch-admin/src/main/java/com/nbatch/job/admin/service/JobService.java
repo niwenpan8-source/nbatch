@@ -13,7 +13,7 @@ import java.util.Map;
  * 
  * @author Mr.ni 2016-5-28 15:30:33
  */
-public interface XxlJobService {
+public interface JobService {
 
 	/**
 	 * page list

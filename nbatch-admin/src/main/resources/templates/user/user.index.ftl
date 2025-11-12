@@ -106,9 +106,9 @@
                     <div class="form-group">
                         <label for="lastname" class="col-sm-2 control-label">${I18n.user_permission}<font color="black">*</font></label>
                         <div class="col-sm-10">
-							<#if groupList?exists && groupList?size gt 0>
+							<#if groupList?? && groupList?size gt 0>
 								<#list groupList as item>
-                                    <input type="checkbox" name="permission" value="${item.id}" />${item.title}(${item.appname})<br>
+                                    <input type="checkbox" name="permission" value="${item.id}" />${item.title}(${item.appName})<br>
 								</#list>
 							</#if>
                         </div>
@@ -156,9 +156,9 @@
                     <div class="form-group">
                         <label for="lastname" class="col-sm-2 control-label">${I18n.user_permission}<font color="black">*</font></label>
                         <div class="col-sm-10">
-						<#if groupList?exists && groupList?size gt 0>
+						<#if groupList?? && groupList?size gt 0>
 							<#list groupList as item>
-                                <input type="checkbox" name="permission" value="${item.id}" />${item.title}(${item.appname})<br>
+                                <input type="checkbox" name="permission" value="${item.id}" />${item.title}(${item.appName})<br>
 							</#list>
 						</#if>
                         </div>

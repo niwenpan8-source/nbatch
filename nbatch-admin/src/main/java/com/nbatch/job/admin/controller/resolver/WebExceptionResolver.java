@@ -19,7 +19,7 @@ import java.io.IOException;
 /**
  * common exception resolver
  *
- * @author Mr.ni 2016-1-6 19:22:18
+ * @author Mr.ni
  */
 @Slf4j
 @Component

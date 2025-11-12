@@ -8,7 +8,7 @@ import com.nbatch.job.core.biz.client.AdminBizClient;
 import com.nbatch.job.core.handler.IJobHandler;
 import com.nbatch.job.core.handler.annotation.XxlJob;
 import com.nbatch.job.core.handler.impl.MethodJobHandler;
-import com.nbatch.job.core.log.XxlJobFileAppender;
+import com.nbatch.job.core.log.JobFileAppender;
 import com.nbatch.job.core.server.EmbedServer;
 import com.nbatch.job.core.thread.JobLogFileCleanThread;
 import com.nbatch.job.core.thread.JobThread;
@@ -40,7 +40,7 @@ public class XxlJobExecutor  {
     @Setter
     private int timeout;
     @Setter
-    private String appname;
+    private String appName;
     @Setter
     private String address;
     @Setter
@@ -57,7 +57,7 @@ public class XxlJobExecutor  {
     public void start() throws Exception {
 
         // init logpath
-        XxlJobFileAppender.initLogPath(logPath);
+        JobFileAppender.initLogPath(logPath);
 
         // init invoker, admin-client
         initAdminBizList(adminAddresses, accessToken, timeout);
@@ -70,7 +70,7 @@ public class XxlJobExecutor  {
         TriggerCallbackThread.getInstance().start();
 
         // init executor-server
-        initEmbedServer(address, ip, port, appname, accessToken);
+        initEmbedServer(address, ip, port, appName, accessToken);
     }
 
     public void destroy(){
@@ -126,7 +126,7 @@ public class XxlJobExecutor  {
     // ---------------------- executor-server (rpc provider) ----------------------
     private EmbedServer embedServer = null;
 
-    private void initEmbedServer(String address, String ip, int port, String appname, String accessToken) {
+    private void initEmbedServer(String address, String ip, int port, String appName, String accessToken) {
 
         // fill ip port
         port = port>0?port: NetUtil.findAvailablePort(9999);
@@ -146,7 +146,7 @@ public class XxlJobExecutor  {
 
         // start
         embedServer = new EmbedServer();
-        embedServer.start(address, port, appname, accessToken);
+        embedServer.start(address, port, appName, accessToken);
     }
 
     private void stopEmbedServer() {

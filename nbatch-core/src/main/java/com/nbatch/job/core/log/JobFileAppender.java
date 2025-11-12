@@ -19,10 +19,10 @@ import java.util.Date;
 
 /**
  * store trigger log in each log-file
- * @author Mr.ni 2016-3-12 19:25:12
+ * @author Mr.ni
  */
 @Slf4j
-public class XxlJobFileAppender {
+public class JobFileAppender {
 
 	/**
 	 * log base path
@@ -42,6 +42,7 @@ public class XxlJobFileAppender {
 	@Getter
 	private static String glueSrcPath = logBasePath.concat("/gluesource");
 	public static void initLogPath(String logPath){
+		logPath = System.getProperty("user.dir") + logPath;
 		// init
 		if (StrUtil.isNotBlank(logPath)) {
 			logBasePath = logPath;
@@ -104,7 +105,7 @@ public class XxlJobFileAppender {
 		File logFile = new File(logFileName);
 
 		if (!FileUtil.exist(logFile)) {
-            FileUtil.createTempFile(logFile);
+            FileUtil.touch(logFile);
         }
 
 		// log

@@ -14,7 +14,7 @@ import com.nbatch.job.core.glue.GlueTypeEnum;
 import com.nbatch.job.core.handler.IJobHandler;
 import com.nbatch.job.core.handler.impl.GlueJobHandler;
 import com.nbatch.job.core.handler.impl.ScriptJobHandler;
-import com.nbatch.job.core.log.XxlJobFileAppender;
+import com.nbatch.job.core.log.JobFileAppender;
 import com.nbatch.job.core.thread.JobThread;
 import lombok.extern.slf4j.Slf4j;
 
@@ -168,9 +168,9 @@ public class ExecutorBizImpl implements ExecutorBiz {
     @Override
     public ReturnT<LogResult> log(LogParam logParam) {
         // log filename: logPath/yyyy-MM-dd/9999.log
-        String logFileName = XxlJobFileAppender.makeLogFileName(new Date(logParam.getLogDateTim()), logParam.getLogId());
+        String logFileName = JobFileAppender.makeLogFileName(new Date(logParam.getLogDateTim()), logParam.getLogId());
 
-        LogResult logResult = XxlJobFileAppender.readLog(logFileName, logParam.getFromLineNum());
+        LogResult logResult = JobFileAppender.readLog(logFileName, logParam.getFromLineNum());
         return new ReturnT<>(logResult);
     }
 

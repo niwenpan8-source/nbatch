@@ -1,7 +1,7 @@
 package com.nbatch.job.core.thread;
 
 import cn.hutool.core.io.FileUtil;
-import com.nbatch.job.core.log.XxlJobFileAppender;
+import com.nbatch.job.core.log.JobFileAppender;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
@@ -37,7 +37,7 @@ public class JobLogFileCleanThread {
             while (!toStop) {
                 try {
                     // clean log dir, over logRetentionDays
-                    File[] childDirs = new File(XxlJobFileAppender.getLogPath()).listFiles();
+                    File[] childDirs = new File(JobFileAppender.getLogPath()).listFiles();
                     if (childDirs!=null && childDirs.length>0) {
 
                         // today

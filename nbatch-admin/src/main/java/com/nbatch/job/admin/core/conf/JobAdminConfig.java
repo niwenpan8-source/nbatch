@@ -24,10 +24,10 @@ import java.util.Arrays;
  */
 
 @Component
-public class XxlJobAdminConfig implements InitializingBean, DisposableBean {
+public class JobAdminConfig implements InitializingBean, DisposableBean {
 
     @Getter
-    private static XxlJobAdminConfig adminConfig = null;
+    private static JobAdminConfig adminConfig = null;
 
 
     // ---------------------- XxlJobScheduler ----------------------

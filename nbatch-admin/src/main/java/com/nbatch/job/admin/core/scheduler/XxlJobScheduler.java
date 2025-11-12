@@ -1,7 +1,7 @@
 package com.nbatch.job.admin.core.scheduler;
 
 import cn.hutool.core.util.StrUtil;
-import com.nbatch.job.admin.core.conf.XxlJobAdminConfig;
+import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.thread.JobCompleteHelper;
 import com.nbatch.job.admin.core.thread.JobFailMonitorHelper;
 import com.nbatch.job.admin.core.thread.JobLogReportHelper;
@@ -98,8 +98,8 @@ public class XxlJobScheduler  {
 
         // set-cache
         executorBiz = new ExecutorBizClient(address,
-                XxlJobAdminConfig.getAdminConfig().getAccessToken(),
-                XxlJobAdminConfig.getAdminConfig().getTimeout());
+                JobAdminConfig.getAdminConfig().getAccessToken(),
+                JobAdminConfig.getAdminConfig().getTimeout());
 
         EXECUTOR_BIZ_REPOSITORY.put(address, executorBiz);
         return executorBiz;

@@ -29,7 +29,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author Mr.ni 2019-05-04 16:39:50
+ * 账号管理
+ * @author Mr.ni
  */
 @Controller
 @RequestMapping("/user")
@@ -67,7 +68,7 @@ public class JobUserController {
         );
 
         // filter
-        if (jobUserPoPage != null && CollUtil.isNotEmpty(jobUserPoPage.getRecords())) {
+        if (CollUtil.isNotEmpty(jobUserPoPage.getRecords())) {
             for (JobUserPo item : jobUserPoPage.getRecords()) {
                 item.setPassword(null);
             }
@@ -75,19 +76,12 @@ public class JobUserController {
 
         // package result
         Map<String, Object> maps = new HashMap<>();
-        if (jobUserPoPage == null) {
-            // 总记录数
-            maps.put("recordsTotal", 0);
-            // 过滤后的总记录数
-            maps.put("recordsFiltered", 0);
-        } else {
-            // 总记录数
-            maps.put("recordsTotal", jobUserPoPage.getTotal());
-            // 过滤后的总记录数
-            maps.put("recordsFiltered", jobUserPoPage.getTotal());
-            // 分页列表
-            maps.put("data", jobUserPoPage.getRecords());
-        }
+        // 总记录数
+        maps.put("recordsTotal", jobUserPoPage.getTotal());
+        // 过滤后的总记录数
+        maps.put("recordsFiltered", jobUserPoPage.getTotal());
+        // 分页列表
+        maps.put("data", jobUserPoPage.getRecords());
 
         return maps;
     }

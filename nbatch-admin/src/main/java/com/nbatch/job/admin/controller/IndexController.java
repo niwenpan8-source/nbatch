@@ -3,7 +3,7 @@ package com.nbatch.job.admin.controller;
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.admin.controller.annotation.PermissionLimit;
 import com.nbatch.job.admin.service.impl.LoginService;
-import com.nbatch.job.admin.service.XxlJobService;
+import com.nbatch.job.admin.service.JobService;
 import com.nbatch.job.core.biz.model.ReturnT;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.stereotype.Controller;
@@ -31,7 +31,7 @@ import java.util.Map;
 public class IndexController {
 
 	@Resource
-	private XxlJobService xxlJobService;
+	private JobService xxlJobService;
 	@Resource
 	private LoginService loginService;
 
@@ -50,7 +50,7 @@ public class IndexController {
     }
 	
 	@RequestMapping("/toLogin")
-	@PermissionLimit(limit=false)
+	@ PermissionLimit(limit=false)
 	public ModelAndView toLogin(HttpServletRequest request, HttpServletResponse response,ModelAndView modelAndView) {
 		if (loginService.ifLogin(request, response) != null) {
 			modelAndView.setView(new RedirectView("/", true, false));

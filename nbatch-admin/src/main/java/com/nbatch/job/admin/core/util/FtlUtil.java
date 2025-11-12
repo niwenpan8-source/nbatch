@@ -5,18 +5,15 @@ import freemarker.ext.beans.BeansWrapperBuilder;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateHashModel;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * ftl util
  *
- * @author Mr.ni 2018-01-17 20:37:48
+ * @author Mr.ni
  */
 @Slf4j
 public class FtlUtil {
 
-    //BeansWrapper.getDefaultInstance();
     private static final BeansWrapper WRAPPER = new BeansWrapperBuilder(Configuration.DEFAULT_INCOMPATIBLE_IMPROVEMENTS).build();
 
     public static TemplateHashModel generateStaticModel(String packageName) {

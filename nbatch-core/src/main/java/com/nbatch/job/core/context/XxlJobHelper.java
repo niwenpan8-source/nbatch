@@ -2,7 +2,7 @@ package com.nbatch.job.core.context;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
-import com.nbatch.job.core.log.XxlJobFileAppender;
+import com.nbatch.job.core.log.JobFileAppender;
 import com.nbatch.job.core.util.ThrowableUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.helpers.FormattingTuple;
@@ -135,7 +135,7 @@ public class XxlJobHelper {
         String logFileName = xxlJobContext.getJobLogFileName();
 
         if (StrUtil.isNotBlank(logFileName)) {
-            XxlJobFileAppender.appendLog(logFileName, formatAppendLog);
+            JobFileAppender.appendLog(logFileName, formatAppendLog);
             return true;
         } else {
             log.info(">>>>>>>>>>> {}", formatAppendLog);

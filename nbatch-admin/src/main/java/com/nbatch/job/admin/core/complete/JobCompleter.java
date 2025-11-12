@@ -3,7 +3,7 @@ package com.nbatch.job.admin.core.complete;
 import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
-import com.nbatch.job.admin.core.conf.XxlJobAdminConfig;
+import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.domain.po.JobInfoPo;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
 import com.nbatch.job.admin.core.thread.JobTriggerPoolHelper;
@@ -16,16 +16,16 @@ import lombok.extern.slf4j.Slf4j;
 import java.text.MessageFormat;
 
 /**
+ * job completion
  * @author Mr.ni
  */
 @Slf4j
-public class XxlJobCompleter {
+public class JobCompleter {
 
     /**
      * common fresh handle entrance (limit only once)
      */
     public static int updateHandleInfoAndFinish(JobLogPo jobLogPo) {
-
         // finish
         finishJob(jobLogPo);
 
@@ -35,7 +35,7 @@ public class XxlJobCompleter {
         }
 
         // fresh handle
-        return XxlJobAdminConfig.getAdminConfig().getJobLogMapper().updateById(jobLogPo);
+        return JobAdminConfig.getAdminConfig().getJobLogMapper().updateById(jobLogPo);
     }
 
 
@@ -47,13 +47,13 @@ public class XxlJobCompleter {
         // 1、handle success, to trigger child job
         StringBuilder triggerChildMsg = null;
         if (XxlJobContext.HANDLE_CODE_SUCCESS == jobLogPo.getHandleCode()) {
-            JobInfoPo xxlJobInfo = XxlJobAdminConfig.getAdminConfig().getJobInfoMapper().selectById(jobLogPo.getJobId());
+            JobInfoPo xxlJobInfo = JobAdminConfig.getAdminConfig().getJobInfoMapper().selectById(jobLogPo.getJobId());
             if (xxlJobInfo != null && StrUtil.isNotBlank(xxlJobInfo.getChildJobid())) {
                 triggerChildMsg = new StringBuilder("<br><br><span style=\"color:#00c0ef;\" > >>>>>>>>>>>" + I18nUtil.getString("jobconf_trigger_child_run") + "<<<<<<<<<<< </span><br>");
 
                 String[] childJobIds = xxlJobInfo.getChildJobid().split(StrPool.COMMA);
                 for (int i = 0; i < childJobIds.length; i++) {
-                    String childJobId = (StrUtil.isNotBlank(childJobIds[i]) && isNumeric(childJobIds[i])) ? childJobIds[i] : "-1";
+                    String childJobId = (StrUtil.isNotBlank(childJobIds[i]) && NumberUtil.isNumber(childJobIds[i])) ? childJobIds[i] : "-1";
                     if (NumberUtil.parseInt(childJobId) > 0) {
                         // valid
                         if (StrUtil.equals(childJobId, jobLogPo.getJobId())) {
@@ -90,15 +90,6 @@ public class XxlJobCompleter {
         // 2、fix_delay trigger next
         // on the way
 
-    }
-
-    private static boolean isNumeric(String str){
-        try {
-            int result = NumberUtil.parseInt(str);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        }
     }
 
 }

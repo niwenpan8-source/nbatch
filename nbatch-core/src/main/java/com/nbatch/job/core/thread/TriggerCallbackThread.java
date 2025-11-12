@@ -11,7 +11,7 @@ import com.nbatch.job.core.context.XxlJobContext;
 import com.nbatch.job.core.context.XxlJobHelper;
 import com.nbatch.job.core.enums.RegistryConfig;
 import com.nbatch.job.core.executor.XxlJobExecutor;
-import com.nbatch.job.core.log.XxlJobFileAppender;
+import com.nbatch.job.core.log.JobFileAppender;
 import com.nbatch.job.core.util.JdkSerializeTool;
 import lombok.extern.slf4j.Slf4j;
 
@@ -186,7 +186,7 @@ public class TriggerCallbackThread {
      */
     private void callbackLog(List<HandleCallbackParam> callbackParamList, String logContent){
         for (HandleCallbackParam callbackParam: callbackParamList) {
-            String logFileName = XxlJobFileAppender.makeLogFileName(new Date(callbackParam.getLogDateTim()), callbackParam.getLogId());
+            String logFileName = JobFileAppender.makeLogFileName(new Date(callbackParam.getLogDateTim()), callbackParam.getLogId());
             XxlJobContext.setXxlJobContext(new XxlJobContext(
                     null,
                     null,
@@ -200,7 +200,7 @@ public class TriggerCallbackThread {
 
     // ---------------------- fail-callback file ----------------------
 
-    private static final String FAIL_CALLBACK_FILE_PATH = XxlJobFileAppender.getLogPath().concat(File.separator).concat("callbacklog").concat(File.separator);
+    private static final String FAIL_CALLBACK_FILE_PATH = JobFileAppender.getLogPath().concat(File.separator).concat("callbacklog").concat(File.separator);
     private static final String FAIL_CALLBACK_FILE_NAME = FAIL_CALLBACK_FILE_PATH.concat("xxl-job-callback-{x}").concat(".log");
 
     private void appendFailCallbackFile(List<HandleCallbackParam> callbackParamList){

@@ -3,7 +3,7 @@ package com.nbatch.job.admin.core.thread;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.nbatch.job.admin.core.conf.XxlJobAdminConfig;
+import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.cron.CronExpression;
 import com.nbatch.job.admin.core.domain.po.JobInfoPo;
 import com.nbatch.job.admin.core.scheduler.MisfireStrategyEnum;
@@ -60,7 +60,7 @@ public class JobScheduleHelper {
             log.info(">>>>>>>>> init xxl-job admin scheduler success.");
 
             // pre-read count: treadpool-size * trigger-qps (each trigger cost 50ms, qps = 1000/50 = 20)
-            int preReadCount = (XxlJobAdminConfig.getAdminConfig().getTriggerPoolFastMax() + XxlJobAdminConfig.getAdminConfig().getTriggerPoolSlowMax()) * 20;
+            int preReadCount = (JobAdminConfig.getAdminConfig().getTriggerPoolFastMax() + JobAdminConfig.getAdminConfig().getTriggerPoolSlowMax()) * 20;
 
             while (!scheduleThreadToStop) {
 
@@ -74,20 +74,22 @@ public class JobScheduleHelper {
                 boolean preReadSuc = true;
                 try {
 
-                    conn = XxlJobAdminConfig.getAdminConfig().getDataSource().getConnection();
+                    conn = JobAdminConfig.getAdminConfig().getDataSource().getConnection();
                     connAutoCommit = conn.getAutoCommit();
                     conn.setAutoCommit(false);
 
-                    preparedStatement = conn.prepareStatement("select * from xxl_job_lock where lock_name = 'schedule_lock' for update");
+                    preparedStatement = conn.prepareStatement("select * from nbatch_job_lock where lock_name = 'schedule_lock' for update");
                     preparedStatement.execute();
 
                     // tx start
 
                     // 1、pre read
                     long nowTime = System.currentTimeMillis();
-                    Page<JobInfoPo> schedulePage = XxlJobAdminConfig.getAdminConfig().getJobInfoMapper()
+                    Page<JobInfoPo> schedulePage = JobAdminConfig.getAdminConfig().getJobInfoMapper()
                             .selectPage(new Page<>(0, preReadCount), Wrappers.lambdaQuery(JobInfoPo.class)
-                                    .le(JobInfoPo::getTriggerNextTime, nowTime + PRE_READ_MS));
+                                    .le(JobInfoPo::getTriggerNextTime, nowTime + PRE_READ_MS)
+                                    .eq(JobInfoPo::getTriggerStatus, 1)
+                            );
                     List<JobInfoPo> scheduleList = schedulePage.getRecords();
                     if (CollUtil.isNotEmpty(scheduleList)) {
                         // 2、push time-ring
@@ -151,7 +153,7 @@ public class JobScheduleHelper {
 
                         // 3、update trigger info
                         for (JobInfoPo jobInfo : scheduleList) {
-                            XxlJobAdminConfig.getAdminConfig().getJobInfoMapper().update(jobInfo,
+                            JobAdminConfig.getAdminConfig().getJobInfoMapper().update(jobInfo,
                                     Wrappers.lambdaUpdate(jobInfo)
                                             .set(JobInfoPo::getTriggerLastTime, jobInfo.getTriggerLastTime())
                                             .set(JobInfoPo::getTriggerNextTime, jobInfo.getTriggerNextTime())

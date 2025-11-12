@@ -15,7 +15,7 @@ import com.nbatch.job.admin.core.scheduler.ScheduleTypeEnum;
 import com.nbatch.job.admin.core.thread.JobScheduleHelper;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.admin.mapper.IJobGroupMapper;
-import com.nbatch.job.admin.service.XxlJobService;
+import com.nbatch.job.admin.service.JobService;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.enums.ExecutorBlockStrategyEnum;
 import com.nbatch.job.core.glue.GlueTypeEnum;
@@ -36,7 +36,7 @@ import java.util.Map;
 /**
  * index controller
  *
- * @author Mr.ni 2015-12-19 16:13:16
+ * @author Mr.ni
  */
 @Slf4j
 @Controller
@@ -46,10 +46,10 @@ public class JobInfoController {
     @Resource
     private IJobGroupMapper jobGroupMapper;
     @Resource
-    private XxlJobService xxlJobService;
+    private JobService xxlJobService;
 
     @RequestMapping
-    public String index(HttpServletRequest request, Model model, @RequestParam(required = false, defaultValue = "-1") int jobGroup) {
+    public String index(HttpServletRequest request, Model model, @RequestParam(required = false, defaultValue = "-1") String jobGroup) {
 
         // 枚举-字典路由策略-列表
         model.addAttribute("ExecutorRouteStrategyEnum", ExecutorRouteStrategyEnum.values());

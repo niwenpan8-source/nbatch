@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 /**
  * job code controller
- * @author Mr.ni 2015-12-19 16:13:16
+ * @author Mr.ni
  */
 @Controller
 @RequestMapping("/jobcode")

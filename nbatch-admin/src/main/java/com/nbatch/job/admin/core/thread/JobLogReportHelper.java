@@ -3,7 +3,7 @@ package com.nbatch.job.admin.core.thread;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.nbatch.job.admin.core.conf.XxlJobAdminConfig;
+import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
 import com.nbatch.job.admin.core.domain.po.JobLogReportPo;
 import lombok.extern.slf4j.Slf4j;
@@ -70,7 +70,7 @@ public class JobLogReportHelper {
                         jobLogReportPo.setSucCount(0);
                         jobLogReportPo.setFailCount(0);
 
-                        List<JobLogPo> jobLogList = XxlJobAdminConfig.getAdminConfig().getJobLogMapper()
+                        List<JobLogPo> jobLogList = JobAdminConfig.getAdminConfig().getJobLogMapper()
                                 .selectList(Wrappers.lambdaQuery(JobLogPo.class).between(JobLogPo::getTriggerTime, todayFrom, todayTo));
 
                         if (CollUtil.isNotEmpty(jobLogList)) {
@@ -89,11 +89,11 @@ public class JobLogReportHelper {
                         }
 
                         // do refresh
-                        int ret = XxlJobAdminConfig.getAdminConfig().getJobLogReportMapper().update(jobLogReportPo,
+                        int ret = JobAdminConfig.getAdminConfig().getJobLogReportMapper().update(jobLogReportPo,
                                 Wrappers.lambdaUpdate(JobLogReportPo.class)
                                         .eq(JobLogReportPo::getTriggerDay, jobLogReportPo.getTriggerDay()));
                         if (ret < 1) {
-                            XxlJobAdminConfig.getAdminConfig().getJobLogReportMapper().insert(jobLogReportPo);
+                            JobAdminConfig.getAdminConfig().getJobLogReportMapper().insert(jobLogReportPo);
                         }
                     }
 
@@ -104,12 +104,12 @@ public class JobLogReportHelper {
                 }
 
                 // 2、log-clean: switch open & once each day
-                if (XxlJobAdminConfig.getAdminConfig().getLogretentiondays() > 0
+                if (JobAdminConfig.getAdminConfig().getLogretentiondays() > 0
                         && System.currentTimeMillis() - lastCleanLogTime > 24 * 60 * 60 * 1000) {
 
                     // expire-time
                     Calendar expiredDay = Calendar.getInstance();
-                    expiredDay.add(Calendar.DAY_OF_MONTH, -1 * XxlJobAdminConfig.getAdminConfig().getLogretentiondays());
+                    expiredDay.add(Calendar.DAY_OF_MONTH, -1 * JobAdminConfig.getAdminConfig().getLogretentiondays());
                     expiredDay.set(Calendar.HOUR_OF_DAY, 0);
                     expiredDay.set(Calendar.MINUTE, 0);
                     expiredDay.set(Calendar.SECOND, 0);
@@ -117,12 +117,12 @@ public class JobLogReportHelper {
                     Date clearBeforeTime = expiredDay.getTime();
                     List<String> logIds = null;
                     do {
-                        Page<JobLogPo> jobLogPoPage = XxlJobAdminConfig.getAdminConfig().getJobLogMapper()
+                        Page<JobLogPo> jobLogPoPage = JobAdminConfig.getAdminConfig().getJobLogMapper()
                                 .selectPage(new Page<>(0, 1000L), Wrappers.lambdaQuery(JobLogPo.class)
                                         .eq(JobLogPo::getTriggerTime, clearBeforeTime));
                         if (CollUtil.isNotEmpty(jobLogPoPage.getRecords())) {
                             logIds = jobLogPoPage.getRecords().stream().map(JobLogPo::getId).collect(Collectors.toList());
-                            XxlJobAdminConfig.getAdminConfig().getJobLogMapper().delete(Wrappers
+                            JobAdminConfig.getAdminConfig().getJobLogMapper().delete(Wrappers
                                     .lambdaQuery(JobLogPo.class).in(JobLogPo::getId, logIds));
                         }
                     } while (CollUtil.isNotEmpty(logIds));

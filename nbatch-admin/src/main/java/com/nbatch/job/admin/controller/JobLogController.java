@@ -6,7 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nbatch.job.admin.controller.interceptor.PermissionInterceptor;
-import com.nbatch.job.admin.core.complete.XxlJobCompleter;
+import com.nbatch.job.admin.core.complete.JobCompleter;
 import com.nbatch.job.admin.core.domain.po.JobGroupPo;
 import com.nbatch.job.admin.core.domain.po.JobInfoPo;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
@@ -22,8 +22,6 @@ import com.nbatch.job.core.biz.model.LogParam;
 import com.nbatch.job.core.biz.model.LogResult;
 import com.nbatch.job.core.biz.model.ReturnT;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
@@ -43,7 +41,7 @@ import java.util.stream.Collectors;
 /**
  * index controller
  *
- * @author Mr.ni 2015-12-19 16:13:16
+ * @author Mr.ni
  */
 @Slf4j
 @Controller
@@ -58,7 +56,8 @@ public class JobLogController {
     public IJobInfoMapper jobInfoMapper;
 
     @RequestMapping
-    public String index(HttpServletRequest request, Model model, @RequestParam(required = false, defaultValue = "0") Integer jobId) {
+    public String index(HttpServletRequest request, Model model,
+                        @RequestParam(required = false) String jobId) {
 
         List<JobGroupPo> jobGroupListAll = jobGroupMapper.selectList(Wrappers.lambdaQuery(JobGroupPo.class)
                 .orderByDesc(JobGroupPo::getAppName).orderByDesc(JobGroupPo::getTitle)
@@ -73,7 +72,7 @@ public class JobLogController {
         model.addAttribute("JobGroupList", jobGroupList);
 
         // 任务
-        if (jobId > 0) {
+        if (StrUtil.isNotEmpty(jobId)) {
             JobInfoPo jobInfo = jobInfoMapper.selectById(jobId);
             if (jobInfo == null) {
                 throw new RuntimeException(I18nUtil.getString("jobinfo_field_id") + I18nUtil.getString("system_unvalid"));
@@ -90,7 +89,7 @@ public class JobLogController {
 
     @RequestMapping("/getJobsByGroup")
     @ResponseBody
-    public ReturnT<List<JobInfoPo>> getJobsByGroup(int jobGroup) {
+    public ReturnT<List<JobInfoPo>> getJobsByGroup(String jobGroup) {
         List<JobInfoPo> list = jobInfoMapper.selectList(Wrappers.lambdaQuery(JobInfoPo.class)
                 .eq(JobInfoPo::getJobGroup, jobGroup));
         return new ReturnT<>(list);
@@ -131,25 +130,18 @@ public class JobLogController {
         );
         // package result
         Map<String, Object> maps = new HashMap<>();
-        if (jobLogPage != null && CollUtil.isNotEmpty(jobLogPage.getRecords())) {
-            // 总记录数
-            maps.put("recordsTotal", jobLogPage.getTotal());
-            // 过滤后的总记录数
-            maps.put("recordsFiltered", jobLogPage.getTotal());
-            // 分页列表
-            maps.put("data", jobLogPage.getRecords());
-        } else {
-            // 总记录数
-            maps.put("recordsTotal", 0);
-            // 过滤后的总记录数
-            maps.put("recordsFiltered", 0);
-        }
+        // 总记录数
+        maps.put("recordsTotal", jobLogPage.getTotal());
+        // 过滤后的总记录数
+        maps.put("recordsFiltered", jobLogPage.getTotal());
+        // 分页列表
+        maps.put("data", jobLogPage.getRecords());
 
         return maps;
     }
 
     @RequestMapping("/logDetailPage")
-    public String logDetailPage(int id, Model model) {
+    public String logDetailPage(String id, Model model) {
         JobLogPo jobLog = jobLogMapper.selectById(id);
         if (jobLog == null) {
             throw new RuntimeException(I18nUtil.getString("joblog_logid_unvalid"));
@@ -200,7 +192,7 @@ public class JobLogController {
 
     @RequestMapping("/logKill")
     @ResponseBody
-    public ReturnT<String> logKill(int id) {
+    public ReturnT<String> logKill(String id) {
         // base check
         JobLogPo logInfo = jobLogMapper.selectById(id);
         JobInfoPo jobInfo = jobInfoMapper.selectById(logInfo.getJobId());
@@ -226,7 +218,7 @@ public class JobLogController {
             logInfo.setHandleCode(ReturnT.FAIL_CODE);
             logInfo.setHandleMsg(I18nUtil.getString("joblog_kill_log_byman") + ":" + (runResult.getMsg() != null ? runResult.getMsg() : ""));
             logInfo.setHandleTime(new Date());
-            XxlJobCompleter.updateHandleInfoAndFinish(logInfo);
+            JobCompleter.updateHandleInfoAndFinish(logInfo);
             return new ReturnT<>(runResult.getMsg());
         } else {
             return new ReturnT<>(500, runResult.getMsg());

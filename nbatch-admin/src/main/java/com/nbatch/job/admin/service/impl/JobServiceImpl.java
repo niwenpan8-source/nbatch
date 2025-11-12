@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.text.StrPool;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -28,7 +29,7 @@ import com.nbatch.job.admin.mapper.IJobInfoMapper;
 import com.nbatch.job.admin.mapper.IJobLogMapper;
 import com.nbatch.job.admin.mapper.IJobLogReportMapper;
 import com.nbatch.job.admin.mapper.IJobLogglueMapper;
-import com.nbatch.job.admin.service.XxlJobService;
+import com.nbatch.job.admin.service.JobService;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.enums.ExecutorBlockStrategyEnum;
 import com.nbatch.job.core.glue.GlueTypeEnum;
@@ -53,7 +54,7 @@ import java.util.Set;
  */
 @Slf4j
 @Service
-public class XxlJobServiceImpl implements XxlJobService {
+public class JobServiceImpl implements JobService {
 
     @Resource
     private IJobGroupMapper jobGroupMapper;
@@ -70,7 +71,7 @@ public class XxlJobServiceImpl implements XxlJobService {
     public Map<String, Object> pageList(int start, int length, String jobGroup, int triggerStatus, String jobDesc, String executorHandler, String author) {
         Page<JobInfoPo> jobInfoPoPage = jobInfoMapper.selectPage(new Page<>(start, length), Wrappers.lambdaQuery(JobInfoPo.class)
                 .eq(StrUtil.isNotEmpty(jobGroup), JobInfoPo::getJobGroup, jobGroup)
-                .eq(triggerStatus != 0, JobInfoPo::getTriggerStatus, triggerStatus)
+                .eq(triggerStatus != -1, JobInfoPo::getTriggerStatus, triggerStatus)
                 .eq(StrUtil.isNotEmpty(jobDesc), JobInfoPo::getJobDesc, jobDesc)
                 .eq(StrUtil.isNotEmpty(executorHandler), JobInfoPo::getExecutorHandler, executorHandler)
                 .eq(StrUtil.isNotEmpty(author), JobInfoPo::getAuthor, author)
@@ -179,6 +180,7 @@ public class XxlJobServiceImpl implements XxlJobService {
         }
 
         // add in db
+        jobInfo.setId(IdUtil.getSnowflakeNextIdStr());
         jobInfo.setAddTime(new Date());
         jobInfo.setUpdateTime(new Date());
         jobInfo.setGlueUpdatetime(new Date());
@@ -431,13 +433,15 @@ public class XxlJobServiceImpl implements XxlJobService {
         Integer jobInfoCount = jobInfoMapper.selectCount(Wrappers.lambdaQuery(JobInfoPo.class));
         int jobLogCount = 0;
         int jobLogSuccessCount = 0;
-        //XxlJobLogReport xxlJobLogReport = xxlJobLogReportDao.queryLogReportTotal();
-        LambdaQueryWrapper<JobLogReportPo> lambdaQueryWrapper = Wrappers.lambdaQuery(JobLogReportPo.class)
-                .select(JobLogReportPo.class, x -> StrUtil.equals(x.getColumn(), "trigger_day")
-                        || StrUtil.equals(x.getColumn(), "suc_count")
-                        || StrUtil.equals(x.getColumn(), "fail_count"));
-
-        JobLogReportPo jobLogReportPo = jobLogReportMapper.selectOne(lambdaQueryWrapper);
+        LambdaQueryWrapper<JobLogReportPo> lambdaQueryWrapper = Wrappers.lambdaQuery(JobLogReportPo.class);
+        List<JobLogReportPo> jobLogReportList = jobLogReportMapper.selectList(lambdaQueryWrapper);
+        JobLogReportPo jobLogReportPo = null;
+        if (CollUtil.isNotEmpty(jobLogReportList)) {
+            jobLogReportPo = new JobLogReportPo();
+            jobLogReportPo.setRunningCount(jobLogReportList.stream().mapToInt(JobLogReportPo::getRunningCount).sum());
+            jobLogReportPo.setSucCount(jobLogReportList.stream().mapToInt(JobLogReportPo::getSucCount).sum());
+            jobLogReportPo.setFailCount(jobLogReportList.stream().mapToInt(JobLogReportPo::getFailCount).sum());
+        }
         if (jobLogReportPo != null) {
             jobLogCount = jobLogReportPo.getRunningCount() + jobLogReportPo.getSucCount() + jobLogReportPo.getFailCount();
             jobLogSuccessCount = jobLogReportPo.getSucCount();

@@ -1,6 +1,7 @@
 package com.nbatch.job.admin.core.domain.po;
 
 import cn.hutool.core.text.StrPool;
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
@@ -23,7 +24,7 @@ public class JobUserPo extends Model<JobUserPo> {
     /**
      * 主键ID
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private String id;
 
     /**

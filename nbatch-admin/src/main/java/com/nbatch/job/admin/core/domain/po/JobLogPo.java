@@ -1,5 +1,6 @@
 package com.nbatch.job.admin.core.domain.po;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
@@ -23,7 +24,7 @@ public class JobLogPo extends Model<JobLogPo> {
     /**
      * 主键ID
      */
-    @TableId
+    @TableId(type = IdType.ASSIGN_ID)
     private String id;
 
     /**
@@ -69,7 +70,7 @@ public class JobLogPo extends Model<JobLogPo> {
     /**
      * 调度-结果
      */
-    private Integer triggerCode;
+    private int triggerCode;
 
     /**
      * 调度-日志
@@ -84,7 +85,7 @@ public class JobLogPo extends Model<JobLogPo> {
     /**
      * 执行-状态
      */
-    private Integer handleCode;
+    private int handleCode;
 
     /**
      * 执行-日志

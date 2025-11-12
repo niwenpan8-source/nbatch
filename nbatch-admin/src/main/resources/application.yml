@@ -65,11 +65,6 @@ spring:
             class: javax.net.ssl.SSLSocketFactory
 # application.yml
 logging:
-  file:
-    name: nbatch-admin.log       # 日志文件名
-    path: /log/nbatch
-  level:
-    root: debug
   config: classpath:logback-spring.xml
 
 ### mybatis
@@ -79,8 +74,7 @@ mybatis-plus:
   type-aliases-package: com.nbatch.**.domain.po
   configuration:
     #开启日志打印
-    #log-impl: org.apache.ibatis.logging.log4j2.Log4j2Impl
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
     #关闭日志打印
     #log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
     #是否开启 MyBatis 二级缓存。

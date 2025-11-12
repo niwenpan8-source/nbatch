@@ -6,7 +6,7 @@ import com.nbatch.job.core.context.XxlJobContext;
 import com.nbatch.job.core.context.XxlJobHelper;
 import com.nbatch.job.core.glue.GlueTypeEnum;
 import com.nbatch.job.core.handler.IJobHandler;
-import com.nbatch.job.core.log.XxlJobFileAppender;
+import com.nbatch.job.core.log.JobFileAppender;
 import com.nbatch.job.core.util.ScriptUtil;
 import lombok.Getter;
 
@@ -32,7 +32,7 @@ public class ScriptJobHandler extends IJobHandler {
         this.glueType = glueType;
 
         // clean old script file
-        File glueSrcPath = new File(XxlJobFileAppender.getGlueSrcPath());
+        File glueSrcPath = new File(JobFileAppender.getGlueSrcPath());
         if (glueSrcPath.exists()) {
             File[] glueSrcFileList = glueSrcPath.listFiles();
             if (ArrayUtil.isNotEmpty(glueSrcFileList)) {
@@ -58,7 +58,7 @@ public class ScriptJobHandler extends IJobHandler {
         String cmd = glueType.getCmd();
 
         // make script file
-        String scriptFileName = XxlJobFileAppender.getGlueSrcPath()
+        String scriptFileName = JobFileAppender.getGlueSrcPath()
                 .concat(File.separator)
                 .concat(String.valueOf(jobId))
                 .concat("_")

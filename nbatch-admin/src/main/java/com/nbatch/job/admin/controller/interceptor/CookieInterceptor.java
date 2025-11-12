@@ -14,7 +14,7 @@ import java.util.HashMap;
 /**
  * push cookies to model as cookieMap
  *
- * @author Mr.ni 2015-12-12 18:09:04
+ * @author Mr.ni
  */
 @Component
 public class CookieInterceptor implements AsyncHandlerInterceptor {

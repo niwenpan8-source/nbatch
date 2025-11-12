@@ -2,7 +2,7 @@ package com.nbatch.job.admin.controller;
 
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.admin.controller.annotation.PermissionLimit;
-import com.nbatch.job.admin.core.conf.XxlJobAdminConfig;
+import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.core.biz.AdminBiz;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.RegistryParam;
@@ -46,11 +46,11 @@ public class JobApiController {
         if (!"POST".equalsIgnoreCase(request.getMethod())) {
             return new ReturnT<>(ReturnT.FAIL_CODE, "invalid request, HttpMethod not support.");
         }
-        if (StrUtil.isNotBlank(uri)) {
+        if (StrUtil.isBlank(uri)) {
             return new ReturnT<>(ReturnT.FAIL_CODE, "invalid request, uri-mapping empty.");
         }
-        if (StrUtil.isNotBlank(XxlJobAdminConfig.getAdminConfig().getAccessToken())
-                && !XxlJobAdminConfig.getAdminConfig().getAccessToken().equals(request.getHeader(JobRemotingUtil.XXL_JOB_ACCESS_TOKEN))) {
+        if (StrUtil.isNotBlank(JobAdminConfig.getAdminConfig().getAccessToken())
+                && !JobAdminConfig.getAdminConfig().getAccessToken().equals(request.getHeader(JobRemotingUtil.XXL_JOB_ACCESS_TOKEN))) {
             return new ReturnT<>(ReturnT.FAIL_CODE, "The access token is wrong.");
         }
 

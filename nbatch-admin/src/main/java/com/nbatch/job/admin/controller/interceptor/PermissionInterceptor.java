@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * 权限拦截
  *
- * @author Mr.ni 2015-12-12 18:09:04
+ * @author Mr.ni
  */
 @Component
 public class PermissionInterceptor implements AsyncHandlerInterceptor {

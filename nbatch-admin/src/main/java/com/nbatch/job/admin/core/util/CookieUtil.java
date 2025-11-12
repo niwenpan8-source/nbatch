@@ -1,6 +1,7 @@
 package com.nbatch.job.admin.core.util;
 
 import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.util.StrUtil;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -41,7 +42,7 @@ public class CookieUtil {
 	 */
 	private static void set(HttpServletResponse response, String key, String value, String domain, String path, int maxAge, boolean isHttpOnly) {
 		Cookie cookie = new Cookie(key, value);
-		if (domain != null) {
+		if (StrUtil.isNotEmpty(domain)) {
 			cookie.setDomain(domain);
 		}
 		cookie.setPath(path);

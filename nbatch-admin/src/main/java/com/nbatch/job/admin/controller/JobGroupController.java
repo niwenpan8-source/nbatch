@@ -36,7 +36,7 @@ import java.util.Map;
 /**
  * job group controller
  *
- * @author Mr.ni 2016-10-02 20:52:56
+ * @author Mr.ni
  */
 @Controller
 @RequestMapping("/jobgroup")
@@ -60,11 +60,11 @@ public class JobGroupController {
     @PermissionLimit(adminuser = true)
     public Map<String, Object> pageList(@RequestParam(required = false, defaultValue = "0") int start,
                                         @RequestParam(required = false, defaultValue = "10") int length,
-                                        String appname,
+                                        String appName,
                                         String title) {
 
         LambdaQueryWrapper<JobGroupPo> jobGroupQuery = Wrappers.lambdaQuery(JobGroupPo.class)
-                .eq(StrUtil.isNotEmpty(appname), JobGroupPo::getAppName, appname)
+                .eq(StrUtil.isNotEmpty(appName), JobGroupPo::getAppName, appName)
                 .eq(StrUtil.isNotEmpty(title), JobGroupPo::getTitle, title);
         Page<JobGroupPo> jobGroupPage = new Page<>(start, length);
         Page<JobGroupPo> list = jobGroupMapper.selectPage(jobGroupPage, jobGroupQuery);
@@ -89,7 +89,7 @@ public class JobGroupController {
             return new ReturnT<>(500, (I18nUtil.getString("system_please_input") + "AppName"));
         }
         if (jobGroupParam.getAppName().length() < 4 || jobGroupParam.getAppName().length() > 64) {
-            return new ReturnT<>(500, I18nUtil.getString("jobgroup_field_appname_length"));
+            return new ReturnT<>(500, I18nUtil.getString("jobgroup_field_appName_length"));
         }
         if (jobGroupParam.getAppName().contains(">") || jobGroupParam.getAppName().contains("<")) {
             return new ReturnT<>(500, "AppName" + I18nUtil.getString("system_unvalid"));
@@ -133,7 +133,7 @@ public class JobGroupController {
             return new ReturnT<>(500, (I18nUtil.getString("system_please_input") + "AppName"));
         }
         if (jobGroupParam.getAppName().length() < 4 || jobGroupParam.getAppName().length() > 64) {
-            return new ReturnT<>(500, I18nUtil.getString("jobgroup_field_appname_length"));
+            return new ReturnT<>(500, I18nUtil.getString("jobgroup_field_appName_length"));
         }
         if (StrUtil.isBlank(jobGroupParam.getTitle())) {
             return new ReturnT<>(500, (I18nUtil.getString("system_please_input") + I18nUtil.getString("jobgroup_field_title")));
@@ -171,7 +171,7 @@ public class JobGroupController {
         return (ret > 0) ? ReturnT.SUCCESS : ReturnT.FAIL;
     }
 
-    private List<String> findRegistryByAppName(String appnameParam) {
+    private List<String> findRegistryByAppName(String appNameParam) {
         HashMap<String, List<String>> appAddressMap = new HashMap<>();
         DateTime currentOffsetTime = DateUtil.offsetSecond(new Date(), -RegistryConfig.DEAD_TIMEOUT);
         LambdaQueryWrapper<JobRegistryPo> registryQuery = Wrappers.lambdaQuery(JobRegistryPo.class)
@@ -180,8 +180,8 @@ public class JobGroupController {
         if (CollUtil.isNotEmpty(list)) {
             for (JobRegistryPo item : list) {
                 if (RegistryConfig.RegistType.EXECUTOR.name().equals(item.getRegistryGroup())) {
-                    String appname = item.getRegistryKey();
-                    List<String> registryList = appAddressMap.get(appname);
+                    String appName = item.getRegistryKey();
+                    List<String> registryList = appAddressMap.get(appName);
                     if (registryList == null) {
                         registryList = new ArrayList<>();
                     }
@@ -189,11 +189,11 @@ public class JobGroupController {
                     if (!registryList.contains(item.getRegistryValue())) {
                         registryList.add(item.getRegistryValue());
                     }
-                    appAddressMap.put(appname, registryList);
+                    appAddressMap.put(appName, registryList);
                 }
             }
         }
-        return appAddressMap.get(appnameParam);
+        return appAddressMap.get(appNameParam);
     }
 
     @RequestMapping("/remove")

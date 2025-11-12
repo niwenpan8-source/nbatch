@@ -3,8 +3,9 @@ package com.nbatch.job.admin.core.thread;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.text.StrPool;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.nbatch.job.admin.core.conf.XxlJobAdminConfig;
+import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.domain.po.JobGroupPo;
 import com.nbatch.job.admin.core.domain.po.JobRegistryPo;
 import com.nbatch.job.core.biz.model.RegistryParam;
@@ -60,7 +61,7 @@ public class JobRegistryHelper {
             while (!toStop) {
                 try {
                     // auto registry group
-                    List<JobGroupPo> groupList = XxlJobAdminConfig.getAdminConfig().getJobGroupMapper()
+                    List<JobGroupPo> groupList = JobAdminConfig.getAdminConfig().getJobGroupMapper()
                             .selectList(Wrappers.lambdaQuery(JobGroupPo.class)
                                     .eq(JobGroupPo::getAddressType, 0)
                                     .orderByDesc(JobGroupPo::getAppName)
@@ -69,25 +70,25 @@ public class JobRegistryHelper {
                     if (groupList != null && !groupList.isEmpty()) {
 
                         // remove dead address (admin/executor)
-                        List<JobRegistryPo> jobRegistryList = XxlJobAdminConfig.getAdminConfig().getJobRegistryMapper()
+                        List<JobRegistryPo> jobRegistryList = JobAdminConfig.getAdminConfig().getJobRegistryMapper()
                                 .selectList(Wrappers.lambdaQuery(JobRegistryPo.class)
                                         .lt(JobRegistryPo::getUpdateTime, DateUtil.offsetSecond(DateUtil.date(), -RegistryConfig.DEAD_TIMEOUT)));
                         if (CollUtil.isNotEmpty(jobRegistryList)) {
                             List<String> ids = jobRegistryList.stream().map(JobRegistryPo::getId).collect(Collectors.toList());
-                            XxlJobAdminConfig.getAdminConfig().getJobRegistryMapper().deleteBatchIds(ids);
+                            JobAdminConfig.getAdminConfig().getJobRegistryMapper().deleteBatchIds(ids);
                         }
 
                         // fresh online address (admin/executor)
                         HashMap<String, List<String>> appAddressMap = new HashMap<>();
 
-                        List<JobRegistryPo> list = XxlJobAdminConfig.getAdminConfig().getJobRegistryMapper()
+                        List<JobRegistryPo> list = JobAdminConfig.getAdminConfig().getJobRegistryMapper()
                                 .selectList(Wrappers.lambdaQuery(JobRegistryPo.class)
-                                        .eq(JobRegistryPo::getUpdateTime, DateUtil.offsetSecond(DateUtil.date(), -RegistryConfig.DEAD_TIMEOUT)));
+                                        .ge(JobRegistryPo::getUpdateTime, DateUtil.offsetSecond(DateUtil.date(), -RegistryConfig.DEAD_TIMEOUT)));
                         if (list != null) {
                             for (JobRegistryPo item : list) {
                                 if (RegistryConfig.RegistType.EXECUTOR.name().equals(item.getRegistryGroup())) {
-                                    String appname = item.getRegistryKey();
-                                    List<String> registryList = appAddressMap.get(appname);
+                                    String appName = item.getRegistryKey();
+                                    List<String> registryList = appAddressMap.get(appName);
                                     if (registryList == null) {
                                         registryList = new ArrayList<>();
                                     }
@@ -95,7 +96,7 @@ public class JobRegistryHelper {
                                     if (!registryList.contains(item.getRegistryValue())) {
                                         registryList.add(item.getRegistryValue());
                                     }
-                                    appAddressMap.put(appname, registryList);
+                                    appAddressMap.put(appName, registryList);
                                 }
                             }
                         }
@@ -116,7 +117,7 @@ public class JobRegistryHelper {
                             group.setAddressList(addressListStr);
                             group.setUpdateTime(new Date());
 
-                            XxlJobAdminConfig.getAdminConfig().getJobGroupMapper().updateById(group);
+                            JobAdminConfig.getAdminConfig().getJobGroupMapper().updateById(group);
                         }
                     }
                 } catch (Throwable e) {
@@ -173,7 +174,17 @@ public class JobRegistryHelper {
                     .setRegistryKey(registryParam.getRegistryKey())
                     .setRegistryValue(registryParam.getRegistryValue())
                     .setUpdateTime(new Date());
-            int ret = XxlJobAdminConfig.getAdminConfig().getJobRegistryMapper().insert(jobRegistryPo);
+            LambdaQueryWrapper<JobRegistryPo> jobRegistryWrapper = Wrappers.lambdaQuery(JobRegistryPo.class)
+                    .eq(JobRegistryPo::getRegistryKey, registryParam.getRegistryKey())
+                    .eq(JobRegistryPo::getRegistryValue, registryParam.getRegistryValue())
+                    .eq(JobRegistryPo::getRegistryGroup, registryParam.getRegistryGroup());
+            Integer registryNum = JobAdminConfig.getAdminConfig().getJobRegistryMapper().selectCount(jobRegistryWrapper);
+            int ret;
+            if (registryNum > 0) {
+                ret = JobAdminConfig.getAdminConfig().getJobRegistryMapper().update(jobRegistryPo, jobRegistryWrapper);
+            } else {
+                ret = JobAdminConfig.getAdminConfig().getJobRegistryMapper().insert(jobRegistryPo);
+            }
             if (ret == 1) {
                 // fresh (add)
                 freshGroupRegistryInfo(registryParam);
@@ -194,7 +205,7 @@ public class JobRegistryHelper {
 
         // async execute
         registryOrRemoveThreadPool.execute(() -> {
-            int ret = XxlJobAdminConfig.getAdminConfig().getJobRegistryMapper().delete(Wrappers.lambdaQuery(JobRegistryPo.class)
+            int ret = JobAdminConfig.getAdminConfig().getJobRegistryMapper().delete(Wrappers.lambdaQuery(JobRegistryPo.class)
                     .eq(JobRegistryPo::getRegistryGroup, registryParam.getRegistryGroup())
                     .eq(JobRegistryPo::getRegistryKey, registryParam.getRegistryKey())
                     .eq(JobRegistryPo::getRegistryValue, registryParam.getRegistryValue()));

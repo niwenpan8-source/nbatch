@@ -3,7 +3,7 @@ package com.nbatch.job.admin.core.thread;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.nbatch.job.admin.core.conf.XxlJobAdminConfig;
+import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.domain.po.JobInfoPo;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
 import com.nbatch.job.admin.core.trigger.TriggerTypeEnum;
@@ -39,7 +39,7 @@ public class JobFailMonitorHelper {
             while (!toStop) {
                 try {
                     List<String> failLogIds = null;
-                    Page<JobLogPo> failLogPage = XxlJobAdminConfig.getAdminConfig().getJobLogMapper()
+                    Page<JobLogPo> failLogPage = JobAdminConfig.getAdminConfig().getJobLogMapper()
                             .selectPage(new Page<>(0, 1000L), Wrappers.lambdaQuery(JobLogPo.class)
                                     .and(x -> x.and(x1 -> x1.in(JobLogPo::getTriggerCode, 0, 200)).or()
                                             .eq(JobLogPo::getHandleCode, 200))
@@ -53,27 +53,27 @@ public class JobFailMonitorHelper {
                         for (String failLogId : failLogIds) {
                             JobLogPo updateAlarmLock = new JobLogPo();
                             updateAlarmLock.setAlarmStatus(-1);
-                            int lockRet = XxlJobAdminConfig.getAdminConfig().getJobLogMapper().update(updateAlarmLock, Wrappers
+                            int lockRet = JobAdminConfig.getAdminConfig().getJobLogMapper().update(updateAlarmLock, Wrappers
                                     .lambdaUpdate(JobLogPo.class).eq(JobLogPo::getId, failLogId)
                                     .eq(JobLogPo::getAlarmStatus, 0));
                             if (lockRet < 1) {
                                 continue;
                             }
-                            JobLogPo logInfo = XxlJobAdminConfig.getAdminConfig().getJobLogMapper().selectById(failLogId);
-                            JobInfoPo info = XxlJobAdminConfig.getAdminConfig().getJobInfoMapper().selectById(logInfo.getJobId());
+                            JobLogPo logInfo = JobAdminConfig.getAdminConfig().getJobLogMapper().selectById(failLogId);
+                            JobInfoPo info = JobAdminConfig.getAdminConfig().getJobInfoMapper().selectById(logInfo.getJobId());
 
                             // 1、fail retry monitor
                             if (logInfo.getExecutorFailRetryCount() > 0) {
                                 JobTriggerPoolHelper.trigger(logInfo.getJobId(), TriggerTypeEnum.RETRY, (logInfo.getExecutorFailRetryCount() - 1), logInfo.getExecutorShardingParam(), logInfo.getExecutorParam(), null);
                                 String retryMsg = "<br><br><span style=\"color:#F39C12;\" > >>>>>>>>>>>" + I18nUtil.getString("jobconf_trigger_type_retry") + "<<<<<<<<<<< </span><br>";
                                 logInfo.setTriggerMsg(logInfo.getTriggerMsg() + retryMsg);
-                                XxlJobAdminConfig.getAdminConfig().getJobLogMapper().updateById(logInfo);
+                                JobAdminConfig.getAdminConfig().getJobLogMapper().updateById(logInfo);
                             }
 
                             // 2、fail alarm monitor
                             int newAlarmStatus;        // 告警状态：0-默认、-1=锁定状态、1-无需告警、2-告警成功、3-告警失败
                             if (info != null) {
-                                boolean alarmResult = XxlJobAdminConfig.getAdminConfig().getJobAlarmer().alarm(info, logInfo);
+                                boolean alarmResult = JobAdminConfig.getAdminConfig().getJobAlarmer().alarm(info, logInfo);
                                 newAlarmStatus = alarmResult ? 2 : 3;
                             } else {
                                 newAlarmStatus = 1;
@@ -81,7 +81,7 @@ public class JobFailMonitorHelper {
 
                             JobLogPo updateAlarmUnlock = new JobLogPo();
                             updateAlarmUnlock.setAlarmStatus(newAlarmStatus);
-                            XxlJobAdminConfig.getAdminConfig().getJobLogMapper().update(updateAlarmUnlock, Wrappers
+                            JobAdminConfig.getAdminConfig().getJobLogMapper().update(updateAlarmUnlock, Wrappers
                                     .lambdaUpdate(JobLogPo.class).eq(JobLogPo::getId, failLogId)
                                     .eq(JobLogPo::getAlarmStatus, -1));
                         }

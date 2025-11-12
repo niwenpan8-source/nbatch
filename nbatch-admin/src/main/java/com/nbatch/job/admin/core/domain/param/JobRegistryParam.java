@@ -1,6 +1,5 @@
 package com.nbatch.job.admin.core.domain.param;
 
-import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -18,7 +17,6 @@ public class JobRegistryParam {
     /**
      * 主键ID
      */
-    @TableId
     private String id;
 
     /**

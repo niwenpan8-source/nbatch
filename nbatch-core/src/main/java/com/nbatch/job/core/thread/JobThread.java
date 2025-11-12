@@ -8,7 +8,7 @@ import com.nbatch.job.core.context.XxlJobContext;
 import com.nbatch.job.core.context.XxlJobHelper;
 import com.nbatch.job.core.executor.XxlJobExecutor;
 import com.nbatch.job.core.handler.IJobHandler;
-import com.nbatch.job.core.log.XxlJobFileAppender;
+import com.nbatch.job.core.log.JobFileAppender;
 import com.nbatch.job.core.util.ThrowableUtil;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -120,7 +120,7 @@ public class JobThread extends Thread{
 					triggerLogIdSet.remove(triggerParam.getLogId());
 
 					// log filename, like "logPath/yyyy-MM-dd/9999.log"
-					String logFileName = XxlJobFileAppender.makeLogFileName(new Date(triggerParam.getLogDateTime()), triggerParam.getLogId());
+					String logFileName = JobFileAppender.makeLogFileName(new Date(triggerParam.getLogDateTime()), triggerParam.getLogId());
 					XxlJobContext xxlJobContext = new XxlJobContext(
 							triggerParam.getJobId(),
 							triggerParam.getExecutorParams(),
