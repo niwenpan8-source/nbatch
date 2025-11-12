@@ -73,7 +73,7 @@ public class EmailJobAlarm implements JobAlarm {
 
                     JobAdminConfig.getAdminConfig().getMailSender().send(mimeMessage);
                 } catch (Exception e) {
-                    log.error(">>>>>>>>>>> xxl-job, job fail alarm email send error, JobLogId:{}", jobLog.getId(), e);
+                    log.error(">>>>>>>>>>> job, job fail alarm email send error, JobLogId:{}", jobLog.getId(), e);
 
                     alarmResult = false;
                 }

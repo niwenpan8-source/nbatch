@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class AdminBizTest {
 
     // admin-client
-    private static String addressUrl = "http://127.0.0.1:8080/xxl-job-admin/";
+    private static String addressUrl = "http://127.0.0.1:8080/job-admin/";
     private static String accessToken = null;
     private static int timeoutSecond = 3;
 
@@ -51,7 +51,7 @@ public class AdminBizTest {
     public void registry() throws Exception {
         AdminBiz adminBiz = new AdminBizClient(addressUrl, accessToken, timeoutSecond);
 
-        RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), "xxl-job-executor-example", "127.0.0.1:9999");
+        RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), "job-executor-example", "127.0.0.1:9999");
         ReturnT<String> returnT = adminBiz.registry(registryParam);
 
         assertTrue(returnT.getCode() == ReturnT.SUCCESS_CODE);
@@ -66,7 +66,7 @@ public class AdminBizTest {
     public void registryRemove() throws Exception {
         AdminBiz adminBiz = new AdminBizClient(addressUrl, accessToken, timeoutSecond);
 
-        RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), "xxl-job-executor-example", "127.0.0.1:9999");
+        RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), "job-executor-example", "127.0.0.1:9999");
         ReturnT<String> returnT = adminBiz.registryRemove(registryParam);
 
         assertTrue(returnT.getCode() == ReturnT.SUCCESS_CODE);

@@ -42,7 +42,7 @@ public class TriggerCallbackThread {
     private final LinkedBlockingQueue<HandleCallbackParam> callBackQueue = new LinkedBlockingQueue<>();
     public static void pushCallBack(HandleCallbackParam callback){
         getInstance().callBackQueue.add(callback);
-        log.debug(">>>>>>>>>>> xxl-job, push callback request, logId:{}", callback.getLogId());
+        log.debug(">>>>>>>>>>> job, push callback request, logId:{}", callback.getLogId());
     }
 
     /**
@@ -55,7 +55,7 @@ public class TriggerCallbackThread {
 
         // valid
         if (XxlJobExecutor.getAdminBizList() == null) {
-            log.warn(">>>>>>>>>>> xxl-job, executor callback config fail, adminAddresses is null.");
+            log.warn(">>>>>>>>>>> job, executor callback config fail, adminAddresses is null.");
             return;
         }
 
@@ -97,11 +97,11 @@ public class TriggerCallbackThread {
                     log.error(e.getMessage(), e);
                 }
             }
-            log.info(">>>>>>>>>>> xxl-job, executor callback thread destroy.");
+            log.info(">>>>>>>>>>> job, executor callback thread destroy.");
 
         });
         triggerCallbackThread.setDaemon(true);
-        triggerCallbackThread.setName("xxl-job, executor TriggerCallbackThread");
+        triggerCallbackThread.setName("job, executor TriggerCallbackThread");
         triggerCallbackThread.start();
 
 
@@ -124,7 +124,7 @@ public class TriggerCallbackThread {
                     }
                 }
             }
-            log.info(">>>>>>>>>>> xxl-job, executor retry callback thread destroy.");
+            log.info(">>>>>>>>>>> job, executor retry callback thread destroy.");
         });
         triggerRetryCallbackThread.setDaemon(true);
         triggerRetryCallbackThread.start();
@@ -166,14 +166,14 @@ public class TriggerCallbackThread {
             try {
                 ReturnT<String> callbackResult = adminBiz.callback(callbackParamList);
                 if (callbackResult!=null && ReturnT.SUCCESS_CODE == callbackResult.getCode()) {
-                    callbackLog(callbackParamList, "<br>----------- xxl-job job callback finish.");
+                    callbackLog(callbackParamList, "<br>----------- job job callback finish.");
                     callbackRet = true;
                     break;
                 } else {
-                    callbackLog(callbackParamList, "<br>----------- xxl-job job callback fail, callbackResult:" + callbackResult);
+                    callbackLog(callbackParamList, "<br>----------- job job callback fail, callbackResult:" + callbackResult);
                 }
             } catch (Throwable e) {
-                callbackLog(callbackParamList, "<br>----------- xxl-job job callback error, errorMsg:" + e.getMessage());
+                callbackLog(callbackParamList, "<br>----------- job job callback error, errorMsg:" + e.getMessage());
             }
         }
         if (!callbackRet) {
@@ -201,7 +201,7 @@ public class TriggerCallbackThread {
     // ---------------------- fail-callback file ----------------------
 
     private static final String FAIL_CALLBACK_FILE_PATH = JobFileAppender.getLogPath().concat(File.separator).concat("callbacklog").concat(File.separator);
-    private static final String FAIL_CALLBACK_FILE_NAME = FAIL_CALLBACK_FILE_PATH.concat("xxl-job-callback-{x}").concat(".log");
+    private static final String FAIL_CALLBACK_FILE_NAME = FAIL_CALLBACK_FILE_PATH.concat("job-callback-{x}").concat(".log");
 
     private void appendFailCallbackFile(List<HandleCallbackParam> callbackParamList){
         // valid

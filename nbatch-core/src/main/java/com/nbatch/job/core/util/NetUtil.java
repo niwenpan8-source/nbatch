@@ -48,7 +48,7 @@ public class NetUtil {
         try (ServerSocket ignored = new ServerSocket(port)) {
             used = false;
         } catch (IOException e) {
-            log.info(">>>>>>>>>>> xxl-job, port[{}] is in use.", port);
+            log.info(">>>>>>>>>>> job, port[{}] is in use.", port);
             used = true;
         }
         return used;

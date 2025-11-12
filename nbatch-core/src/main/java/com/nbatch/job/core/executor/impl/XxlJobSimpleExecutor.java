@@ -12,7 +12,7 @@ import java.util.List;
 
 
 /**
- * xxl-job executor (for frameless)
+ * job executor (for frameless)
  *
  * @author Mr.ni 2020-11-05
  */

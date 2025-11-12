@@ -1,6 +1,6 @@
 package com.nbatch.job.admin.core.route.strategy;
 
-import com.nbatch.job.admin.core.scheduler.XxlJobScheduler;
+import com.nbatch.job.admin.core.scheduler.JobScheduler;
 import com.nbatch.job.admin.core.route.ExecutorRouter;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.ExecutorBiz;
@@ -26,7 +26,7 @@ public class ExecutorRouteFailover extends ExecutorRouter {
             // beat
             ReturnT<String> beatResult;
             try {
-                ExecutorBiz executorBiz = XxlJobScheduler.getExecutorBiz(address);
+                ExecutorBiz executorBiz = JobScheduler.getExecutorBiz(address);
                 assert executorBiz != null;
                 beatResult = executorBiz.beat();
             } catch (Exception e) {

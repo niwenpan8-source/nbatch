@@ -1,7 +1,7 @@
 package com.nbatch.job.admin.core.conf;
 
 import com.nbatch.job.admin.core.alarm.JobAlarmer;
-import com.nbatch.job.admin.core.scheduler.XxlJobScheduler;
+import com.nbatch.job.admin.core.scheduler.JobScheduler;
 import com.nbatch.job.admin.mapper.IJobGroupMapper;
 import com.nbatch.job.admin.mapper.IJobInfoMapper;
 import com.nbatch.job.admin.mapper.IJobLogMapper;
@@ -32,12 +32,12 @@ public class JobAdminConfig implements InitializingBean, DisposableBean {
 
     // ---------------------- XxlJobScheduler ----------------------
 
-    private XxlJobScheduler xxlJobScheduler;
+    private JobScheduler xxlJobScheduler;
 
     @Override
     public void afterPropertiesSet() throws Exception {
         adminConfig = this;
-        xxlJobScheduler = new XxlJobScheduler();
+        xxlJobScheduler = new JobScheduler();
         xxlJobScheduler.init();
     }
 

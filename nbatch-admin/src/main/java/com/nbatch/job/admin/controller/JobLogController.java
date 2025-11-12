@@ -11,7 +11,7 @@ import com.nbatch.job.admin.core.domain.po.JobGroupPo;
 import com.nbatch.job.admin.core.domain.po.JobInfoPo;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
 import com.nbatch.job.admin.core.exception.XxlJobException;
-import com.nbatch.job.admin.core.scheduler.XxlJobScheduler;
+import com.nbatch.job.admin.core.scheduler.JobScheduler;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.admin.mapper.IJobGroupMapper;
 import com.nbatch.job.admin.mapper.IJobInfoMapper;
@@ -165,7 +165,7 @@ public class JobLogController {
             }
 
             // log cat
-            ExecutorBiz executorBiz = XxlJobScheduler.getExecutorBiz(jobLog.getExecutorAddress());
+            ExecutorBiz executorBiz = JobScheduler.getExecutorBiz(jobLog.getExecutorAddress());
             assert executorBiz != null;
             ReturnT<LogResult> logResult = executorBiz.log(new LogParam(jobLog.getTriggerTime().getTime(), logId, fromLineNum));
 
@@ -206,7 +206,7 @@ public class JobLogController {
         // request of kill
         ReturnT<String> runResult;
         try {
-            ExecutorBiz executorBiz = XxlJobScheduler.getExecutorBiz(logInfo.getExecutorAddress());
+            ExecutorBiz executorBiz = JobScheduler.getExecutorBiz(logInfo.getExecutorAddress());
             assert executorBiz != null;
             runResult = executorBiz.kill(new KillParam(jobInfo.getId()));
         } catch (Exception e) {

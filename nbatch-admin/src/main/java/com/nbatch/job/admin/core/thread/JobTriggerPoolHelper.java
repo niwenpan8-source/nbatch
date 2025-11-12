@@ -34,8 +34,8 @@ public class JobTriggerPoolHelper {
                 60L,
                 TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(2000),
-                r -> new Thread(r, "xxl-job, admin JobTriggerPoolHelper-fastTriggerPool-" + r.hashCode()),
-                (r, executor) -> log.error(">>>>>>>>>>> xxl-job, admin JobTriggerPoolHelper-fastTriggerPool execute too fast, Runnable={}", r.toString()));
+                r -> new Thread(r, "job, admin JobTriggerPoolHelper-fastTriggerPool-" + r.hashCode()),
+                (r, executor) -> log.error(">>>>>>>>>>> job, admin JobTriggerPoolHelper-fastTriggerPool execute too fast, Runnable={}", r.toString()));
 
         slowTriggerPool = new ThreadPoolExecutor(
                 10,
@@ -43,8 +43,8 @@ public class JobTriggerPoolHelper {
                 60L,
                 TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(5000),
-                r -> new Thread(r, "xxl-job, admin JobTriggerPoolHelper-slowTriggerPool-" + r.hashCode()),
-                (r, executor) -> log.error(">>>>>>>>>>> xxl-job, admin JobTriggerPoolHelper-slowTriggerPool execute too fast, Runnable={}", r.toString()));
+                r -> new Thread(r, "job, admin JobTriggerPoolHelper-slowTriggerPool-" + r.hashCode()),
+                (r, executor) -> log.error(">>>>>>>>>>> job, admin JobTriggerPoolHelper-slowTriggerPool execute too fast, Runnable={}", r.toString()));
     }
 
 
@@ -52,7 +52,7 @@ public class JobTriggerPoolHelper {
         //triggerPool.shutdown();
         fastTriggerPool.shutdownNow();
         slowTriggerPool.shutdownNow();
-        log.info(">>>>>>>>> xxl-job trigger thread pool shutdown success.");
+        log.info(">>>>>>>>> job trigger thread pool shutdown success.");
     }
 
 

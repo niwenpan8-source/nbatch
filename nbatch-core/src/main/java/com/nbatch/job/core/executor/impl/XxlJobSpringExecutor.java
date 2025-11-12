@@ -18,7 +18,7 @@ import java.util.Map;
 
 
 /**
- * xxl-job executor (for spring)
+ * job executor (for spring)
  *
  * @author Mr.ni 2018-11-01 09:24:52
  */
@@ -67,7 +67,7 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
                     String name = serviceBean.getClass().getAnnotation(JobHandler.class).value();
                     IJobHandler handler = (IJobHandler) serviceBean;
                     if (loadJobHandler(name) != null) {
-                        throw new RuntimeException("xxl-job jobhandler[" + name + "] naming conflicts.");
+                        throw new RuntimeException("job jobhandler[" + name + "] naming conflicts.");
                     }
                     registJobHandler(name, handler);
                 }
@@ -87,7 +87,7 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
             Object bean = null;
             Lazy onBean = applicationContext.findAnnotationOnBean(beanDefinitionName, Lazy.class);
             if (onBean!=null){
-                log.debug("xxl-job annotation scan, skip @Lazy Bean:{}", beanDefinitionName);
+                log.debug("job annotation scan, skip @Lazy Bean:{}", beanDefinitionName);
                 continue;
             }else {
                 bean = applicationContext.getBean(beanDefinitionName);

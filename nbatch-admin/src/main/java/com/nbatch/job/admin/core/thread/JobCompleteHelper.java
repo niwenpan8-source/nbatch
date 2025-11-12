@@ -49,10 +49,10 @@ public class JobCompleteHelper {
                 30L,
                 TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(3000),
-                r -> new Thread(r, "xxl-job, admin JobLosedMonitorHelper-callbackThreadPool-" + r.hashCode()),
+                r -> new Thread(r, "job, admin JobLosedMonitorHelper-callbackThreadPool-" + r.hashCode()),
                 (r, executor) -> {
                     r.run();
-                    log.warn(">>>>>>>>>>> xxl-job, callback too fast, match threadpool rejected handler(run now).");
+                    log.warn(">>>>>>>>>>> job, callback too fast, match threadpool rejected handler(run now).");
                 });
 
 
@@ -104,7 +104,7 @@ public class JobCompleteHelper {
                     }
                 } catch (Throwable e) {
                     if (!toStop) {
-                        log.error(">>>>>>>>>>> xxl-job, job fail monitor thread error:", e);
+                        log.error(">>>>>>>>>>> job, job fail monitor thread error:", e);
                     }
                 }
 
@@ -118,11 +118,11 @@ public class JobCompleteHelper {
 
             }
 
-            log.info(">>>>>>>>>>> xxl-job, JobLosedMonitorHelper stop");
+            log.info(">>>>>>>>>>> job, JobLosedMonitorHelper stop");
 
         });
         monitorThread.setDaemon(true);
-        monitorThread.setName("xxl-job, admin JobLosedMonitorHelper");
+        monitorThread.setName("job, admin JobLosedMonitorHelper");
         monitorThread.start();
     }
 

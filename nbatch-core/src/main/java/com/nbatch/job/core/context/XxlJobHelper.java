@@ -11,7 +11,7 @@ import org.slf4j.helpers.MessageFormatter;
 import java.util.Date;
 
 /**
- * helper for xxl-job
+ * helper for job
  *
  * @author Mr.ni
  */

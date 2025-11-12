@@ -47,17 +47,17 @@ public class JobCompleter {
         // 1、handle success, to trigger child job
         StringBuilder triggerChildMsg = null;
         if (XxlJobContext.HANDLE_CODE_SUCCESS == jobLogPo.getHandleCode()) {
-            JobInfoPo xxlJobInfo = JobAdminConfig.getAdminConfig().getJobInfoMapper().selectById(jobLogPo.getJobId());
-            if (xxlJobInfo != null && StrUtil.isNotBlank(xxlJobInfo.getChildJobid())) {
+            JobInfoPo jobInfo = JobAdminConfig.getAdminConfig().getJobInfoMapper().selectById(jobLogPo.getJobId());
+            if (jobInfo != null && StrUtil.isNotBlank(jobInfo.getChildJobid())) {
                 triggerChildMsg = new StringBuilder("<br><br><span style=\"color:#00c0ef;\" > >>>>>>>>>>>" + I18nUtil.getString("jobconf_trigger_child_run") + "<<<<<<<<<<< </span><br>");
 
-                String[] childJobIds = xxlJobInfo.getChildJobid().split(StrPool.COMMA);
+                String[] childJobIds = jobInfo.getChildJobid().split(StrPool.COMMA);
                 for (int i = 0; i < childJobIds.length; i++) {
                     String childJobId = (StrUtil.isNotBlank(childJobIds[i]) && NumberUtil.isNumber(childJobIds[i])) ? childJobIds[i] : "-1";
                     if (NumberUtil.parseInt(childJobId) > 0) {
                         // valid
                         if (StrUtil.equals(childJobId, jobLogPo.getJobId())) {
-                            log.debug(">>>>>>>>>>> xxl-job, XxlJobCompleter-finishJob ignore childJobId,  childJobId {} is self.", childJobId);
+                            log.debug(">>>>>>>>>>> job, XxlJobCompleter-finishJob ignore childJobId,  childJobId {} is self.", childJobId);
                             continue;
                         }
 

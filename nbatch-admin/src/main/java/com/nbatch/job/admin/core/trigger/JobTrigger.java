@@ -8,7 +8,7 @@ import com.nbatch.job.admin.core.domain.po.JobGroupPo;
 import com.nbatch.job.admin.core.domain.po.JobInfoPo;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
 import com.nbatch.job.admin.core.route.ExecutorRouteStrategyEnum;
-import com.nbatch.job.admin.core.scheduler.XxlJobScheduler;
+import com.nbatch.job.admin.core.scheduler.JobScheduler;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.ExecutorBiz;
 import com.nbatch.job.core.biz.model.ReturnT;
@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Date;
 
 /**
- * xxl-job trigger
+ * job trigger
  *
  * @author Mr.ni
  * @date 2025/11/05
@@ -127,7 +127,7 @@ public class JobTrigger {
         jobLog.setJobId(jobInfo.getId());
         jobLog.setTriggerTime(new Date());
         JobAdminConfig.getAdminConfig().getJobLogMapper().insert(jobLog);
-        log.debug(">>>>>>>>>>> xxl-job trigger start, jobId:{}", jobLog.getId());
+        log.debug(">>>>>>>>>>> job trigger start, jobId:{}", jobLog.getId());
 
         // 2、init trigger-param
         TriggerParam triggerParam = new TriggerParam();
@@ -201,7 +201,7 @@ public class JobTrigger {
         jobLog.setTriggerMsg(triggerMsgSb.toString());
         JobAdminConfig.getAdminConfig().getJobLogMapper().updateById(jobLog);
 
-        log.debug(">>>>>>>>>>> xxl-job trigger end, jobId:{}", jobLog.getId());
+        log.debug(">>>>>>>>>>> job trigger end, jobId:{}", jobLog.getId());
     }
 
     /**
@@ -212,11 +212,11 @@ public class JobTrigger {
     public static ReturnT<String> runExecutor(TriggerParam triggerParam, String address) {
         ReturnT<String> runResult;
         try {
-            ExecutorBiz executorBiz = XxlJobScheduler.getExecutorBiz(address);
+            ExecutorBiz executorBiz = JobScheduler.getExecutorBiz(address);
             assert executorBiz != null;
             runResult = executorBiz.run(triggerParam);
         } catch (Exception e) {
-            log.error(">>>>>>>>>>> xxl-job trigger error, please check if the executor[{}] is running.", address, e);
+            log.error(">>>>>>>>>>> job trigger error, please check if the executor[{}] is running.", address, e);
             runResult = new ReturnT<>(ReturnT.FAIL_CODE, ThrowableUtil.toString(e));
         }
 

@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * xxl-job context
+ * job context
  *
  * @author Mr.ni 2020-05-21
  * [Dear hj]

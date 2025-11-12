@@ -50,10 +50,10 @@ public class JobRegistryHelper {
                 30L,
                 TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(2000),
-                r -> new Thread(r, "xxl-job, admin JobRegistryMonitorHelper-registryOrRemoveThreadPool-" + r.hashCode()),
+                r -> new Thread(r, "job, admin JobRegistryMonitorHelper-registryOrRemoveThreadPool-" + r.hashCode()),
                 (r, executor) -> {
                     r.run();
-                    log.warn(">>>>>>>>>>> xxl-job, registry or remove too fast, match threadpool rejected handler(run now).");
+                    log.warn(">>>>>>>>>>> job, registry or remove too fast, match threadpool rejected handler(run now).");
                 });
 
         // for monitor
@@ -122,21 +122,21 @@ public class JobRegistryHelper {
                     }
                 } catch (Throwable e) {
                     if (!toStop) {
-                        log.error(">>>>>>>>>>> xxl-job, job registry monitor thread error:", e);
+                        log.error(">>>>>>>>>>> job, job registry monitor thread error:", e);
                     }
                 }
                 try {
                     TimeUnit.SECONDS.sleep(RegistryConfig.BEAT_TIMEOUT);
                 } catch (Throwable e) {
                     if (!toStop) {
-                        log.error(">>>>>>>>>>> xxl-job, job registry monitor thread error:", e);
+                        log.error(">>>>>>>>>>> job, job registry monitor thread error:", e);
                     }
                 }
             }
-            log.info(">>>>>>>>>>> xxl-job, job registry monitor thread stop");
+            log.info(">>>>>>>>>>> job, job registry monitor thread stop");
         });
         registryMonitorThread.setDaemon(true);
-        registryMonitorThread.setName("xxl-job, admin JobRegistryMonitorHelper-registryMonitorThread");
+        registryMonitorThread.setName("job, admin JobRegistryMonitorHelper-registryMonitorThread");
         registryMonitorThread.start();
     }
 

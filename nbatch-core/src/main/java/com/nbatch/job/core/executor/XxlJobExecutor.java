@@ -86,7 +86,7 @@ public class XxlJobExecutor  {
                     try {
                         oldJobThread.join();
                     } catch (InterruptedException e) {
-                        log.error(">>>>>>>>>>> xxl-job, JobThread destroy(join) error, jobId:{}", item.getKey(), e);
+                        log.error(">>>>>>>>>>> job, JobThread destroy(join) error, jobId:{}", item.getKey(), e);
                     }
                 }
             }
@@ -141,7 +141,7 @@ public class XxlJobExecutor  {
 
         // accessToken
         if (StrUtil.isBlank(accessToken)) {
-            log.warn(">>>>>>>>>>> xxl-job accessToken is empty. To ensure system security, please set the accessToken.");
+            log.warn(">>>>>>>>>>> job accessToken is empty. To ensure system security, please set the accessToken.");
         }
 
         // start
@@ -167,7 +167,7 @@ public class XxlJobExecutor  {
         return JOB_HANDLER_REPOSITORY.get(name);
     }
     public static IJobHandler registJobHandler(String name, IJobHandler jobHandler){
-        log.info(">>>>>>>>>>> xxl-job register jobhandler success, name:{}, jobHandler:{}", name, jobHandler);
+        log.info(">>>>>>>>>>> job register jobhandler success, name:{}, jobHandler:{}", name, jobHandler);
         return JOB_HANDLER_REPOSITORY.put(name, jobHandler);
     }
     protected void registJobHandler(XxlJob xxlJob, Object bean, Method executeMethod){
@@ -180,10 +180,10 @@ public class XxlJobExecutor  {
         Class<?> clazz = bean.getClass();
         String methodName = executeMethod.getName();
         if (StrUtil.isBlank(name)) {
-            throw new RuntimeException("xxl-job method-jobhandler name invalid, for[" + clazz + "#" + methodName + "] .");
+            throw new RuntimeException("job method-jobhandler name invalid, for[" + clazz + "#" + methodName + "] .");
         }
         if (loadJobHandler(name) != null) {
-            throw new RuntimeException("xxl-job jobhandler[" + name + "] naming conflicts.");
+            throw new RuntimeException("job jobhandler[" + name + "] naming conflicts.");
         }
 
         executeMethod.setAccessible(true);

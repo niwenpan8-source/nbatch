@@ -89,7 +89,7 @@ public class JobFailMonitorHelper {
 
                 } catch (Throwable e) {
                     if (!toStop) {
-                        log.error(">>>>>>>>>>> xxl-job, job fail monitor thread error:", e);
+                        log.error(">>>>>>>>>>> job, job fail monitor thread error:", e);
                     }
                 }
 
@@ -103,11 +103,11 @@ public class JobFailMonitorHelper {
 
             }
 
-            log.info(">>>>>>>>>>> xxl-job, job fail monitor thread stop");
+            log.info(">>>>>>>>>>> job, job fail monitor thread stop");
 
         });
         monitorThread.setDaemon(true);
-        monitorThread.setName("xxl-job, admin JobFailMonitorHelper");
+        monitorThread.setName("job, admin JobFailMonitorHelper");
         monitorThread.start();
     }
 

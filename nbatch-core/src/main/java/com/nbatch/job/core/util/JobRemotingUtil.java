@@ -111,7 +111,7 @@ public class JobRemotingUtil {
             // valid StatusCode
             int statusCode = connection.getResponseCode();
             if (statusCode != 200) {
-                return new ReturnT<>(ReturnT.FAIL_CODE, "xxl-job remoting fail, StatusCode(" + statusCode + ") invalid. for url : " + url);
+                return new ReturnT<>(ReturnT.FAIL_CODE, "job remoting fail, StatusCode(" + statusCode + ") invalid. for url : " + url);
             }
 
             // result
@@ -126,13 +126,13 @@ public class JobRemotingUtil {
             try {
                 return GsonTool.fromJson(resultJson, ReturnT.class, returnTargClassOfT);
             } catch (Exception e) {
-                log.error("xxl-job remoting (url={}) response content invalid({}).", url, resultJson, e);
-                return new ReturnT<>(ReturnT.FAIL_CODE, "xxl-job remoting (url="+url+") response content invalid("+ resultJson +").");
+                log.error("job remoting (url={}) response content invalid({}).", url, resultJson, e);
+                return new ReturnT<>(ReturnT.FAIL_CODE, "job remoting (url="+url+") response content invalid("+ resultJson +").");
             }
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            return new ReturnT<>(ReturnT.FAIL_CODE, "xxl-job remoting error("+ e.getMessage() +"), for url : " + url);
+            return new ReturnT<>(ReturnT.FAIL_CODE, "job remoting error("+ e.getMessage() +"), for url : " + url);
         } finally {
             try {
                 if (bufferedReader != null) {

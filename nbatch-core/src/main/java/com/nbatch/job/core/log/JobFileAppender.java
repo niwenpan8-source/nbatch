@@ -37,7 +37,7 @@ public class JobFileAppender {
 	 *
 	 */
 	@Getter
-	private static String logBasePath = "/data/applogs/xxl-job/jobhandler";
+	private static String logBasePath = "/data/applogs/job/jobhandler";
 
 	@Getter
 	private static String glueSrcPath = logBasePath.concat("/gluesource");

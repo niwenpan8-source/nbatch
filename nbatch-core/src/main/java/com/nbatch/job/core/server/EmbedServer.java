@@ -66,9 +66,9 @@ public class EmbedServer {
                     60L,
                     TimeUnit.SECONDS,
                     new LinkedBlockingQueue<>(2000),
-                    r -> new Thread(r, "xxl-job, EmbedServer bizThreadPool-" + r.hashCode()),
+                    r -> new Thread(r, "job, EmbedServer bizThreadPool-" + r.hashCode()),
                     (r, executor) -> {
-                        throw new RuntimeException("xxl-job, EmbedServer bizThreadPool is EXHAUSTED!");
+                        throw new RuntimeException("job, EmbedServer bizThreadPool is EXHAUSTED!");
                     });
             try {
                 // start server
@@ -90,7 +90,7 @@ public class EmbedServer {
                 // bind
                 ChannelFuture future = bootstrap.bind(port).sync();
 
-                log.info(">>>>>>>>>>> xxl-job remoting server start success, nettype = {}, port = {}", EmbedServer.class, port);
+                log.info(">>>>>>>>>>> job remoting server start success, nettype = {}, port = {}", EmbedServer.class, port);
 
                 // start registry
                 startRegistry(appName, address);
@@ -99,7 +99,7 @@ public class EmbedServer {
                 future.channel().closeFuture().sync();
 
             } catch (InterruptedException e) {
-                log.info(">>>>>>>>>>> xxl-job remoting server stop.");
+                log.info(">>>>>>>>>>> job remoting server stop.");
             } catch (Throwable e) {
                 log.error(">>>>>>>>>>> xxl-job remoting server error.", e);
             } finally {

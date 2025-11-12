@@ -31,14 +31,14 @@ import java.util.Map;
 public class IndexController {
 
 	@Resource
-	private JobService xxlJobService;
+	private JobService jobService;
 	@Resource
 	private LoginService loginService;
 
 	@RequestMapping("/")
 	public String index(Model model) {
 
-		Map<String, Object> dashboardMap = xxlJobService.dashboardInfo();
+		Map<String, Object> dashboardMap = jobService.dashboardInfo();
 		model.addAllAttributes(dashboardMap);
 		return "index";
 	}
@@ -46,7 +46,7 @@ public class IndexController {
     @RequestMapping("/chartInfo")
 	@ResponseBody
 	public ReturnT<Map<String, Object>> chartInfo(Date startDate, Date endDate) {
-        return xxlJobService.chartInfo(startDate, endDate);
+        return jobService.chartInfo(startDate, endDate);
     }
 	
 	@RequestMapping("/toLogin")

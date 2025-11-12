@@ -99,7 +99,7 @@ public class JobLogReportHelper {
 
                 } catch (Throwable e) {
                     if (!toStop) {
-                        log.error(">>>>>>>>>>> xxl-job, job log report thread error:", e);
+                        log.error(">>>>>>>>>>> job, job log report thread error:", e);
                     }
                 }
 
@@ -141,11 +141,11 @@ public class JobLogReportHelper {
 
             }
 
-            log.info(">>>>>>>>>>> xxl-job, job log report thread stop");
+            log.info(">>>>>>>>>>> job, job log report thread stop");
 
         });
         logrThread.setDaemon(true);
-        logrThread.setName("xxl-job, admin JobLogReportHelper");
+        logrThread.setName("job, admin JobLogReportHelper");
         logrThread.start();
     }
 

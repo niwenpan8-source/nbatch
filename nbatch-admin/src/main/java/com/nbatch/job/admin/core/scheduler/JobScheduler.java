@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author Mr.ni
  */
 @Slf4j
-public class XxlJobScheduler  {
+public class JobScheduler {
 
     public void init() throws Exception {
         // init i18n
@@ -46,7 +46,7 @@ public class XxlJobScheduler  {
         // start-schedule  ( depend on JobTriggerPoolHelper )
         JobScheduleHelper.getInstance().start();
 
-        log.info(">>>>>>>>> init xxl-job admin success.");
+        log.info(">>>>>>>>> init job admin success.");
     }
 
     
