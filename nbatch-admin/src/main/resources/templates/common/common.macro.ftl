@@ -145,7 +145,14 @@
                     <li class="nav-click <#if pageName == "jobgroup">active</#if>" ><a href="${request.contextPath}/jobgroup"><i class="fa fa-circle-o text-red"></i><span>${I18n.jobgroup_name}</span></a></li>
                     <li class="nav-click <#if pageName == "user">active</#if>" ><a href="${request.contextPath}/user"><i class="fa fa-circle-o text-purple"></i><span>${I18n.user_manage}</span></a></li>
 				</#if>
-				<li class="nav-click <#if pageName == "help">active</#if>" ><a href="${request.contextPath}/help"><i class="fa fa-circle-o text-gray"></i><span>${I18n.job_help}</span></a></li>
+<#--				<li class="nav-click <#if pageName == "help">active</#if>" >-->
+<#--					<a href="${request.contextPath}/help"><i class="fa fa-circle-o text-gray"></i><span>${I18n.job_help}</span></a>-->
+<#--				</li>-->
+				<li class="nav-click <#if pageName == "work">active</#if>" >
+					<a href="${request.contextPath}/work">
+						<i class="fa fa-circle-o text-blue"></i><span>${I18n.job_work}</span>
+					</a>
+				</li>
 			</ul>
 		</section>
 		<!-- /.sidebar -->
@@ -185,7 +192,7 @@
 						</a>
 					</li>
 					<li>
-						<a href="javascript::;"> 
+						<a href="javascript::;">
 							<i class="menu-icon fa fa-envelope-o bg-light-blue"></i>
 							<div class="menu-info">
 								<h4 class="control-sidebar-subheading">Nora 加入邮件列表</h4>
@@ -231,13 +238,6 @@
 
 <#macro commonFooter >
 	<footer class="main-footer">
-        Powered by <b>XXL-JOB</b> ${I18n.admin_version}
-		<div class="pull-right hidden-xs">
-            <strong>Copyright &copy; 2015-${.now?string('yyyy')} &nbsp;
-                <a href="https://www.nbatch.com/" target="_blank" >nbatch</a>
-				&nbsp;
-                <a href="https://github.com/nbatch/xxl-job" target="_blank" >github</a>
-            </strong><!-- All rights reserved. -->
-		</div>
+        Powered by <b>NBATCH</b> ${I18n.admin_version}
 	</footer>
 </#macro>

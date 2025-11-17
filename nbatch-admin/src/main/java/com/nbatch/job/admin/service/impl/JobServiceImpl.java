@@ -29,7 +29,7 @@ import com.nbatch.job.admin.mapper.IJobInfoMapper;
 import com.nbatch.job.admin.mapper.IJobLogMapper;
 import com.nbatch.job.admin.mapper.IJobLogReportMapper;
 import com.nbatch.job.admin.mapper.IJobLogglueMapper;
-import com.nbatch.job.admin.service.JobService;
+import com.nbatch.job.admin.service.IJobService;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.enums.ExecutorBlockStrategyEnum;
 import com.nbatch.job.core.glue.GlueTypeEnum;
@@ -50,11 +50,11 @@ import java.util.Set;
 /**
  * core job action for job
  *
- * @author Mr.ni 2016-5-28 15:30:33
+ * @author Mr.ni
  */
 @Slf4j
 @Service
-public class JobServiceImpl implements JobService {
+public class JobServiceImpl implements IJobService {
 
     @Resource
     private IJobGroupMapper jobGroupMapper;
@@ -335,7 +335,7 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public ReturnT<String> remove(int id) {
+    public ReturnT<String> remove(String id) {
         JobInfoPo jobInfoPo = jobInfoMapper.selectById(id);
         if (jobInfoPo == null) {
             return ReturnT.SUCCESS;
@@ -347,7 +347,7 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public ReturnT<String> start(int id) {
+    public ReturnT<String> start(String id) {
         JobInfoPo jobInfoPo = jobInfoMapper.selectById(id);
 
         // valid
@@ -380,7 +380,7 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
-    public ReturnT<String> stop(int id) {
+    public ReturnT<String> stop(String id) {
         JobInfoPo jobInfoPo = jobInfoMapper.selectById(id);
 
         jobInfoPo.setTriggerStatus(0);

@@ -2,6 +2,8 @@ package com.nbatch.job.admin.core.domain.po;
 
 import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -51,10 +53,12 @@ public class JobGroupPo extends Model<JobGroupPo> {
     /**
      * 执行器地址列表，多地址逗号分隔
      */
+    @TableField(updateStrategy = FieldStrategy.IGNORED)
     private String addressList;
 
     /**
      * 更新时间
+     * 忽略空值判断
      */
     private Date updateTime;
 

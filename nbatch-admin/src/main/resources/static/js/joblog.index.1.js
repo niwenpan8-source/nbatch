@@ -124,11 +124,11 @@ $(function() {
                         "width":'10%',
 						"render": function ( data, type, row ) {
 							var html = data;
-							if (data == 200) {
+							if (data === 200) {
 								html = '<span style="color: green">'+ I18n.system_success +'</span>';
-							} else if (data == 500) {
+							} else if (data === 500) {
 								html = '<span style="color: red">'+ I18n.system_fail +'</span>';
-							} else if (data == 0) {
+							} else if (data === 0) {
                                 html = '';
 							}
                             return html;

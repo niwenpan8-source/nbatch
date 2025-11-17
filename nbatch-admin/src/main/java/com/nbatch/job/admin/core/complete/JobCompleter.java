@@ -87,9 +87,6 @@ public class JobCompleter {
             jobLogPo.setHandleMsg(jobLogPo.getHandleMsg() + triggerChildMsg);
         }
 
-        // 2、fix_delay trigger next
-        // on the way
-
     }
 
 }

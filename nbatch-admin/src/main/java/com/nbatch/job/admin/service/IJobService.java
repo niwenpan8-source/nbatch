@@ -13,7 +13,7 @@ import java.util.Map;
  * 
  * @author Mr.ni 2016-5-28 15:30:33
  */
-public interface JobService {
+public interface IJobService {
 
 	/**
 	 * page list
@@ -46,21 +46,21 @@ public interface JobService {
 	 *
 	 * @param id 任务ID
 	 */
-	ReturnT<String> remove(int id);
+	ReturnT<String> remove(String id);
 
 	/**
 	 * start job
 	 *
 	 * @param id 任务ID
 	 */
-	ReturnT<String> start(int id);
+	ReturnT<String> start(String id);
 
 	/**
 	 * stop job
 	 *
 	 * @param id 任务ID
 	 */
-	ReturnT<String> stop(int id);
+	ReturnT<String> stop(String id);
 
 	/**
 	 * trigger

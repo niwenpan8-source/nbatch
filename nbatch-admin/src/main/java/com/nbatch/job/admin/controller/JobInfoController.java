@@ -15,7 +15,7 @@ import com.nbatch.job.admin.core.scheduler.ScheduleTypeEnum;
 import com.nbatch.job.admin.core.thread.JobScheduleHelper;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.admin.mapper.IJobGroupMapper;
-import com.nbatch.job.admin.service.JobService;
+import com.nbatch.job.admin.service.IJobService;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.enums.ExecutorBlockStrategyEnum;
 import com.nbatch.job.core.glue.GlueTypeEnum;
@@ -46,7 +46,7 @@ public class JobInfoController {
     @Resource
     private IJobGroupMapper jobGroupMapper;
     @Resource
-    private JobService xxlJobService;
+    private IJobService xxlJobService;
 
     @RequestMapping
     public String index(HttpServletRequest request, Model model, @RequestParam(required = false, defaultValue = "-1") String jobGroup) {
@@ -111,19 +111,19 @@ public class JobInfoController {
 
     @RequestMapping("/remove")
     @ResponseBody
-    public ReturnT<String> remove(int id) {
+    public ReturnT<String> remove(String id) {
         return xxlJobService.remove(id);
     }
 
     @RequestMapping("/stop")
     @ResponseBody
-    public ReturnT<String> pause(int id) {
+    public ReturnT<String> pause(String id) {
         return xxlJobService.stop(id);
     }
 
     @RequestMapping("/start")
     @ResponseBody
-    public ReturnT<String> start(int id) {
+    public ReturnT<String> start(String id) {
         return xxlJobService.start(id);
     }
 

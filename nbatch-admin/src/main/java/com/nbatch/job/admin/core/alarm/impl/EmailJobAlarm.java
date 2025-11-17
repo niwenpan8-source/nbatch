@@ -21,7 +21,7 @@ import java.util.Set;
 /**
  * job alarm by email
  *
- * @author Mr.ni 2020-01-19
+ * @author Mr.ni
  */
 @Slf4j
 @Component
