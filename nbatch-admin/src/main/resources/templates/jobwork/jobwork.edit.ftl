@@ -97,7 +97,8 @@
                     </h3>
                     <div class="space-y-2">
                         <#list jobWorkNodeTypeVo.jobWorkNodeList as jobWorkNode>
-                            <div class="node-item p-2 bg-gray-100 rounded-md text-sm cursor-move node-hover" draggable="true" data-type="${jobWorkNode.nodeId}">
+                            <div class="node-item p-2 bg-gray-100 rounded-md text-sm cursor-move node-hover" draggable="true"
+                                 data-node-id="${jobWorkNode.nodeId}">
                                 <i class="fa fa-download text-success mr-2"></i>${jobWorkNode.nodeName}
                             </div>
                         </#list>
@@ -153,7 +154,7 @@
     <script>
         $(document).ready(function() {
             // 全局变量
-            let nodeIdCounter = 1;
+            let runNodeIdCounter = 1;
             let nodes = {}; // 存储所有节点信息
             let connections = []; // 存储所有连接关系
             let isSettingDependency = false;
@@ -167,16 +168,17 @@
             const jobWorkNodeTypeList = JSON.parse(decodedData);
 
             // 节点类型配置
-            // 将数组 jobWorkNodeTypeList 转换为 nodeTypes 对象格式
-            const nodeTypes = {};
+            // 将数组 jobWorkNodeTypeList 转换为 nodeIds 对象格式
+            const nodeIds = {};
 
             // 遍历 jobWorkNodeTypeList 数组
             jobWorkNodeTypeList.forEach(category => {
                 // 遍历每个分类中的节点列表
                 category.jobWorkNodeList.forEach(node => {
-                    // 将节点信息添加到 nodeTypes 对象中
-                    nodeTypes[node.nodeId] = {
+                    // 将节点信息添加到 nodeIds 对象中
+                    nodeIds[node.nodeId] = {
                         name: node.nodeName,
+                        nodeType: node.nodeType,
                         icon: 'fa-exchange', // 根据节点ID获取图标
                         color: 'bg-success' // 根据分类名称获取颜色
                     };
@@ -196,8 +198,8 @@
             function initDragAndDrop() {
                 // 左侧节点拖拽
                 $('.node-item').on('dragstart', function(e) {
-                    const nodeType = $(this).data('type');
-                    e.originalEvent.dataTransfer.setData('node-type', nodeType);
+                    const nodeId = $(this).data('node-id');
+                    e.originalEvent.dataTransfer.setData('node-id', nodeId);
                     $(this).addClass('opacity-50');
                 });
 
@@ -219,10 +221,10 @@
                     e.preventDefault();
                     $(this).removeClass('bg-gray-200/50');
 
-                    const nodeType = e.originalEvent.dataTransfer.getData('node-type');
-                    if (nodeType) {
+                    const nodeId = e.originalEvent.dataTransfer.getData('node-id');
+                    if (nodeId) {
                         // 添加新节点（位置由grid布局自动管理）
-                        addNode(nodeType);
+                        addNode(nodeId);
                     }
                 });
             }
@@ -265,7 +267,7 @@
                         $('#connections').empty();
                         nodes = {};
                         connections = [];
-                        nodeIdCounter = 1;
+                        runNodeIdCounter = 1;
                         updateNodesCount();
                         resetDependencySetting();
                     }
@@ -277,25 +279,25 @@
                         nodes: nodes,
                         connections: connections
                     };
-
+                    //保存相关数据
                     console.log('保存流程数据:', flowData);
                     alert('流程已保存！（数据已输出到控制台）');
                 });
 
                 // 节点点击事件委托
                 $('#nodes-container').on('click', '.work-node', function(e) {
-                    const nodeId = $(this).data('id');
+                    const runNodeId = $(this).data('id');
 
                     if (isSettingDependency) {
-                        handleNodeSelectionForDependency(nodeId);
+                        handleNodeSelectionForDependency(runNodeId);
                         e.stopPropagation();
                     }
                 });
 
                 // 删除节点按钮事件委托
                 $('#nodes-container').on('click', '.delete-node', function(e) {
-                    const nodeId = $(this).closest('.work-node').data('id');
-                    removeNode(nodeId);
+                    const runNodeId = $(this).closest('.work-node').data('id');
+                    removeNode(runNodeId);
                     e.stopPropagation();
                 });
 
@@ -308,21 +310,21 @@
             }
 
             // 添加新节点到工作区（由grid布局自动控制每行4个节点）
-            function addNode(nodeType) {
-                console.log('添加节点:', nodeType);
-                const nodeId = 'node-' + nodeIdCounter++;
-                const nodeConfig = nodeTypes[nodeType];
+            function addNode(nodeId) {
+                console.log('添加节点:', nodeId);
+                const runNodeId = 'node-' + runNodeIdCounter++;
+                const nodeConfig = nodeIds[nodeId];
 
                 // 创建节点元素
                 const nodeElement = $(`
                     <div class="work-node w-[150px] h-[200px] rounded-lg shadow node-shadow node-hover transition-all"
-                         data-id="` + nodeId + `">
+                         data-id="` + runNodeId + `">
                         <div class="h-1/3 ` + nodeConfig.color + ` text-white rounded-t-lg flex items-center justify-center">
                             <i class="fa ` + nodeConfig.icon + ` text-2xl"></i>
                         </div>
                         <div class="h-2/3 bg-white p-3 flex flex-col">
                             <h4 class="font-medium text-center text-gray-800 mb-2">` + nodeConfig.name + `</h4>
-                            <p class="text-xs text-gray-500 text-center flex-1">ID: ` + nodeId + `</p>
+                            <p class="text-xs text-gray-500 text-center flex-1">ID: ` + runNodeId + `</p>
                             <div class="flex justify-between mt-2">
                                 <div class="setting-node text-primary text-center text-xs cursor-pointer hover:underline">
                                     <i class="fa fa-cog mr-1"></i>设置
@@ -342,9 +344,10 @@
                 const position = nodeElement.position();
 
                 // 存储节点信息
-                nodes[nodeId] = {
-                    id: nodeId,
-                    type: nodeType,
+                nodes[runNodeId] = {
+                    id: runNodeId,
+                    nodeId: nodeId,
+                    nodeType: nodeConfig.nodeType,
                     x: position.left,
                     y: position.top,
                     width: 150,
@@ -357,8 +360,8 @@
                 // 重新计算位置并绘制连接线（确保位置准确）
                 setTimeout(() => {
                     const newPosition = nodeElement.position();
-                    nodes[nodeId].x = newPosition.left;
-                    nodes[nodeId].y = newPosition.top;
+                    nodes[runNodeId].x = newPosition.left;
+                    nodes[runNodeId].y = newPosition.top;
                     redrawConnections();
                 }, 0);
             }
@@ -366,14 +369,14 @@
             // 在事件监听初始化函数中添加以下代码
             // 设置节点按钮事件委托
             $('#nodes-container').on('click', '.setting-node', function(e) {
-                const nodeId = $(this).closest('.work-node').data('id');
-                openNodeSettings(nodeId);
+                const runNodeId = $(this).closest('.work-node').data('id');
+                openNodeSettings(runNodeId);
                 e.stopPropagation();
             });
 
             // 打开节点设置面板的函数 - 使用layui弹窗
-            function openNodeSettings(nodeId) {
-                const node = nodes[nodeId];
+            function openNodeSettings(runNodeId) {
+                const node = nodes[runNodeId];
                 if (!node) {
                     return;
                 }
@@ -382,21 +385,33 @@
                 const content = `
                     <div class="p-4">
                         <form class="layui-form" lay-filter="node-setting-form">
-                            <input type="hidden" name="nodeId" value="` + nodeId + `">
+                            <input type="hidden" name="runNodeId" value="` + runNodeId + `">
+                            <input type="hidden" name="nodeId" value="` + node.nodeId + `">
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">运行节点ID</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="runNodeIdDisplay" value="` + runNodeId + `" disabled class="layui-input">
+                                </div>
+                            </div>
 
                             <div class="layui-form-item">
                                 <label class="layui-form-label">节点ID</label>
                                 <div class="layui-input-block">
-                                    <input type="text" name="nodeIdDisplay" value="` + nodeId + `" disabled class="layui-input">
+                                    <input type="text" name="nodeIdDisplay" value="` + node.nodeId + `" disabled class="layui-input">
                                 </div>
                             </div>
 
                             <div class="layui-form-item">
                                 <label class="layui-form-label">节点类型</label>
-                                <div class="layui-input-block">
+                                <div class="layui-input-block" style="padding-top: 10px;">
                                     <select name="nodeType" lay-verify="required">
                                     <option value="">请选择节点类型</option>
-                                        <option value="data-import" ` + (node.type === 'data-import' ? 'selected' : '') + `>数据导入</option>
+                                        <option value="data-import" ` + (node.nodeType === 'script' ? 'selected' : '') + `>脚本</option>
+                                        <option value="data-import" ` + (node.nodeType === 'store_procedure' ? 'selected' : '') + `>存储过程</option>
+                                        <option value="data-import" ` + (node.nodeType === 'execute_sql' ? 'selected' : '') + `>执行sql</option>
+                                        <option value="data-import" ` + (node.nodeType === 'import' ? 'selected' : '') + `>数据导入</option>
+                                        <option value="data-import" ` + (node.nodeType === 'export' ? 'selected' : '') + `>数据导出</option>
                                     </select>
                                 </div>
                             </div>
@@ -421,7 +436,7 @@
                 // 使用layui弹窗
                 layer.open({
                     type: 1,
-                    title: '节点设置-' + nodeId,
+                    title: '节点设置-' + runNodeId,
                     area: ['700px', '500px'],
                     shade: 0.6,
                     shadeClose: false,
@@ -438,6 +453,7 @@
                         const formData = {};
 
                         // 获取表单数据
+                        formData.runNodeId = form.find('input[name="runNodeId"]').val();
                         formData.nodeId = form.find('input[name="nodeId"]').val();
                         formData.nodeType = form.find('select[name="nodeType"]').val();
                         formData.scriptContent = form.find('textarea[name="scriptContent"]').val();
@@ -460,16 +476,18 @@
             function saveNodeSettings(formData) {
                 console.log('保存节点设置:', formData);
                 // 更新节点数据
-                const node = nodes[formData.nodeId];
+                const node = nodes[formData.runNodeId];
                 if (node) {
+                    node.runNodeId = formData.runNodeId;
+                    node.nodeId = formData.nodeId;
                     node.type = formData.nodeType;
                     node.scriptContent = formData.scriptContent;
                     node.parameters = formData.parameters;
 
                     // 更新节点显示名称（如果类型改变）
-                    if (nodeTypes[formData.nodeType]) {
-                        const nodeConfig = nodeTypes[formData.nodeType];
-                        $(`.work-node[data-id="` + formData.nodeId + `"] .font-medium`).text(nodeConfig.name);
+                    if (nodeIds[formData.nodeId]) {
+                        const nodeConfig = nodeIds[formData.nodeId];
+                        $(`.work-node[data-id="` + formData.runNodeId + `"] .font-medium`).text(nodeConfig.name);
                     }
 
                     console.log('节点设置已保存:', formData);
@@ -478,16 +496,16 @@
             }
 
             // 移除节点
-            function removeNode(nodeId) {
+            function removeNode(runNodeId) {
                 // 从DOM中移除节点
-                $(`.work-node[data-id="` + nodeId + `"]`).remove();
+                $(`.work-node[data-id="` + runNodeId + `"]`).remove();
 
                 // 从数据中移除节点
-                delete nodes[nodeId];
+                delete nodes[runNodeId];
 
                 // 移除与该节点相关的连接
                 connections = connections.filter(conn =>
-                    conn.source !== nodeId && conn.target !== nodeId
+                    conn.source !== runNodeId && conn.target !== runNodeId
                 );
 
                 // 重新绘制连接线
@@ -497,27 +515,27 @@
                 updateNodesCount();
 
                 // 如果正在设置依赖关系，重置
-                if (isSettingDependency && (firstNodeId === nodeId)) {
+                if (isSettingDependency && (firstNodeId === runNodeId)) {
                     resetDependencySetting();
                 }
             }
 
             // 处理节点选择用于设置依赖关系
-            function handleNodeSelectionForDependency(nodeId) {
+            function handleNodeSelectionForDependency(runNodeId) {
                 // 重置所有节点的选择状态
                 $('.work-node').removeClass('ring-2 ring-primary ring-offset-2');
 
                 if (!firstNodeId) {
                     // 选择第一个节点
-                    firstNodeId = nodeId;
-                    $(`.work-node[data-id="` + nodeId + `"]`).addClass('ring-2 ring-primary ring-offset-2');
-                } else if (firstNodeId === nodeId) {
+                    firstNodeId = runNodeId;
+                    $(`.work-node[data-id="` + runNodeId + `"]`).addClass('ring-2 ring-primary ring-offset-2');
+                } else if (firstNodeId === runNodeId) {
                     // 取消选择
                     firstNodeId = null;
                 } else {
                     // 选择第二个节点，等待用户选择关系类型
                     $(`.work-node[data-id="` + firstNodeId + `"]`).addClass('ring-2 ring-primary ring-offset-2');
-                    $(`.work-node[data-id="` + nodeId + `"]`).addClass('ring-2 ring-primary ring-offset-2');
+                    $(`.work-node[data-id="` + runNodeId + `"]`).addClass('ring-2 ring-primary ring-offset-2');
                 }
             }
 
@@ -628,11 +646,11 @@
             $(window).on('resize', function() {
                 // 更新所有节点的位置信息
                 $('.work-node').each(function() {
-                    const nodeId = $(this).data('id');
+                    const runNodeId = $(this).data('id');
                     const position = $(this).position();
-                    if (nodes[nodeId]) {
-                        nodes[nodeId].x = position.left;
-                        nodes[nodeId].y = position.top;
+                    if (nodes[runNodeId]) {
+                        nodes[runNodeId].x = position.left;
+                        nodes[runNodeId].y = position.top;
                     }
                 });
 
