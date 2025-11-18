@@ -1,22 +1,25 @@
 package com.nbatch.job.admin.controller;
 
+import cn.hutool.core.codec.Base64Decoder;
+import cn.hutool.core.codec.Base64Encoder;
+import cn.hutool.json.JSONUtil;
 import com.nbatch.job.admin.core.domain.param.JobWorkPageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkParam;
+import com.nbatch.job.admin.core.domain.vo.JobWorkNodeTypeVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkVo;
-import com.nbatch.job.admin.core.util.I18nUtil;
-import com.nbatch.job.admin.core.work.WorkStatusEnum;
+import com.nbatch.job.admin.core.enums.WorkStatusEnum;
+import com.nbatch.job.admin.service.IJobWorkNodeService;
 import com.nbatch.job.admin.service.IJobWorkService;
 import com.nbatch.job.core.biz.model.ReturnT;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,6 +34,9 @@ public class JobWorkController {
 
     @Resource
     private IJobWorkService jobWorkService;
+
+    @Resource
+    private IJobWorkNodeService jobWorkNodeService;
 
     @RequestMapping
     public String index(Model model) {
@@ -82,6 +88,17 @@ public class JobWorkController {
         }
         jobWorkService.update(param);
         return new ReturnT<>("修改成功");
+    }
+
+
+    @RequestMapping("/editModel")
+    public String editModel(Model model, String workId) {
+        List<JobWorkNodeTypeVo> list = jobWorkNodeService.getAllPublishNode();
+        // 枚举-字典路由策略-列表
+        model.addAttribute("workId", workId);
+        model.addAttribute("list", list);
+        model.addAttribute("jobWorkNodeTypeJsonStr", Base64Encoder.encode(JSONUtil.toJsonStr(list)));
+        return "jobwork/jobwork.edit";
     }
 
 }

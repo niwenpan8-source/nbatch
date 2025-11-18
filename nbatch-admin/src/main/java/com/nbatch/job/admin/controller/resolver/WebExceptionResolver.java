@@ -1,11 +1,9 @@
 package com.nbatch.job.admin.controller.resolver;
 
-import com.nbatch.job.admin.core.exception.XxlJobException;
+import com.nbatch.job.admin.core.exception.JobException;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.admin.core.util.JacksonUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.method.HandlerMethod;
@@ -29,7 +27,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 	public ModelAndView resolveException(HttpServletRequest request,
 			HttpServletResponse response, Object handler, Exception ex) {
 
-		if (!(ex instanceof XxlJobException)) {
+		if (!(ex instanceof JobException)) {
 			log.error("WebExceptionResolver:", ex);
 		}
 

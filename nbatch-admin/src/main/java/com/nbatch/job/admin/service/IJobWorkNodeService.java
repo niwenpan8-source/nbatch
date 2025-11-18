@@ -2,8 +2,10 @@ package com.nbatch.job.admin.service;
 
 import com.nbatch.job.admin.core.domain.param.JobWorkNodePageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodeParam;
+import com.nbatch.job.admin.core.domain.vo.JobWorkNodeTypeVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeVo;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -37,4 +39,9 @@ public interface IJobWorkNodeService {
      * 删除
      */
     int delete(String id);
+
+    /**
+     * 得到所有的发布的
+     */
+    List<JobWorkNodeTypeVo> getAllPublishNode();
 }

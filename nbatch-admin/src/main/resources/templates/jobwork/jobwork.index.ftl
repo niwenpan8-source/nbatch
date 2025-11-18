@@ -29,7 +29,7 @@
 	                	<span class="input-group-addon">${I18n.job_work_field_status}</span>
                 		<select class="form-control" id="workStatus" >
                 			<#list workStatusEnum as status>
-                				<option value="${status.code}">${status.title}</option>
+                				<option value="${status.code}">${status.value}</option>
                 			</#list>
 	                  	</select>
 	              	</div>

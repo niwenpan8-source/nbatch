@@ -6,9 +6,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.cron.CronExpression;
 import com.nbatch.job.admin.core.domain.po.JobInfoPo;
-import com.nbatch.job.admin.core.scheduler.MisfireStrategyEnum;
-import com.nbatch.job.admin.core.scheduler.ScheduleTypeEnum;
-import com.nbatch.job.admin.core.trigger.TriggerTypeEnum;
+import com.nbatch.job.admin.core.enums.MisfireStrategyEnum;
+import com.nbatch.job.admin.core.enums.ScheduleTypeEnum;
+import com.nbatch.job.admin.core.enums.TriggerTypeEnum;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;

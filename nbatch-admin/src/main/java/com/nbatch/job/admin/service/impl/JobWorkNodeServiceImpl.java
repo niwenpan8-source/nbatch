@@ -1,19 +1,25 @@
 package com.nbatch.job.admin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodePageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodeParam;
 import com.nbatch.job.admin.core.domain.po.JobWorkNodePo;
+import com.nbatch.job.admin.core.domain.vo.JobWorkNodeTypeVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeVo;
+import com.nbatch.job.admin.core.enums.NodeTypeEnum;
 import com.nbatch.job.admin.mapper.IJobWorkNodeMapper;
 import com.nbatch.job.admin.service.IJobWorkNodeService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @description: 作业节点执行服务实现类
@@ -34,6 +40,11 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
         Page<JobWorkNodePo> page = jobWorkNodeMapper.selectPage(new Page<>(param.getStart(), param.getLength()),
                 Wrappers.lambdaQuery(JobWorkNodePo.class));
         // package result
+        page.convert(jobWorkNodePo -> {
+            JobWorkNodeVo jobWorkNodeVo = BeanUtil.toBean(jobWorkNodePo, JobWorkNodeVo.class);
+            jobWorkNodeVo.setNodeTypeName(NodeTypeEnum.getValue(jobWorkNodePo.getNodeType()));
+            return jobWorkNodeVo;
+        });
         Map<String, Object> maps = new HashMap<>();
         // 总记录数
         maps.put("recordsTotal", page.getTotal());
@@ -82,6 +93,34 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
             return 1;
         }
         return jobWorkNodeMapper.deleteById(id);
+    }
+
+    /**
+     * 得到所有的发布的
+     */
+    @Override
+    public List<JobWorkNodeTypeVo> getAllPublishNode() {
+        List<JobWorkNodePo> list = jobWorkNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkNodePo.class)
+                .eq(JobWorkNodePo::getNodeStatus, 1));
+        List<JobWorkNodeVo> jobWorkNodeVoList = list.stream()
+                .filter(x -> StrUtil.isNotEmpty(x.getNodeType()))
+                .map(x -> {
+                    JobWorkNodeVo jobWorkNodeVo = BeanUtil.toBean(x, JobWorkNodeVo.class);
+                    jobWorkNodeVo.setNodeTypeName(NodeTypeEnum.getValue(x.getNodeType()));
+                    return jobWorkNodeVo;
+                }).collect(Collectors.toList());
+        Map<String, List<JobWorkNodeVo>> jobWorkNodeVoMap
+                = jobWorkNodeVoList.stream().collect(Collectors.groupingBy(JobWorkNodeVo::getNodeType));
+        List<JobWorkNodeTypeVo> jobWorkNodeTypeList = new ArrayList<>();
+        jobWorkNodeVoMap.forEach((k, v) -> {
+            JobWorkNodeTypeVo jobWorkNodeTypeVo = new JobWorkNodeTypeVo();
+            jobWorkNodeTypeVo
+                    .setNodeType(k)
+                    .setNodeTypeName(NodeTypeEnum.getValue(k))
+                    .setJobWorkNodeList(v);
+            jobWorkNodeTypeList.add(jobWorkNodeTypeVo);
+        });
+        return jobWorkNodeTypeList;
     }
 
 

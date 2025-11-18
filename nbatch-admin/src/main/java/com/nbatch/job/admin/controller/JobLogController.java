@@ -10,7 +10,7 @@ import com.nbatch.job.admin.core.complete.JobCompleter;
 import com.nbatch.job.admin.core.domain.po.JobGroupPo;
 import com.nbatch.job.admin.core.domain.po.JobInfoPo;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
-import com.nbatch.job.admin.core.exception.XxlJobException;
+import com.nbatch.job.admin.core.exception.JobException;
 import com.nbatch.job.admin.core.scheduler.JobScheduler;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.admin.mapper.IJobGroupMapper;
@@ -66,7 +66,7 @@ public class JobLogController {
         // filter group
         List<JobGroupPo> jobGroupList = PermissionInterceptor.filterJobGroupByRole(request, jobGroupListAll);
         if (CollUtil.isEmpty(jobGroupList)) {
-            throw new XxlJobException(I18nUtil.getString("jobgroup_empty"));
+            throw new JobException(I18nUtil.getString("jobgroup_empty"));
         }
 
         model.addAttribute("JobGroupList", jobGroupList);

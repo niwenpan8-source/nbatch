@@ -1,7 +1,7 @@
 package com.nbatch.job.admin.core.thread;
 
 import com.nbatch.job.admin.core.conf.JobAdminConfig;
-import com.nbatch.job.admin.core.trigger.TriggerTypeEnum;
+import com.nbatch.job.admin.core.enums.TriggerTypeEnum;
 import com.nbatch.job.admin.core.trigger.JobTrigger;
 import lombok.extern.slf4j.Slf4j;
 

@@ -3,7 +3,8 @@ package com.nbatch.job.admin.controller;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodePageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodeParam;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeVo;
-import com.nbatch.job.admin.core.work.WorkStatusEnum;
+import com.nbatch.job.admin.core.enums.NodeTypeEnum;
+import com.nbatch.job.admin.core.enums.WorkStatusEnum;
 import com.nbatch.job.admin.service.IJobWorkNodeService;
 import com.nbatch.job.core.biz.model.ReturnT;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +24,7 @@ import java.util.Map;
  */
 @Slf4j
 @Controller
-@RequestMapping("/work/node")
+@RequestMapping("/node")
 public class JobWorkNodeController {
 
     @Resource
@@ -32,7 +33,7 @@ public class JobWorkNodeController {
     @RequestMapping
     public String index(Model model) {
         // 枚举-字典路由策略-列表
-        model.addAttribute("workStatusEnum", WorkStatusEnum.values());
+        model.addAttribute("nodeTypeEnum", NodeTypeEnum.values());
         return "worknode/worknode.index";
     }
 
@@ -52,6 +53,7 @@ public class JobWorkNodeController {
     @RequestMapping("/addModel")
     public String addModel(Model model) {
         // 枚举-字典路由策略-列表
+        model.addAttribute("nodeTypeEnum", NodeTypeEnum.values());
         model.addAttribute("workStatusEnum", WorkStatusEnum.values());
         return "worknode/worknode.add";
     }
@@ -66,15 +68,21 @@ public class JobWorkNodeController {
     public String updateModel(Model model, String workNodeId) {
         JobWorkNodeVo workVo = jobWorkNodeService.getModel(workNodeId);
         // 枚举-字典路由策略-列表
+        model.addAttribute("nodeTypeEnum", NodeTypeEnum.values());
         model.addAttribute("workStatusEnum", WorkStatusEnum.values());
-        model.addAttribute("model", workVo);
+        if (workVo != null) {
+            model.addAttribute("model", workVo);
+        } else {
+            model.addAttribute("model", new JobWorkNodeVo());
+        }
+
         return "worknode/worknode.update";
     }
 
     @ResponseBody
     @PostMapping("/update")
     public ReturnT<String> update(JobWorkNodeParam param) {
-        if (param.getWorkId() == null) {
+        if (param.getNodeId() == null) {
             return new ReturnT<>(ReturnT.FAIL_CODE, "修改失败，作业id不可为空");
         }
         jobWorkNodeService.update(param);

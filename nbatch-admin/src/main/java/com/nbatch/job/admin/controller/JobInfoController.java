@@ -8,10 +8,10 @@ import com.nbatch.job.admin.core.domain.param.JobInfoParam;
 import com.nbatch.job.admin.core.domain.po.JobGroupPo;
 import com.nbatch.job.admin.core.domain.po.JobInfoPo;
 import com.nbatch.job.admin.core.domain.po.JobUserPo;
-import com.nbatch.job.admin.core.exception.XxlJobException;
-import com.nbatch.job.admin.core.route.ExecutorRouteStrategyEnum;
-import com.nbatch.job.admin.core.scheduler.MisfireStrategyEnum;
-import com.nbatch.job.admin.core.scheduler.ScheduleTypeEnum;
+import com.nbatch.job.admin.core.exception.JobException;
+import com.nbatch.job.admin.core.enums.ExecutorRouteStrategyEnum;
+import com.nbatch.job.admin.core.enums.MisfireStrategyEnum;
+import com.nbatch.job.admin.core.enums.ScheduleTypeEnum;
 import com.nbatch.job.admin.core.thread.JobScheduleHelper;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.admin.mapper.IJobGroupMapper;
@@ -69,7 +69,7 @@ public class JobInfoController {
         // filter group
         List<JobGroupPo> jobGroupList = PermissionInterceptor.filterJobGroupByRole(request, jobGroupListAll);
         if (CollUtil.isEmpty(jobGroupList)) {
-            throw new XxlJobException(I18nUtil.getString("jobgroup_empty"));
+            throw new JobException(I18nUtil.getString("jobgroup_empty"));
         }
 
         model.addAttribute("JobGroupList", jobGroupList);

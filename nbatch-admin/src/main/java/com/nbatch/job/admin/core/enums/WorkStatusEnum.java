@@ -1,4 +1,4 @@
-package com.nbatch.job.admin.core.work;
+package com.nbatch.job.admin.core.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -11,8 +11,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum WorkStatusEnum {
 
-    STOP(0, "停止"),
-    START(1, "运行")
+    STOP(0, "停用"),
+    START(1, "启用")
     ;
 
     /**
@@ -23,5 +23,5 @@ public enum WorkStatusEnum {
     /**
      * 状态描述
      */
-    private final String title;
+    private final String value;
 }

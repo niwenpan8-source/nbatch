@@ -25,12 +25,10 @@
         <div class="form-group">
             <label for="firstname" class="col-sm-2 control-label">作业状态<font color="red">*</font></label>
             <div class="col-sm-4">
-                <select class="form-control" id="workStatus">
+                <select class="form-control" id="workStatus" name="workStatus">
                     <option value="" >--请选择--</option>
                     <#list workStatusEnum as worStatusItem>
-                        <option value="${worStatusItem.code}">
-                            ${worStatusItem.title}
-                        </option>
+                        <option value="${worStatusItem.code}">${worStatusItem.value}</option>
                     </#list>
                 </select>
             </div>

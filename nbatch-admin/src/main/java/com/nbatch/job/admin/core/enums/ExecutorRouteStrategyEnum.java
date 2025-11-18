@@ -1,5 +1,6 @@
-package com.nbatch.job.admin.core.route;
+package com.nbatch.job.admin.core.enums;
 
+import com.nbatch.job.admin.core.route.ExecutorRouter;
 import com.nbatch.job.admin.core.route.strategy.ExecutorRouteBusyover;
 import com.nbatch.job.admin.core.route.strategy.ExecutorRouteConsistentHash;
 import com.nbatch.job.admin.core.route.strategy.ExecutorRouteFailover;

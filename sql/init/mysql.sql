@@ -200,14 +200,10 @@ drop table if exists nbatch_job_work_node;
 create table nbatch_job_work_node
 (
     node_id      varchar(32) not null comment '作业节点id',
-    parent_node_id      varchar(32) not null default '0' comment '作业父节点id',
-    work_id      varchar(32) not null comment '作业id',
     node_name    varchar(300) not null comment '节点名称',
     node_desc    varchar(300) comment '节点描述',
     node_status  tinyint(4)  not null default 0 comment '节点状态：0=停用、1=启用',
-    node_type  varchar(20)  not null comment 'scipt:脚本,store_procedure:存储过程,execute_sql:执行sql,import:导入,export:导出',
-    node_order  tinyint(4)  not null comment '节点顺序',
-    turn_time  datetime comment '翻牌时间',
+    node_type  varchar(20)  not null comment 'script:脚本,store_procedure:存储过程,execute_sql:执行sql,import:导入,export:导出',
     primary key (node_id)
 ) engine = innodb comment = '作业节点表'
   default charset = utf8mb4;

@@ -12,7 +12,7 @@
 	<!-- header -->
 	<@netCommon.commonHeader />
 	<!-- left -->
-	<@netCommon.commonLeft "work" />
+	<@netCommon.commonLeft "node" />
 	
 	<!-- Content Wrapper. Contains page content -->
 	<div class="content-wrapper">
@@ -26,10 +26,10 @@
 	    	<div class="row">
 	    		<div class="col-xs-3">
 	              	<div class="input-group">
-	                	<span class="input-group-addon">${I18n.job_work_field_status}</span>
-                		<select class="form-control" id="workStatus" >
-                			<#list workStatusEnum as status>
-                				<option value="${status.code}">${status.title}</option>
+	                	<span class="input-group-addon">${I18n.job_work_node_field_type}</span>
+                		<select class="form-control" id="nodeType" >
+                			<#list nodeTypeEnum as type>
+                				<option value="${type.code}">${type.value}</option>
                 			</#list>
 	                  	</select>
 	              	</div>
@@ -45,14 +45,14 @@
 				<div class="col-xs-12">
 					<div class="box">
 			            <div class="box-body" >
-			              	<table id="job_work_list" class="table table-bordered table-striped" width="100%" >
+			              	<table id="work_node_list" class="table table-bordered table-striped" width="100%" >
 				                <thead>
 					            	<tr>
-					            		<th name="workId">${I18n.job_work_field_id}</th>
-					                	<th name="workName">${I18n.job_work_field_name}</th>
-					                  	<th name="workDesc">${I18n.job_work_field_desc}</th>
-                                        <th name="workStatus">${I18n.job_work_field_status}</th>
-                                        <th name="turnTime">${I18n.job_work_field_turn_time}</th>
+					            		<th name="nodeId">${I18n.job_work_node_field_id}</th>
+					                	<th name="nodeName">${I18n.job_work_node_field_name}</th>
+					                  	<th name="nodeDesc">${I18n.job_work_node_field_desc}</th>
+                                        <th name="nodeStatus">${I18n.job_work_node_field_status}</th>
+                                        <th name="nodeType">${I18n.job_work_node_field_type}</th>
 					                  	<th>${I18n.system_opt}</th>
 					                </tr>
 				                </thead>
@@ -78,6 +78,6 @@
 <script src="${request.contextPath}/static/adminlte/bower_components/moment/moment.min.js"></script>
 <#-- cronGen -->
 <script src="${request.contextPath}/static/plugins/cronGen/cronGen<#if I18n.admin_i18n?default('')?length gt 0 >_${I18n.admin_i18n}</#if>.js"></script>
-<script src="${request.contextPath}/static/js/jobwork.index.1.js"></script>
+<script src="${request.contextPath}/static/js/worknode.index.1.js"></script>
 </body>
 </html>

@@ -8,36 +8,41 @@
 
 <!-- job新增.模态框 -->
 <div class="modal-body">
-    <form class="form-horizontal form" role="form" id="addModel" action="/work/insert">
+    <form class="form-horizontal form" role="form" id="addModel" action="/node/insert">
         <#-- 基础信息 -->
         <div class="form-group">
-            <label for="firstname" class="col-sm-2 control-label">作业名称<font color="red">*</font></label>
+            <label for="firstname" class="col-sm-2 control-label">节点名称<font color="red">*</font></label>
             <div class="col-sm-4">
-                <input type="text" class="form-control" name="workName" placeholder="${I18n.system_please_input}" maxlength="50">
+                <input type="text" class="form-control" name="nodeName" placeholder="${I18n.system_please_input}" maxlength="50">
             </div>
 
-            <label for="lastname" class="col-sm-2 control-label">作业描述<font color="red">*</font></label>
+            <label for="lastname" class="col-sm-2 control-label">节点描述<font color="red">*</font></label>
             <div class="col-sm-4">
-                <input type="text" class="form-control" name="workDesc" placeholder="${I18n.system_please_input}" maxlength="50">
+                <input type="text" class="form-control" name="nodeDesc" placeholder="${I18n.system_please_input}" maxlength="50">
             </div>
         </div>
 
         <div class="form-group">
-            <label for="firstname" class="col-sm-2 control-label">作业状态<font color="red">*</font></label>
+            <label for="firstname" class="col-sm-2 control-label">节点状态<font color="red">*</font></label>
             <div class="col-sm-4">
-                <select class="form-control" id="workStatus">
+                <select class="form-control" id="nodeType" name="nodeType">
                     <option value="" >--请选择--</option>
-                    <#list workStatusEnum as worStatusItem>
-                        <option value="${worStatusItem.code}">
-                            ${worStatusItem.title}
+                    <#list nodeTypeEnum as nodeTypeItem>
+                        <option value="${nodeTypeItem.code}">
+                            ${nodeTypeItem.value}
                         </option>
                     </#list>
                 </select>
             </div>
 
-            <label for="lastname" class="col-sm-2 control-label">翻牌日期<font color="red">*</font></label>
+            <label for="lastname" class="col-sm-2 control-label">节点状态<font color="red">*</font></label>
             <div class="col-sm-4">
-                <input type="text" class="form-control" id="turnTime" name="turnTime" placeholder="yyyy-MM-dd">
+                <select class="form-control" id="nodeStatus" name="nodeStatus">
+                    <option value="" >--请选择--</option>
+                    <#list workStatusEnum as worStatusItem>
+                        <option value="${worStatusItem.code}">${worStatusItem.value}</option>
+                    </#list>
+                </select>
             </div>
         </div>
 

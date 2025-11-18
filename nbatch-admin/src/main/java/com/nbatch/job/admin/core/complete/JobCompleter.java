@@ -7,7 +7,7 @@ import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.domain.po.JobInfoPo;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
 import com.nbatch.job.admin.core.thread.JobTriggerPoolHelper;
-import com.nbatch.job.admin.core.trigger.TriggerTypeEnum;
+import com.nbatch.job.admin.core.enums.TriggerTypeEnum;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.context.XxlJobContext;

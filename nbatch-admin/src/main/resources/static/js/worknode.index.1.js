@@ -1,15 +1,15 @@
 $(function () {
     // init date tables
-    var jobWorkTable = $("#job_work_list").dataTable({
+    var workNodeTable = $("#work_node_list").dataTable({
         "deferRender": true,
         "processing": true,
         "serverSide": true,
         "ajax": {
-            url: base_url + "/work/pageList",
+            url: base_url + "/node/pageList",
             type: "post",
             data: function (d) {
                 var obj = {};
-                obj.workStatus = $('#workStatus').val();
+                obj.nodeType = $('#nodeType').val();
                 obj.start = d.start;
                 obj.length = d.length;
                 return obj;
@@ -19,25 +19,25 @@ $(function () {
         "ordering": false,
         "columns": [
             {
-                "data": 'workId',
+                "data": 'nodeId',
                 "bSortable": false,
                 "visible": true,
-                "width": '20%'
+                "width": '15%'
             },
             {
-                "data": 'workName',
+                "data": 'nodeName',
+                "visible": true,
+                "width": '15%'
+            },
+            {
+                "data": 'nodeDesc',
                 "visible": true,
                 "width": '20%'
             },
             {
-                "data": 'workDesc',
+                "data": 'nodeStatus',
                 "visible": true,
-                "width": '20%'
-            },
-            {
-                "data": 'workStatus',
-                "visible": true,
-                "width": '13%',
+                "width": '15%',
                 "render": function (data, type, row) {
                     // status
                     if (1 === data) {
@@ -48,18 +48,15 @@ $(function () {
                 }
             },
             {
-                "data": 'turnTime',
+                "data": 'nodeTypeName',
                 "visible": true,
-                "render": function (data, type, row) {
-                    return data ? moment(new Date(data)).format("YYYY-MM-DD") : "";
-                }
+                "width": '15%'
             },
             {
                 "data": I18n.system_opt,
-                "width": '10%',
+                "width": '15%',
                 "render": function (data, type, row) {
                     return function () {
-
                         // data
                         tableData['key' + row.id] = row;
 
@@ -70,10 +67,9 @@ $(function () {
                             '       <span class="caret"></span>\n' +
                             '       <span class="sr-only">Toggle Dropdown</span>\n' +
                             '     </button>\n' +
-                            '     <ul class="dropdown-menu" role="menu" _id="' + row.workId + '" >\n' +
+                            '     <ul class="dropdown-menu" role="menu" _id="' + row.nodeId + '" >\n' +
                             '       <li><a href="javascript:void(0);" class="update">' + I18n.system_opt_edit + '</a></li>\n' +
                             '       <li><a href="javascript:void(0);" class="delete">' + I18n.system_opt_del + '</a></li>\n' +
-                            '       <li><a href="javascript:void(0);" class="edit">' + I18n.system_opt_edit + '</a></li>\n' +
                             '     </ul>\n' +
                             '   </div>';
                     };
@@ -111,13 +107,14 @@ $(function () {
 
     // search btn
     $('#searchBtn').on('click', function () {
-        jobWorkTable.fnDraw();
+        console.log(123)
+        workNodeTable.fnDraw();
     });
 
     // job operate
-    $("#job_work_list").on('click', '.delete', function () {
+    $("#work_node_list").on('click', '.delete', function () {
 
-        var url = base_url + "/work/delete";
+        var url = base_url + "/node/delete";
         var id = $(this).parents('ul').attr("_id");
         console.log(id);
         var typeName = I18n.system_opt_del;
@@ -139,7 +136,7 @@ $(function () {
                 success: function (data) {
                     if (data.code === 200) {
                         layer.msg(typeName + I18n.system_success);
-                        jobWorkTable.fnDraw(false);
+                        workNodeTable.fnDraw(false);
                     } else {
                         layer.msg(data.msg || typeName + I18n.system_fail);
                     }
@@ -151,7 +148,7 @@ $(function () {
 
     // add
     $(".add").click(function () {
-        var url = base_url + "/work/addModel";
+        var url = base_url + "/node/addModel";
         layer.open({
             type: 2,
             area: ['500px', '400px'],
@@ -173,7 +170,7 @@ $(function () {
 
                     // 使用jQuery.ajax提交表单
                     $.ajax({
-                        url: base_url + '/work/insert',  // 替换为实际的提交地址
+                        url: base_url + '/node/insert',  // 替换为实际的提交地址
                         type: 'POST',
                         data: formData,
                         processData: false,
@@ -182,7 +179,7 @@ $(function () {
                             if (response.code === 200) {
                                 layer.msg('添加成功', {icon: 1});
                                 layer.close(index);
-                                jobWorkTable.fnDraw();  // 刷新表格
+                                workNodeTable.fnDraw();  // 刷新表格
                             } else {
                                 layer.msg(response.msg || '添加失败', {icon: 2});
                             }
@@ -202,10 +199,10 @@ $(function () {
     });
 
     // add
-    $("#job_work_list").on('click', '.update',function() {
+    $("#work_node_list").on('click', '.update',function() {
         var id = $(this).parents('ul').attr("_id");
         console.log(id)
-        var url = base_url + "/work/updateModel?workId=" + id;
+        var url = base_url + "/node/updateModel?workNodeId=" + id;
         layer.open({
             type: 2,
             area: ['500px', '400px'],
@@ -227,7 +224,7 @@ $(function () {
 
                     // 使用jQuery.ajax提交表单
                     $.ajax({
-                        url: base_url + '/work/update',  // 替换为实际的提交地址
+                        url: base_url + '/node/update',  // 替换为实际的提交地址
                         type: 'POST',
                         data: formData,
                         processData: false,
@@ -236,7 +233,7 @@ $(function () {
                             if (response.code === 200) {
                                 layer.msg('添加成功', {icon: 1});
                                 layer.close(index);
-                                jobWorkTable.fnDraw();  // 刷新表格
+                                workNodeTable.fnDraw();  // 刷新表格
                             } else {
                                 layer.msg(response.msg || '添加失败', {icon: 2});
                             }
@@ -253,14 +250,6 @@ $(function () {
                 layer.close(index);
             }
         });
-    });
-
-    // add
-    $("#job_work_list").on('click', '.edit',function() {
-        var id = $(this).parents('ul').attr("_id");
-        var url = base_url + "/work/editModel?workId=" + id;
-        // 打开新页签
-        window.open(url, '_blank');
     });
 
 

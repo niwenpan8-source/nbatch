@@ -8,41 +8,48 @@
 
 <!-- job新增.模态框 -->
 <div class="modal-body">
-    <form class="form-horizontal form" role="form" id="addModel" action="/work/insert">
-        <input type="hidden" name="workId" value="${model.workId}">
+    <form class="form-horizontal form" role="form" id="updateModel" action="/node/update">
+        <input type="hidden" name="nodeId" value="${model.nodeId}">
         <#-- 基础信息 -->
         <div class="form-group">
-            <label for="firstname" class="col-sm-2 control-label">作业名称<font color="red">*</font></label>
+            <label for="nodeName" class="col-sm-2 control-label">节点名称<font color="red">*</font></label>
             <div class="col-sm-4">
-                <input type="text" class="form-control" name="workName" placeholder="${I18n.system_please_input}"
-                       maxlength="50" value="<#if model?? && model.workName??>${model.workName}</#if>">
+                <input type="text" class="form-control" name="nodeName" placeholder="${I18n.system_please_input}"
+                       maxlength="50" value="${model.nodeName}">
             </div>
 
-            <label for="lastname" class="col-sm-2 control-label">作业描述<font color="red">*</font></label>
+            <label for="nodeDesc" class="col-sm-2 control-label">节点描述<font color="red">*</font></label>
             <div class="col-sm-4">
-                <input type="text" class="form-control" name="workDesc" placeholder="${I18n.system_please_input}"
-                       maxlength="50" value="<#if model?? && model.workDesc??>${model.workDesc}</#if>">
+                <input type="text" class="form-control" name="nodeDesc" placeholder="${I18n.system_please_input}"
+                       maxlength="50" value="${model.nodeDesc}">
             </div>
         </div>
 
         <div class="form-group">
-            <label for="firstname" class="col-sm-2 control-label">作业状态<font color="red">*</font></label>
+            <label for="nodeType" class="col-sm-2 control-label">节点状态<font color="red">*</font></label>
             <div class="col-sm-4">
-                <select class="form-control" id="workStatus">
-                     <option value="" >--请选择--</option>
-                    <#list workStatusEnum as worStatusItem>
-                        <option value="${worStatusItem.code}"
-                        <#if model?? && model.workStatus?? && model.workStatus == worStatusItem.code>selected</#if>>
-                            ${worStatusItem.title}
+                <select class="form-control" id="nodeType" name="nodeType">
+                    <option value="" >--请选择--</option>
+                    <#list nodeTypeEnum as nodeTypeItem>
+                        <option value="${nodeTypeItem.code}"
+                                <#if model?? && model.nodeType?? && model.nodeType == nodeTypeItem.code>selected</#if>>
+                            ${nodeTypeItem.value}
                         </option>
                     </#list>
                 </select>
             </div>
 
-            <label for="lastname" class="col-sm-2 control-label">翻牌日期<font color="red">*</font></label>
+            <label for="nodeStatus" class="col-sm-2 control-label">节点状态<font color="red">*</font></label>
             <div class="col-sm-4">
-                <input type="text" class="form-control" id="turnTime" name="turnTime"
-                       placeholder="yyyy-MM-dd" value="<#if model?? && model.turnTime??>${model.turnTime}</#if>">
+                <select class="form-control" id="nodeStatus" name="nodeStatus">
+                    <option value="" >--请选择--</option>
+                    <#list workStatusEnum as workStatusItem>
+                        <option value="${workStatusItem.code}"
+                                <#if model?? && model.workStatus?? && model.workStatus == workStatusItem.code>selected</#if>>
+                            ${workStatusItem.value}
+                        </option>
+                    </#list>
+                </select>
             </div>
         </div>
 
