@@ -7,10 +7,10 @@ import cn.hutool.core.util.ObjUtil;
 import com.nbatch.job.core.biz.AdminBiz;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.ReturnT;
-import com.nbatch.job.core.context.XxlJobContext;
-import com.nbatch.job.core.context.XxlJobHelper;
+import com.nbatch.job.core.context.BatchJobContext;
+import com.nbatch.job.core.context.BatchJobHelper;
 import com.nbatch.job.core.enums.RegistryConfig;
-import com.nbatch.job.core.executor.XxlJobExecutor;
+import com.nbatch.job.core.executor.BatchJobExecutor;
 import com.nbatch.job.core.log.JobFileAppender;
 import com.nbatch.job.core.util.JdkSerializeTool;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +54,7 @@ public class TriggerCallbackThread {
     public void start() {
 
         // valid
-        if (XxlJobExecutor.getAdminBizList() == null) {
+        if (BatchJobExecutor.getAdminBizList() == null) {
             log.warn(">>>>>>>>>>> job, executor callback config fail, adminAddresses is null.");
             return;
         }
@@ -162,7 +162,7 @@ public class TriggerCallbackThread {
     private void doCallback(List<HandleCallbackParam> callbackParamList){
         boolean callbackRet = false;
         // callback, will retry if error
-        for (AdminBiz adminBiz: XxlJobExecutor.getAdminBizList()) {
+        for (AdminBiz adminBiz: BatchJobExecutor.getAdminBizList()) {
             try {
                 ReturnT<String> callbackResult = adminBiz.callback(callbackParamList);
                 if (callbackResult!=null && ReturnT.SUCCESS_CODE == callbackResult.getCode()) {
@@ -187,13 +187,13 @@ public class TriggerCallbackThread {
     private void callbackLog(List<HandleCallbackParam> callbackParamList, String logContent){
         for (HandleCallbackParam callbackParam: callbackParamList) {
             String logFileName = JobFileAppender.makeLogFileName(new Date(callbackParam.getLogDateTim()), callbackParam.getLogId());
-            XxlJobContext.setXxlJobContext(new XxlJobContext(
+            BatchJobContext.setXxlJobContext(new BatchJobContext(
                     null,
                     null,
                     logFileName,
                     -1,
                     -1));
-            XxlJobHelper.log(logContent);
+            BatchJobHelper.log(logContent);
         }
     }
 

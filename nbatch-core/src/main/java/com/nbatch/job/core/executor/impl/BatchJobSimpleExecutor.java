@@ -1,10 +1,9 @@
 package com.nbatch.job.core.executor.impl;
 
-import com.nbatch.job.core.executor.XxlJobExecutor;
-import com.nbatch.job.core.handler.annotation.XxlJob;
+import cn.hutool.core.collection.CollUtil;
+import com.nbatch.job.core.executor.BatchJobExecutor;
+import com.nbatch.job.core.handler.annotation.BatchJob;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -17,7 +16,7 @@ import java.util.List;
  * @author Mr.ni 2020-11-05
  */
 @Slf4j
-public class XxlJobSimpleExecutor extends XxlJobExecutor {
+public class BatchJobSimpleExecutor extends BatchJobExecutor {
 
 
     private List<Object> xxlJobBeanList = new ArrayList<>();
@@ -49,20 +48,20 @@ public class XxlJobSimpleExecutor extends XxlJobExecutor {
     }
 
 
-    private void initJobHandlerMethodRepository(List<Object> xxlJobBeanList) {
-        if (xxlJobBeanList==null || xxlJobBeanList.size()==0) {
+    private void initJobHandlerMethodRepository(List<Object> jobBeanList) {
+        if (CollUtil.isEmpty(jobBeanList)) {
             return;
         }
 
         // init job handler from method
-        for (Object bean: xxlJobBeanList) {
+        for (Object bean: jobBeanList) {
             // method
             Method[] methods = bean.getClass().getDeclaredMethods();
             if (methods.length == 0) {
                 continue;
             }
             for (Method executeMethod : methods) {
-                XxlJob xxlJob = executeMethod.getAnnotation(XxlJob.class);
+                BatchJob xxlJob = executeMethod.getAnnotation(BatchJob.class);
                 // registry
                 registJobHandler(xxlJob, bean, executeMethod);
             }

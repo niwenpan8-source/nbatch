@@ -1,8 +1,9 @@
 package com.nbatch.job.core.executor.impl;
 
-import com.nbatch.job.core.executor.XxlJobExecutor;
+import com.nbatch.job.core.executor.BatchJobExecutor;
 import com.nbatch.job.core.glue.GlueFactory;
-import com.nbatch.job.core.handler.annotation.XxlJob;
+import com.nbatch.job.core.handler.annotation.BatchJob;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.DisposableBean;
@@ -20,10 +21,10 @@ import java.util.Map;
 /**
  * job executor (for spring)
  *
- * @author Mr.ni 2018-11-01 09:24:52
+ * @author Mr.ni
  */
 @Slf4j
-public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationContextAware, SmartInitializingSingleton, DisposableBean {
+public class BatchJobSpringExecutor extends BatchJobExecutor implements ApplicationContextAware, SmartInitializingSingleton, DisposableBean {
 
     // start
     @Override
@@ -51,29 +52,7 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
     public void destroy() {
         super.destroy();
     }
-
-
-    /*private void initJobHandlerRepository(ApplicationContext applicationContext) {
-        if (applicationContext == null) {
-            return;
-        }
-
-        // init job handler action
-        Map<String, Object> serviceBeanMap = applicationContext.getBeansWithAnnotation(JobHandler.class);
-
-        if (serviceBeanMap != null && serviceBeanMap.size() > 0) {
-            for (Object serviceBean : serviceBeanMap.values()) {
-                if (serviceBean instanceof IJobHandler) {
-                    String name = serviceBean.getClass().getAnnotation(JobHandler.class).value();
-                    IJobHandler handler = (IJobHandler) serviceBean;
-                    if (loadJobHandler(name) != null) {
-                        throw new RuntimeException("job jobhandler[" + name + "] naming conflicts.");
-                    }
-                    registJobHandler(name, handler);
-                }
-            }
-        }
-    }*/
+    
 
     private void initJobHandlerMethodRepository(ApplicationContext applicationContext) {
         if (applicationContext == null) {
@@ -84,7 +63,7 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
         for (String beanDefinitionName : beanDefinitionNames) {
 
             // get bean
-            Object bean = null;
+            Object bean;
             Lazy onBean = applicationContext.findAnnotationOnBean(beanDefinitionName, Lazy.class);
             if (onBean!=null){
                 log.debug("job annotation scan, skip @Lazy Bean:{}", beanDefinitionName);
@@ -94,52 +73,36 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
             }
 
             // filter method
-            Map<Method, XxlJob> annotatedMethods = null;   // referred to ：org.springframework.context.event.EventListenerMethodProcessor.processBean
+            // referred to ：org.springframework.context.event.EventListenerMethodProcessor.processBean
+            Map<Method, BatchJob> annotatedMethods = null;   
             try {
                 annotatedMethods = MethodIntrospector.selectMethods(bean.getClass(),
-                        new MethodIntrospector.MetadataLookup<XxlJob>() {
-                            @Override
-                            public XxlJob inspect(Method method) {
-                                return AnnotatedElementUtils.findMergedAnnotation(method, XxlJob.class);
-                            }
-                        });
+                        (MethodIntrospector.MetadataLookup<BatchJob>) method -> AnnotatedElementUtils.findMergedAnnotation(method, BatchJob.class));
             } catch (Throwable ex) {
-                log.error("xxl-job method-jobhandler resolve error for bean[" + beanDefinitionName + "].", ex);
+                log.error("xxl-job method-jobhandler resolve error for bean[{}].", beanDefinitionName, ex);
             }
             if (annotatedMethods==null || annotatedMethods.isEmpty()) {
                 continue;
             }
 
             // generate and regist method job handler
-            for (Map.Entry<Method, XxlJob> methodXxlJobEntry : annotatedMethods.entrySet()) {
+            for (Map.Entry<Method, BatchJob> methodXxlJobEntry : annotatedMethods.entrySet()) {
                 Method executeMethod = methodXxlJobEntry.getKey();
-                XxlJob xxlJob = methodXxlJobEntry.getValue();
+                BatchJob batchJob = methodXxlJobEntry.getValue();
                 // regist
-                registJobHandler(xxlJob, bean, executeMethod);
+                registJobHandler(batchJob, bean, executeMethod);
             }
 
         }
     }
 
     // ---------------------- applicationContext ----------------------
+    @Getter
     private static ApplicationContext applicationContext;
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        XxlJobSpringExecutor.applicationContext = applicationContext;
+        BatchJobSpringExecutor.applicationContext = applicationContext;
     }
-
-    public static ApplicationContext getApplicationContext() {
-        return applicationContext;
-    }
-
-    /*
-    BeanDefinitionRegistryPostProcessor
-    registry.getBeanDefine()
-    @Override
-    public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-        this.registry = registry;
-    }
-    * */
 
 }

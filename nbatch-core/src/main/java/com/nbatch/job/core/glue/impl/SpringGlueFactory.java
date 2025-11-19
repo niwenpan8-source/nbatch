@@ -1,7 +1,7 @@
 package com.nbatch.job.core.glue.impl;
 
 import cn.hutool.core.util.StrUtil;
-import com.nbatch.job.core.executor.impl.XxlJobSpringExecutor;
+import com.nbatch.job.core.executor.impl.BatchJobSpringExecutor;
 import com.nbatch.job.core.glue.GlueFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +29,7 @@ public class SpringGlueFactory extends GlueFactory {
             return;
         }
 
-        if (XxlJobSpringExecutor.getApplicationContext() == null) {
+        if (BatchJobSpringExecutor.getApplicationContext() == null) {
             return;
         }
 
@@ -46,21 +46,21 @@ public class SpringGlueFactory extends GlueFactory {
                 try {
                     Resource resource = AnnotationUtils.getAnnotation(field, Resource.class);
                     if (resource != null && StrUtil.isNotBlank(resource.name())){
-                        fieldBean = XxlJobSpringExecutor.getApplicationContext().getBean(resource.name());
+                        fieldBean = BatchJobSpringExecutor.getApplicationContext().getBean(resource.name());
                     } else {
-                        fieldBean = XxlJobSpringExecutor.getApplicationContext().getBean(field.getName());
+                        fieldBean = BatchJobSpringExecutor.getApplicationContext().getBean(field.getName());
                     }
                 } catch (Exception ignored) {
                 }
                 if (fieldBean==null ) {
-                    fieldBean = XxlJobSpringExecutor.getApplicationContext().getBean(field.getType());
+                    fieldBean = BatchJobSpringExecutor.getApplicationContext().getBean(field.getType());
                 }
             } else if (AnnotationUtils.getAnnotation(field, Autowired.class) != null) {
                 Qualifier qualifier = AnnotationUtils.getAnnotation(field, Qualifier.class);
                 if (qualifier!=null && StrUtil.isNotBlank(qualifier.value())) {
-                    fieldBean = XxlJobSpringExecutor.getApplicationContext().getBean(qualifier.value());
+                    fieldBean = BatchJobSpringExecutor.getApplicationContext().getBean(qualifier.value());
                 } else {
-                    fieldBean = XxlJobSpringExecutor.getApplicationContext().getBean(field.getType());
+                    fieldBean = BatchJobSpringExecutor.getApplicationContext().getBean(field.getType());
                 }
             }
 

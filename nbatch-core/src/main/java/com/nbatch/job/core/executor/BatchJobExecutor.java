@@ -6,7 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.core.biz.AdminBiz;
 import com.nbatch.job.core.biz.client.AdminBizClient;
 import com.nbatch.job.core.handler.IJobHandler;
-import com.nbatch.job.core.handler.annotation.XxlJob;
+import com.nbatch.job.core.handler.annotation.BatchJob;
 import com.nbatch.job.core.handler.impl.MethodJobHandler;
 import com.nbatch.job.core.log.JobFileAppender;
 import com.nbatch.job.core.server.EmbedServer;
@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentMap;
  * Created by nbatch on 2016/3/2 21:14.
  */
 @Slf4j
-public class XxlJobExecutor  {
+public class BatchJobExecutor {
 
     // ---------------------- param ----------------------
     @Setter
@@ -170,7 +170,7 @@ public class XxlJobExecutor  {
         log.info(">>>>>>>>>>> job register jobhandler success, name:{}, jobHandler:{}", name, jobHandler);
         return JOB_HANDLER_REPOSITORY.put(name, jobHandler);
     }
-    protected void registJobHandler(XxlJob xxlJob, Object bean, Method executeMethod){
+    protected void registJobHandler(BatchJob xxlJob, Object bean, Method executeMethod){
         if (xxlJob == null) {
             return;
         }

@@ -4,13 +4,14 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * @author Mr.ni 2018-10-28 00:38:13
+ * 启动类
+ * @author Mr.ni
  */
 @SpringBootApplication
-public class XxlJobExecutorApplication {
+public class NbatchConsumerApplication {
 
 	public static void main(String[] args) {
-        SpringApplication.run(XxlJobExecutorApplication.class, args);
+        SpringApplication.run(NbatchConsumerApplication.class, args);
 	}
 
 }

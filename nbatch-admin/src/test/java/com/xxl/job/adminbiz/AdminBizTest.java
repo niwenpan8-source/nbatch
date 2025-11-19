@@ -5,7 +5,7 @@ import com.nbatch.job.core.biz.client.AdminBizClient;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.RegistryParam;
 import com.nbatch.job.core.biz.model.ReturnT;
-import com.nbatch.job.core.context.XxlJobContext;
+import com.nbatch.job.core.context.BatchJobContext;
 import com.nbatch.job.core.enums.RegistryConfig;
 import org.junit.jupiter.api.Test;
 
@@ -33,7 +33,7 @@ public class AdminBizTest {
 
         HandleCallbackParam param = new HandleCallbackParam();
         param.setLogId("1");
-        param.setHandleCode(XxlJobContext.HANDLE_CODE_SUCCESS);
+        param.setHandleCode(BatchJobContext.HANDLE_CODE_SUCCESS);
 
         List<HandleCallbackParam> callbackParamList = Arrays.asList(param);
 

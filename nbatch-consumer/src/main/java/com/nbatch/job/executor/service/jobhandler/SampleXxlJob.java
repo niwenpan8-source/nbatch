@@ -1,8 +1,8 @@
 package com.nbatch.job.executor.service.jobhandler;
 
 import cn.hutool.core.util.StrUtil;
-import com.nbatch.job.core.context.XxlJobHelper;
-import com.nbatch.job.core.handler.annotation.XxlJob;
+import com.nbatch.job.core.context.BatchJobHelper;
+import com.nbatch.job.core.handler.annotation.BatchJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -35,12 +35,12 @@ public class SampleXxlJob {
     /**
      * 1、简单任务示例（Bean模式）
      */
-    @XxlJob("demoJobHandler")
+    @BatchJob("demoJobHandler")
     public void demoJobHandler() throws Exception {
-        XxlJobHelper.log("XXL-JOB, Hello World.");
+        BatchJobHelper.log("XXL-JOB, Hello World.");
 
         for (int i = 0; i < 5; i++) {
-            XxlJobHelper.log("beat at:" + i);
+            BatchJobHelper.log("beat at:" + i);
             TimeUnit.SECONDS.sleep(2);
         }
         // default success
@@ -50,21 +50,21 @@ public class SampleXxlJob {
     /**
      * 2、分片广播任务
      */
-    @XxlJob("shardingJobHandler")
+    @BatchJob("shardingJobHandler")
     public void shardingJobHandler() throws Exception {
 
         // 分片参数
-        int shardIndex = XxlJobHelper.getShardIndex();
-        int shardTotal = XxlJobHelper.getShardTotal();
+        int shardIndex = BatchJobHelper.getShardIndex();
+        int shardTotal = BatchJobHelper.getShardTotal();
 
-        XxlJobHelper.log("分片参数：当前分片序号 = {}, 总分片数 = {}", shardIndex, shardTotal);
+        BatchJobHelper.log("分片参数：当前分片序号 = {}, 总分片数 = {}", shardIndex, shardTotal);
 
         // 业务逻辑
         for (int i = 0; i < shardTotal; i++) {
             if (i == shardIndex) {
-                XxlJobHelper.log("第 {} 片, 命中分片开始处理", i);
+                BatchJobHelper.log("第 {} 片, 命中分片开始处理", i);
             } else {
-                XxlJobHelper.log("第 {} 片, 忽略", i);
+                BatchJobHelper.log("第 {} 片, 忽略", i);
             }
         }
 
@@ -74,9 +74,9 @@ public class SampleXxlJob {
     /**
      * 3、命令行任务
      */
-    @XxlJob("commandJobHandler")
+    @BatchJob("commandJobHandler")
     public void commandJobHandler() throws Exception {
-        String command = XxlJobHelper.getJobParam();
+        String command = BatchJobHelper.getJobParam();
         int exitValue = -1;
 
         BufferedReader bufferedReader = null;
@@ -95,14 +95,14 @@ public class SampleXxlJob {
             // command log
             String line;
             while ((line = bufferedReader.readLine()) != null) {
-                XxlJobHelper.log(line);
+                BatchJobHelper.log(line);
             }
 
             // command exit
             process.waitFor();
             exitValue = process.exitValue();
         } catch (Exception e) {
-            XxlJobHelper.log(e);
+            BatchJobHelper.log(e);
         } finally {
             if (bufferedReader != null) {
                 bufferedReader.close();
@@ -112,7 +112,7 @@ public class SampleXxlJob {
         if (exitValue == 0) {
             // default success
         } else {
-            XxlJobHelper.handleFail("command exit value("+exitValue+") is failed");
+            BatchJobHelper.handleFail("command exit value("+exitValue+") is failed");
         }
 
     }
@@ -125,15 +125,15 @@ public class SampleXxlJob {
      *      "method: get\n" +
      *      "data: content\n";
      */
-    @XxlJob("httpJobHandler")
+    @BatchJob("httpJobHandler")
     public void httpJobHandler() {
 
         // param parse
-        String param = XxlJobHelper.getJobParam();
+        String param = BatchJobHelper.getJobParam();
         if (StrUtil.isBlank(param)) {
-            XxlJobHelper.log("param["+ param +"] invalid.");
+            BatchJobHelper.log("param["+ param +"] invalid.");
 
-            XxlJobHelper.handleFail();
+            BatchJobHelper.handleFail();
             return;
         }
 
@@ -155,15 +155,15 @@ public class SampleXxlJob {
 
         // param valid
         if (StrUtil.isBlank(url)) {
-            XxlJobHelper.log("url["+ url +"] invalid.");
+            BatchJobHelper.log("url["+ url +"] invalid.");
 
-            XxlJobHelper.handleFail();
+            BatchJobHelper.handleFail();
             return;
         }
         if (method==null || !Arrays.asList("GET", "POST").contains(method)) {
-            XxlJobHelper.log("method["+ method +"] invalid.");
+            BatchJobHelper.log("method["+ method +"] invalid.");
 
-            XxlJobHelper.handleFail();
+            BatchJobHelper.handleFail();
             return;
         }
         boolean isPostMethod = StrUtil.equals(method, "POST");
@@ -213,13 +213,13 @@ public class SampleXxlJob {
             }
             String responseMsg = result.toString();
 
-            XxlJobHelper.log(responseMsg);
+            BatchJobHelper.log(responseMsg);
 
             return;
         } catch (Exception e) {
-            XxlJobHelper.log(e);
+            BatchJobHelper.log(e);
 
-            XxlJobHelper.handleFail();
+            BatchJobHelper.handleFail();
             return;
         } finally {
             try {
@@ -230,7 +230,7 @@ public class SampleXxlJob {
                     connection.disconnect();
                 }
             } catch (Exception e2) {
-                XxlJobHelper.log(e2);
+                BatchJobHelper.log(e2);
             }
         }
 
@@ -239,9 +239,9 @@ public class SampleXxlJob {
     /**
      * 5、生命周期任务示例：任务初始化与销毁时，支持自定义相关逻辑；
      */
-    @XxlJob(value = "demoJobHandler2", init = "init", destroy = "destroy")
+    @BatchJob(value = "demoJobHandler2", init = "init", destroy = "destroy")
     public void demoJobHandler2() throws Exception {
-        XxlJobHelper.log("XXL-JOB, Hello World.");
+        BatchJobHelper.log("XXL-JOB, Hello World.");
     }
     public void init(){
         log.info("init");

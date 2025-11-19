@@ -10,7 +10,7 @@ import com.nbatch.job.admin.core.thread.JobTriggerPoolHelper;
 import com.nbatch.job.admin.core.enums.TriggerTypeEnum;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.model.ReturnT;
-import com.nbatch.job.core.context.XxlJobContext;
+import com.nbatch.job.core.context.BatchJobContext;
 import lombok.extern.slf4j.Slf4j;
 
 import java.text.MessageFormat;
@@ -46,7 +46,7 @@ public class JobCompleter {
 
         // 1、handle success, to trigger child job
         StringBuilder triggerChildMsg = null;
-        if (XxlJobContext.HANDLE_CODE_SUCCESS == jobLogPo.getHandleCode()) {
+        if (BatchJobContext.HANDLE_CODE_SUCCESS == jobLogPo.getHandleCode()) {
             JobInfoPo jobInfo = JobAdminConfig.getAdminConfig().getJobInfoMapper().selectById(jobLogPo.getJobId());
             if (jobInfo != null && StrUtil.isNotBlank(jobInfo.getChildJobid())) {
                 triggerChildMsg = new StringBuilder("<br><br><span style=\"color:#00c0ef;\" > >>>>>>>>>>>" + I18nUtil.getString("jobconf_trigger_child_run") + "<<<<<<<<<<< </span><br>");

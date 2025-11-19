@@ -1,6 +1,6 @@
 package com.nbatch.job.executor.core.config;
 
-import com.nbatch.job.core.executor.impl.XxlJobSpringExecutor;
+import com.nbatch.job.core.executor.impl.BatchJobSpringExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Slf4j
 @Configuration
-public class XxlJobConfig {
+public class JobConsumerConfig {
 
     @Value("${xxl.job.admin.addresses}")
     private String adminAddresses;
@@ -44,9 +44,9 @@ public class XxlJobConfig {
 
 
     @Bean
-    public XxlJobSpringExecutor xxlJobExecutor() {
+    public BatchJobSpringExecutor xxlJobExecutor() {
         log.info(">>>>>>>>>>> job config init.");
-        XxlJobSpringExecutor xxlJobSpringExecutor = new XxlJobSpringExecutor();
+        BatchJobSpringExecutor xxlJobSpringExecutor = new BatchJobSpringExecutor();
         xxlJobSpringExecutor.setAdminAddresses(adminAddresses);
         xxlJobSpringExecutor.setAppName(appName);
         xxlJobSpringExecutor.setAddress(address);

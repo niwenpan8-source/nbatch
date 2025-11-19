@@ -5,7 +5,7 @@ import com.nbatch.job.core.biz.AdminBiz;
 import com.nbatch.job.core.biz.model.RegistryParam;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.enums.RegistryConfig;
-import com.nbatch.job.core.executor.XxlJobExecutor;
+import com.nbatch.job.core.executor.BatchJobExecutor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,7 +35,7 @@ public class ExecutorRegistryThread {
             log.warn(">>>>>>>>>>> job, executor registry config fail, appName is null.");
             return;
         }
-        if (XxlJobExecutor.getAdminBizList() == null) {
+        if (BatchJobExecutor.getAdminBizList() == null) {
             log.warn(">>>>>>>>>>> job, executor registry config fail, adminAddresses is null.");
             return;
         }
@@ -45,7 +45,7 @@ public class ExecutorRegistryThread {
             while (!toStop) {
                 try {
                     RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), appName, address);
-                    for (AdminBiz adminBiz: XxlJobExecutor.getAdminBizList()) {
+                    for (AdminBiz adminBiz: BatchJobExecutor.getAdminBizList()) {
                         try {
                             ReturnT<String> registryResult = adminBiz.registry(registryParam);
                             if (registryResult!=null && ReturnT.SUCCESS_CODE == registryResult.getCode()) {
@@ -81,7 +81,7 @@ public class ExecutorRegistryThread {
             // registry remove
             try {
                 RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), appName, address);
-                for (AdminBiz adminBiz: XxlJobExecutor.getAdminBizList()) {
+                for (AdminBiz adminBiz: BatchJobExecutor.getAdminBizList()) {
                     try {
                         ReturnT<String> registryResult = adminBiz.registryRemove(registryParam);
                         if (registryResult!=null && ReturnT.SUCCESS_CODE == registryResult.getCode()) {

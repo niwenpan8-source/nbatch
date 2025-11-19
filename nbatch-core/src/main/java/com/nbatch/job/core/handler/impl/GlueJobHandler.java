@@ -1,6 +1,6 @@
 package com.nbatch.job.core.handler.impl;
 
-import com.nbatch.job.core.context.XxlJobHelper;
+import com.nbatch.job.core.context.BatchJobHelper;
 import com.nbatch.job.core.handler.IJobHandler;
 import lombok.Getter;
 
@@ -21,7 +21,7 @@ public class GlueJobHandler extends IJobHandler {
 
 	@Override
 	public void execute() throws Exception {
-		XxlJobHelper.log("----------- glue.version:"+ glueUpdatetime +" -----------");
+		BatchJobHelper.log("----------- glue.version:"+ glueUpdatetime +" -----------");
 		jobHandler.execute();
 	}
 

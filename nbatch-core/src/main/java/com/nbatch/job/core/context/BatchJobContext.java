@@ -10,7 +10,7 @@ import lombok.Setter;
  * [Dear hj]
  */
 @Getter
-public class XxlJobContext {
+public class BatchJobContext {
 
     public static final int HANDLE_CODE_SUCCESS = 200;
     public static final int HANDLE_CODE_FAIL = 500;
@@ -66,7 +66,7 @@ public class XxlJobContext {
     private String handleMsg;
 
 
-    public XxlJobContext(String jobId, String jobParam, String jobLogFileName, int shardIndex, int shardTotal) {
+    public BatchJobContext(String jobId, String jobParam, String jobLogFileName, int shardIndex, int shardTotal) {
         this.jobId = jobId;
         this.jobParam = jobParam;
         this.jobLogFileName = jobLogFileName;
@@ -79,13 +79,13 @@ public class XxlJobContext {
     // ---------------------- tool ----------------------
 
     // support for child thread of job handler)
-    private static final InheritableThreadLocal<XxlJobContext> CONTEXT_HOLDER = new InheritableThreadLocal<>();
+    private static final InheritableThreadLocal<BatchJobContext> CONTEXT_HOLDER = new InheritableThreadLocal<>();
 
-    public static void setXxlJobContext(XxlJobContext xxlJobContext){
+    public static void setXxlJobContext(BatchJobContext xxlJobContext){
         CONTEXT_HOLDER.set(xxlJobContext);
     }
 
-    public static XxlJobContext getXxlJobContext(){
+    public static BatchJobContext getXxlJobContext(){
         return CONTEXT_HOLDER.get();
     }
 

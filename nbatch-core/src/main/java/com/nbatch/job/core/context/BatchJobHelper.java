@@ -16,7 +16,7 @@ import java.util.Date;
  * @author Mr.ni
  */
 @Slf4j
-public class XxlJobHelper {
+public class BatchJobHelper {
 
     // ---------------------- base info ----------------------
 
@@ -24,7 +24,7 @@ public class XxlJobHelper {
      * current JobId
      */
     public static String getJobId() {
-        XxlJobContext xxlJobContext = XxlJobContext.getXxlJobContext();
+        BatchJobContext xxlJobContext = BatchJobContext.getXxlJobContext();
         if (xxlJobContext == null) {
             return null;
         }
@@ -36,7 +36,7 @@ public class XxlJobHelper {
      * current JobParam
      */
     public static String getJobParam() {
-        XxlJobContext xxlJobContext = XxlJobContext.getXxlJobContext();
+        BatchJobContext xxlJobContext = BatchJobContext.getXxlJobContext();
         if (xxlJobContext == null) {
             return null;
         }
@@ -50,7 +50,7 @@ public class XxlJobHelper {
      * current JobLogFileName
      */
     public static String getJobLogFileName() {
-        XxlJobContext xxlJobContext = XxlJobContext.getXxlJobContext();
+        BatchJobContext xxlJobContext = BatchJobContext.getXxlJobContext();
         if (xxlJobContext == null) {
             return null;
         }
@@ -64,7 +64,7 @@ public class XxlJobHelper {
      * current ShardIndex
      */
     public static int getShardIndex() {
-        XxlJobContext xxlJobContext = XxlJobContext.getXxlJobContext();
+        BatchJobContext xxlJobContext = BatchJobContext.getXxlJobContext();
         if (xxlJobContext == null) {
             return -1;
         }
@@ -76,7 +76,7 @@ public class XxlJobHelper {
      * current ShardTotal
      */
     public static int getShardTotal() {
-        XxlJobContext xxlJobContext = XxlJobContext.getXxlJobContext();
+        BatchJobContext xxlJobContext = BatchJobContext.getXxlJobContext();
         if (xxlJobContext == null) {
             return -1;
         }
@@ -120,7 +120,7 @@ public class XxlJobHelper {
      * @param appendLog append log
      */
     private static boolean logDetail(StackTraceElement callInfo, String appendLog) {
-        XxlJobContext xxlJobContext = XxlJobContext.getXxlJobContext();
+        BatchJobContext xxlJobContext = BatchJobContext.getXxlJobContext();
         if (xxlJobContext == null) {
             return false;
         }
@@ -149,7 +149,7 @@ public class XxlJobHelper {
      * handle success
      */
     public static boolean handleSuccess() {
-        return handleResult(XxlJobContext.HANDLE_CODE_SUCCESS, null);
+        return handleResult(BatchJobContext.HANDLE_CODE_SUCCESS, null);
     }
 
     /**
@@ -158,14 +158,14 @@ public class XxlJobHelper {
      * @param handleMsg handleMsg
      */
     public static boolean handleSuccess(String handleMsg) {
-        return handleResult(XxlJobContext.HANDLE_CODE_SUCCESS, handleMsg);
+        return handleResult(BatchJobContext.HANDLE_CODE_SUCCESS, handleMsg);
     }
 
     /**
      * handle fail
      */
     public static boolean handleFail() {
-        return handleResult(XxlJobContext.HANDLE_CODE_FAIL, null);
+        return handleResult(BatchJobContext.HANDLE_CODE_FAIL, null);
     }
 
     /**
@@ -174,14 +174,14 @@ public class XxlJobHelper {
      * @param handleMsg handleMsg
      */
     public static boolean handleFail(String handleMsg) {
-        return handleResult(XxlJobContext.HANDLE_CODE_FAIL, handleMsg);
+        return handleResult(BatchJobContext.HANDLE_CODE_FAIL, handleMsg);
     }
 
     /**
      * handle timeout
      */
     public static boolean handleTimeout() {
-        return handleResult(XxlJobContext.HANDLE_CODE_TIMEOUT, null);
+        return handleResult(BatchJobContext.HANDLE_CODE_TIMEOUT, null);
     }
 
     /**
@@ -190,7 +190,7 @@ public class XxlJobHelper {
      * @param handleMsg handleMsg
      */
     public static boolean handleTimeout(String handleMsg) {
-        return handleResult(XxlJobContext.HANDLE_CODE_TIMEOUT, handleMsg);
+        return handleResult(BatchJobContext.HANDLE_CODE_TIMEOUT, handleMsg);
     }
 
     /**
@@ -200,7 +200,7 @@ public class XxlJobHelper {
      * @param handleMsg  处理信息
      */
     public static boolean handleResult(int handleCode, String handleMsg) {
-        XxlJobContext xxlJobContext = XxlJobContext.getXxlJobContext();
+        BatchJobContext xxlJobContext = BatchJobContext.getXxlJobContext();
         if (xxlJobContext == null) {
             return false;
         }

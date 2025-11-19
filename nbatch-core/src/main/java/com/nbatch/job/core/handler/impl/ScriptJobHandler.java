@@ -2,8 +2,8 @@ package com.nbatch.job.core.handler.impl;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ArrayUtil;
-import com.nbatch.job.core.context.XxlJobContext;
-import com.nbatch.job.core.context.XxlJobHelper;
+import com.nbatch.job.core.context.BatchJobContext;
+import com.nbatch.job.core.context.BatchJobHelper;
 import com.nbatch.job.core.glue.GlueTypeEnum;
 import com.nbatch.job.core.handler.IJobHandler;
 import com.nbatch.job.core.log.JobFileAppender;
@@ -50,7 +50,7 @@ public class ScriptJobHandler extends IJobHandler {
     public void execute() throws Exception {
 
         if (!glueType.isScript()) {
-            XxlJobHelper.handleFail("glueType["+ glueType +"] invalid.");
+            BatchJobHelper.handleFail("glueType["+ glueType +"] invalid.");
             return;
         }
 
@@ -70,22 +70,22 @@ public class ScriptJobHandler extends IJobHandler {
         }
 
         // log file
-        String logFileName = XxlJobContext.getXxlJobContext().getJobLogFileName();
+        String logFileName = BatchJobContext.getXxlJobContext().getJobLogFileName();
 
         // script params：0=param、1=分片序号、2=分片总数
         String[] scriptParams = new String[3];
-        scriptParams[0] = XxlJobHelper.getJobParam();
-        scriptParams[1] = String.valueOf(XxlJobContext.getXxlJobContext().getShardIndex());
-        scriptParams[2] = String.valueOf(XxlJobContext.getXxlJobContext().getShardTotal());
+        scriptParams[0] = BatchJobHelper.getJobParam();
+        scriptParams[1] = String.valueOf(BatchJobContext.getXxlJobContext().getShardIndex());
+        scriptParams[2] = String.valueOf(BatchJobContext.getXxlJobContext().getShardTotal());
 
         // invoke
-        XxlJobHelper.log("----------- script file:"+ scriptFileName +" -----------");
+        BatchJobHelper.log("----------- script file:"+ scriptFileName +" -----------");
         int exitValue = ScriptUtil.execToFile(cmd, scriptFileName, logFileName, scriptParams);
 
         if (exitValue == 0) {
-            XxlJobHelper.handleSuccess();
+            BatchJobHelper.handleSuccess();
         } else {
-            XxlJobHelper.handleFail("script exit value("+exitValue+") is failed");
+            BatchJobHelper.handleFail("script exit value("+exitValue+") is failed");
         }
 
     }
