@@ -28,6 +28,11 @@ public class JobWorkImportFilePo extends Model<JobWorkImportFilePo> {
 	private String importFileId;
 
 	/**
+	 * 作业id
+	 */
+	private String workId;
+
+	/**
 	 * 作业节点id
 	 */
 	private String nodeId;

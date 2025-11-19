@@ -1,29 +1,28 @@
-package com.nbatch.job.admin.core.domain.vo;
+package com.nbatch.job.handler.domain.param;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * @description: 作业节点导出文件表
+ * @description: 作业节点导入节点表
  * @author: Mr.ni
  * @date: 2025-11-13
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class JobWorkExportFileVo {
+public class JobWorkImportFileParam {
 
     /**
-     * 导出文件id
+     * 导入文件id
      */
-    private String exportFileId;
+    private String importFileId;
 
     /**
      * 作业id
      */
     private String workId;
-
 
     /**
      * 作业节点id
@@ -31,24 +30,29 @@ public class JobWorkExportFileVo {
     private String nodeId;
 
     /**
-     * 导出的文件名
+     * 导入的文件名
      */
     private String fileName;
 
     /**
-     * 导出的表名
+     * 导入的文件名-需要再程序里面生成
      */
-    private String exportTableName;
+    private String filePath;
 
     /**
-     * 导出的列
+     * 导入的表名
      */
-    private String exportTableFiled;
+    private String importTableName;
 
     /**
-     * 删除条件
+     * 导入的列
      */
-    private String exportTableCondition;
+    private String importTableFiled;
+
+    /**
+     * 导入条件
+     */
+    private String importTableCondition;
 
     /**
      * 文件编码

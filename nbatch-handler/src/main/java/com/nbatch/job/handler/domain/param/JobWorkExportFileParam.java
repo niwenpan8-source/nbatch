@@ -1,4 +1,4 @@
-package com.nbatch.job.admin.core.domain.vo;
+package com.nbatch.job.handler.domain.param;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class JobWorkExportFileVo {
+public class JobWorkExportFileParam {
 
     /**
      * 导出文件id
@@ -24,7 +24,6 @@ public class JobWorkExportFileVo {
      */
     private String workId;
 
-
     /**
      * 作业节点id
      */
@@ -34,6 +33,11 @@ public class JobWorkExportFileVo {
      * 导出的文件名
      */
     private String fileName;
+
+    /**
+     * 导入的文件名-需要再程序里面生成
+     */
+    private String filePath;
 
     /**
      * 导出的表名

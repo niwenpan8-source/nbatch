@@ -203,7 +203,8 @@ create table nbatch_job_work_node
     node_name    varchar(300) not null comment '节点名称',
     node_desc    varchar(300) comment '节点描述',
     node_status  tinyint(4)  not null default 0 comment '节点状态：0=停用、1=启用',
-    node_type  varchar(20)  not null comment 'script:脚本,store_procedure:存储过程,execute_sql:执行sql,import:导入,export:导出',
+    node_type  varchar(20)  not null comment 'script:脚本,store_procedure:存储过程,execute_sql:执行sql,file_to_db:文件导入到数据库,db_to_file:数据库导出到文件',
+    turn_date  date comment '翻牌日期',
     primary key (node_id)
 ) engine = innodb comment = '作业节点表'
   default charset = utf8mb4;
@@ -211,34 +212,36 @@ create table nbatch_job_work_node
 # 作业节点导出文件表
 drop table if exists nbatch_job_work_export_file;
 create table nbatch_job_work_export_file (
-                                             export_file_id varchar(32) not null comment '导出文件id',
-                                             node_id varchar(32) not null comment '作业节点id',
-                                             file_name varchar(200) not null comment '导出的文件名',
-                                             export_table_name varchar(200) not null comment '导出的表名',
-                                             export_table_filed text comment '导出的列',
-                                             export_table_condition varchar(200) comment '删除条件',
-                                             file_code varchar(8)  comment '文件编码',
-                                             sep varchar(32) comment '分隔符',
-                                             all_update int default 0 comment '是否全量文件：1全量 0增量',
-                                             is_gzip int default 0  comment '是否压缩：1压缩 0不压缩',
-                                             primary key (export_file_id)
+    export_file_id varchar(32) not null comment '导出文件id',
+    work_id varchar(32) not null comment '作业id',
+    node_id varchar(32) not null comment '作业节点id',
+    file_name varchar(200) not null comment '导出的文件名',
+    export_table_name varchar(200) not null comment '导出的表名',
+    export_table_filed text comment '导出的列',
+    export_table_condition varchar(200) comment '删除条件',
+    file_code varchar(8)  comment '文件编码',
+    sep varchar(32) comment '分隔符',
+    all_update int default 0 comment '是否全量文件：1全量 0增量',
+    is_gzip int default 0  comment '是否压缩：1压缩 0不压缩',
+    primary key (export_file_id)
 ) engine = innodb comment = '作业节点导出文件表'
   default charset = utf8mb4;
 
 # 作业节点导入文件表
 drop table if exists nbatch_job_work_import_file;
 create table nbatch_job_work_import_file (
-                                             import_file_id varchar(32) not null comment '导入文件id',
-                                             node_id varchar(32) not null comment '作业节点id',
-                                             file_name              varchar(200) not null comment '导入的文件名',
-                                             import_table_name      varchar(200) not null comment '导入的表名',
-                                             import_table_filed     text not null comment '导入的列',
-                                             import_table_condition text comment '导入条件',
-                                             file_code              varchar(8) comment '文件编码',
-                                             sep                    varchar(32) comment '分隔符',
-                                             all_update             int default 0 comment '是否全量文件：1全量 0增量',
-                                             is_gzip                int default 0 comment '是否压缩：1压缩 0不压缩',
-                                             primary key (import_file_id)
+    import_file_id varchar(32) not null comment '导入文件id',
+    work_id varchar(32) not null comment '作业id',
+    node_id varchar(32) not null comment '作业节点id',
+    file_name              varchar(200) not null comment '导入的文件名',
+    import_table_name      varchar(200) not null comment '导入的表名',
+    import_table_filed     text not null comment '导入的列',
+    import_table_condition text comment '导入条件',
+    file_code              varchar(8) comment '文件编码',
+    sep                    varchar(32) comment '分隔符',
+    all_update             int default 0 comment '是否全量文件：1全量 0增量',
+    is_gzip                int default 0 comment '是否压缩：1压缩 0不压缩',
+    primary key (import_file_id)
 ) engine = innodb comment = '作业节点导入文件表'
   default charset = utf8mb4;
 

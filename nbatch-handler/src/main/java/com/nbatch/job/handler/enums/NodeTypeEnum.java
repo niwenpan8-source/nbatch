@@ -1,4 +1,4 @@
-package com.nbatch.job.admin.core.enums;
+package com.nbatch.job.handler.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -23,12 +23,12 @@ public enum NodeTypeEnum {
 
     private final String value;
 
-    public static String getValue(String code) {
+    public static boolean isSupport(String code) {
         for (NodeTypeEnum value : values()) {
             if (value.getCode().equals(code)) {
-                return value.getValue();
+                return true;
             }
         }
-        return null;
+        return false;
     }
 }

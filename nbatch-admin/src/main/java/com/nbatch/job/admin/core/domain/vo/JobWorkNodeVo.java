@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 /**
  * @description: 作业节点表
  * @author: Mr.ni
@@ -35,9 +37,14 @@ public class JobWorkNodeVo {
     private Integer nodeStatus;
 
     /**
-     * script:脚本,store_procedure:存储过程,execute_sql:执行sql,import:导入,export:导出
+     * script:脚本,store_procedure:存储过程,execute_sql:执行sql,file_to_db:文件导入到数据库,db_to_file:数据库导出到文件
      */
     private String nodeType;
     private String nodeTypeName;
+
+    /**
+     * 翻牌日期
+     */
+    private Date turnDate;
 
 }
