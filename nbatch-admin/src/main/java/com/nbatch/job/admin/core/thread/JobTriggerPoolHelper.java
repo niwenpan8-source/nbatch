@@ -3,6 +3,7 @@ package com.nbatch.job.admin.core.thread;
 import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.enums.TriggerTypeEnum;
 import com.nbatch.job.admin.core.trigger.JobTrigger;
+import com.nbatch.job.core.biz.model.ExecuteWorkParam;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -11,6 +12,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 /**
  * job trigger thread pool helper

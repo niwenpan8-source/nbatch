@@ -2,6 +2,8 @@ package com.nbatch.job.handler.thread;
 
 
 import cn.hutool.core.text.StrPool;
+import com.nbatch.job.core.biz.model.HandleCallbackParam;
+import com.nbatch.job.core.thread.TriggerCallbackThread;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +15,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.nbatch.job.core.enums.CallbackTypeEnum.NODE_STATUS_CALLBACK;
 
 /**
  * 线程池 工具类
@@ -105,6 +109,15 @@ public class BatchThreadPoolUtil {
         @Override
         public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
             log.error("线程被丢弃，{}", r);
+            HandleCallbackParam handleCallbackParam = new HandleCallbackParam();
+            handleCallbackParam.setCallBackType(NODE_STATUS_CALLBACK.getValue());
+            BatchRunnable batchRunnable = (BatchRunnable) r;
+            handleCallbackParam.getNodeStatusCallbackParam()
+                    .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
+                    .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
+                    .setHandleCode(0)
+                    .setHandleMsg("线程被抛弃");
+            TriggerCallbackThread.pushCallBack(handleCallbackParam);
         }
     }
 

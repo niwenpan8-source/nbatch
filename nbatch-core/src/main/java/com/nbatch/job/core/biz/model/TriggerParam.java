@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * 触发参数
@@ -33,6 +34,17 @@ public class TriggerParam implements Serializable{
 
     private int broadcastIndex;
     private int broadcastTotal;
+
+
+    /**
+     * 作业id
+     */
+    private String workId;
+
+    /**
+     * 执行作业参数
+     */
+    private ExecuteWorkParam executeWorkParam;
 
 
 }

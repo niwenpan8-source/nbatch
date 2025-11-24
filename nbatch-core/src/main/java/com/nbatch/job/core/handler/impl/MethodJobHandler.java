@@ -5,7 +5,8 @@ import com.nbatch.job.core.handler.IJobHandler;
 import java.lang.reflect.Method;
 
 /**
- * @author Mr.ni 2019-12-11 21:12:18
+ * 方法任务处理器
+ * @author Mr.ni
  */
 public class MethodJobHandler extends IJobHandler {
 

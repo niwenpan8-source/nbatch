@@ -2,6 +2,7 @@ package com.nbatch.job.admin.core.thread;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nbatch.job.admin.core.complete.JobCompleter;
 import com.nbatch.job.admin.core.conf.JobAdminConfig;
@@ -19,6 +20,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static com.nbatch.job.core.enums.CallbackTypeEnum.LOG_CALLBACK;
+import static com.nbatch.job.core.enums.CallbackTypeEnum.NODE_STATUS_CALLBACK;
 
 /**
  * job lose-monitor instance
@@ -158,14 +162,27 @@ public class JobCompleteHelper {
     }
 
     private ReturnT<String> callback(HandleCallbackParam handleCallbackParam) {
+        log.info("执行回调callback,{}", handleCallbackParam);
+        if (StrUtil.equals(handleCallbackParam.getCallBackType(), LOG_CALLBACK.getValue())) {
+            return logCallback(handleCallbackParam);
+        } else if (StrUtil.equals(handleCallbackParam.getCallBackType(), NODE_STATUS_CALLBACK.getValue())){
+            return nodeStatusCallback(handleCallbackParam);
+        }
+        return ReturnT.SUCCESS;
+    }
+
+    /**
+     * log callback
+     */
+    private ReturnT<String> logCallback(HandleCallbackParam handleCallbackParam) {
         // valid log item
-        JobLogPo logInfo = JobAdminConfig.getAdminConfig().getJobLogMapper().selectById(handleCallbackParam.getLogId());
+        JobLogPo logInfo = JobAdminConfig.getAdminConfig().getJobLogMapper().selectById(handleCallbackParam.getLogCallBackParam().getLogId());
         if (logInfo == null) {
             return new ReturnT<>(ReturnT.FAIL_CODE, "log item not found.");
         }
         if (logInfo.getHandleCode() > 0) {
             // avoid repeat callback, trigger child job etc
-            return new ReturnT<>(ReturnT.FAIL_CODE, "log repeate callback.");
+            return new ReturnT<>(ReturnT.FAIL_CODE, "log repeat callback.");
         }
 
         // handle msg
@@ -173,16 +190,26 @@ public class JobCompleteHelper {
         if (logInfo.getHandleMsg() != null) {
             handleMsg.append(logInfo.getHandleMsg()).append("<br>");
         }
-        if (handleCallbackParam.getHandleMsg() != null) {
-            handleMsg.append(handleCallbackParam.getHandleMsg());
+        if (handleCallbackParam.getLogCallBackParam().getHandleMsg() != null) {
+            handleMsg.append(handleCallbackParam.getLogCallBackParam().getHandleMsg());
         }
 
         // success, save log
         logInfo.setHandleTime(new Date());
-        logInfo.setHandleCode(handleCallbackParam.getHandleCode());
+        log.info(">>>>>>>>>>> handleCallbackParam.getLogCallBackParam().getHandleCode():{}"
+                , handleCallbackParam.getLogCallBackParam().getHandleCode());
+        logInfo.setHandleCode(handleCallbackParam.getLogCallBackParam().getHandleCode());
         logInfo.setHandleMsg(handleMsg.toString());
         JobCompleter.updateHandleInfoAndFinish(logInfo);
+        return ReturnT.SUCCESS;
+    }
 
+    /**
+     * node status callback
+     */
+    private ReturnT<String> nodeStatusCallback(HandleCallbackParam handleCallbackParam) {
+        // todo node status callback
+        log.info(">>>>>>>>>>> job, node status callback, handleCallbackParam: {}", handleCallbackParam);
         return ReturnT.SUCCESS;
     }
 

@@ -10,6 +10,7 @@
 
 	<modules>
 		<module>nbatch-core</module>
+		<module>nbatch-handler</module>
 		<module>nbatch-admin</module>
 		<module>nbatch-consumer</module>
     </modules>
@@ -60,6 +61,12 @@
 			<dependency>
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-aop</artifactId>
+				<version>${spring.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-beans</artifactId>
 				<version>${spring.version}</version>
 			</dependency>
 
@@ -168,6 +175,12 @@
 			<dependency>
 				<groupId>com.nbatch</groupId>
 				<artifactId>nbatch-core</artifactId>
+				<version>${nbatch.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.nbatch</groupId>
+				<artifactId>nbatch-handler</artifactId>
 				<version>${nbatch.version}</version>
 			</dependency>
 

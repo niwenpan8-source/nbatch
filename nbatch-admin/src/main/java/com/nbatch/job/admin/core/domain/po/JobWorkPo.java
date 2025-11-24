@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
+import lombok.experimental.Accessors;
+
 import java.util.Date;
 
 /**
@@ -17,6 +19,7 @@ import java.util.Date;
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
+@Accessors(chain = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @TableName("nbatch_job_work")
@@ -44,8 +47,8 @@ public class JobWorkPo extends Model<JobWorkPo> {
 	private Integer workStatus;
 
 	/**
-	 * 翻牌时间
+	 * 翻牌日期
 	 */
-	private Date turnTime;
+	private Date turnDate;
 
 }

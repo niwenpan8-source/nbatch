@@ -1,28 +1,15 @@
-package com.nbatch.job.admin.core.domain.param;
+package com.nbatch.job.core.biz.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
- * @description: 作业节点导出文件表
+ * @description: 执行数据库导出到文件参数
  * @author: Mr.ni
- * @date: 2025-11-13
+ * @date: 2025/11/21
  */
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class JobWorkExportFileParam {
+public class ExecuteDbToFileParam {
 
-    /**
-     * 导出文件id
-     */
-    private String exportFileId;
-
-    /**
-     * 作业节点id
-     */
-    private String nodeId;
 
     /**
      * 导出的文件名
@@ -63,10 +50,5 @@ public class JobWorkExportFileParam {
      * 是否压缩：1压缩 0不压缩
      */
     private Integer isGzip;
-
-    /**
-     * 数据库类型
-     */
-    private String dbType;
 
 }

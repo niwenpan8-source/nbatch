@@ -37,8 +37,8 @@ public class JobWorkVo {
     private Integer workStatus;
 
     /**
-     * 翻牌时间
+     * 翻牌日期
      */
-    private Date turnTime;
+    private Date turnDate;
 
 }

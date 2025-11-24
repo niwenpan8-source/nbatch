@@ -28,11 +28,6 @@ public class JobWorkImportFilePo extends Model<JobWorkImportFilePo> {
 	private String importFileId;
 
 	/**
-	 * 作业id
-	 */
-	private String workId;
-
-	/**
 	 * 作业节点id
 	 */
 	private String nodeId;
@@ -76,5 +71,10 @@ public class JobWorkImportFilePo extends Model<JobWorkImportFilePo> {
 	 * 是否压缩：1压缩 0不压缩
 	 */
 	private Integer isGzip;
+
+	/**
+	 * 数据库类型
+	 */
+	private String dbType;
 
 }

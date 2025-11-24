@@ -26,12 +26,6 @@ public class JobWorkExportFilePo extends Model<JobWorkExportFilePo> {
 	 */
 	@TableId(type = IdType.ASSIGN_ID)
 	private String exportFileId;
-
-	/**
-	 * 作业id
-	 */
-	private String workId;
-
 	/**
 	 * 作业节点id
 	 */
@@ -76,5 +70,10 @@ public class JobWorkExportFilePo extends Model<JobWorkExportFilePo> {
 	 * 是否压缩：1压缩 0不压缩
 	 */
 	private Integer isGzip;
+
+	/**
+	 * 数据库类型
+	 */
+	private String dbType;
 
 }

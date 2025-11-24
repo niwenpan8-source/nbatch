@@ -1,10 +1,13 @@
 package com.nbatch.job.executor.core.config;
 
 import com.nbatch.job.core.executor.impl.BatchJobSpringExecutor;
+import com.nbatch.job.core.util.SpringUtil;
+import com.nbatch.job.handler.handler.JobHandlerHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 /**
  * job config
@@ -58,6 +61,16 @@ public class JobConsumerConfig {
         xxlJobSpringExecutor.setLogRetentionDays(logRetentionDays);
 
         return xxlJobSpringExecutor;
+    }
+
+    @Bean
+    public SpringUtil springUtil() {
+        return new SpringUtil();
+    }
+
+    @Bean(name = "jobHandlerHolder")
+    public JobHandlerHolder jobHandlerHolder() {
+        return new JobHandlerHolder();
     }
 
 

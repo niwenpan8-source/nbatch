@@ -142,4 +142,10 @@ public class JobInfoPo extends Model<JobInfoPo> {
      */
     private Long triggerNextTime;
 
+    /**
+     * 作业id
+     */
+    private String workId;
+
+
 }

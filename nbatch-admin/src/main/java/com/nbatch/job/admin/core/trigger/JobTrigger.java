@@ -7,14 +7,18 @@ import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.domain.po.JobGroupPo;
 import com.nbatch.job.admin.core.domain.po.JobInfoPo;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
-import com.nbatch.job.admin.core.enums.TriggerTypeEnum;
 import com.nbatch.job.admin.core.enums.ExecutorRouteStrategyEnum;
+import com.nbatch.job.admin.core.enums.TriggerTypeEnum;
+import com.nbatch.job.admin.core.enums.WorkStatusEnum;
+import com.nbatch.job.admin.core.exception.JobException;
 import com.nbatch.job.admin.core.scheduler.JobScheduler;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.ExecutorBiz;
+import com.nbatch.job.core.biz.model.ExecuteWorkParam;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.TriggerParam;
 import com.nbatch.job.core.enums.ExecutorBlockStrategyEnum;
+import com.nbatch.job.core.glue.GlueTypeEnum;
 import com.nbatch.job.core.util.IpUtil;
 import com.nbatch.job.core.util.ThrowableUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -126,6 +130,8 @@ public class JobTrigger {
         JobLogPo jobLog = new JobLogPo();
         jobLog.setJobGroup(jobInfo.getJobGroup());
         jobLog.setJobId(jobInfo.getId());
+        jobLog.setHandleCode(0);
+        jobLog.setTriggerCode(0);
         jobLog.setTriggerTime(new Date());
         JobAdminConfig.getAdminConfig().getJobLogMapper().insert(jobLog);
         log.debug(">>>>>>>>>>> job trigger start, jobId:{}", jobLog.getId());
@@ -144,6 +150,7 @@ public class JobTrigger {
         triggerParam.setGlueUpdatetime(jobInfo.getGlueUpdatetime().getTime());
         triggerParam.setBroadcastIndex(index);
         triggerParam.setBroadcastTotal(total);
+        triggerParam.setWorkId(jobInfo.getWorkId());
 
         // 3、init address
         String address = null;
@@ -215,8 +222,29 @@ public class JobTrigger {
         try {
             ExecutorBiz executorBiz = JobScheduler.getExecutorBiz(address);
             assert executorBiz != null;
+            // 如果为作业需要将作业节点置为运行
+            if (StrUtil.equals(triggerParam.getGlueType(), GlueTypeEnum.WORK.name())) {
+                if (StrUtil.isBlank(triggerParam.getWorkId())) {
+                    throw new JobException("如果为作业任务，job需要绑定作业id");
+                }
+                handleWorkTypeTaskParam(triggerParam);
+            }
+
             runResult = executorBiz.run(triggerParam);
+
+            // 如果请求失败需要将作业节点置为停止
+            if (runResult.getCode() == ReturnT.FAIL_CODE) {
+                if (StrUtil.equals(triggerParam.getGlueType(), GlueTypeEnum.WORK.name())) {
+                    JobAdminConfig.getAdminConfig().getRunNodeHelper()
+                            .updateNodeRunStatus(triggerParam.getExecuteWorkParam(), WorkStatusEnum.STOP.getCode());
+                }
+            }
         } catch (Exception e) {
+            // 如果发生异常需要将作业节点置为停止
+            if (StrUtil.equals(triggerParam.getGlueType(), GlueTypeEnum.WORK.name())) {
+                JobAdminConfig.getAdminConfig().getRunNodeHelper()
+                        .updateNodeRunStatus(triggerParam.getExecuteWorkParam(), WorkStatusEnum.START.getCode());
+            }
             log.error(">>>>>>>>>>> job trigger error, please check if the executor[{}] is running.", address, e);
             runResult = new ReturnT<>(ReturnT.FAIL_CODE, ThrowableUtil.toString(e));
         }
@@ -227,6 +255,20 @@ public class JobTrigger {
 
         runResult.setMsg(runResultStr);
         return runResult;
+    }
+
+    /**
+     * 处理工作节点任务参数
+     * @param triggerParam 调度参数
+     */
+    private static void handleWorkTypeTaskParam(TriggerParam triggerParam) {
+        // 获取可执行节点
+        ExecuteWorkParam executeWorkParam
+                = JobAdminConfig.getAdminConfig().getRunNodeHelper().getEnableExecuteNodeList(triggerParam.getWorkId());
+        triggerParam.setExecuteWorkParam(executeWorkParam);
+
+        JobAdminConfig.getAdminConfig().getRunNodeHelper()
+                .updateNodeRunStatus(triggerParam.getExecuteWorkParam(), WorkStatusEnum.START.getCode());
     }
 
 }

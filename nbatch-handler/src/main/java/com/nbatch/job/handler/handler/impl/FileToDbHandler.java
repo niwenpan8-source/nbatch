@@ -51,9 +51,4 @@ public class FileToDbHandler implements JobHandlerAdapter {
 
     }
 
-    @Override
-    public void registryListener() {
-        batchThreadPoolExecutor.shutdown();
-    }
-
 }

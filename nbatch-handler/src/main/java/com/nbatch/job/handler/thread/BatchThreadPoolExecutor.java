@@ -1,6 +1,8 @@
 package com.nbatch.job.handler.thread;
 
 import cn.hutool.core.collection.CollUtil;
+import com.nbatch.job.core.biz.model.HandleCallbackParam;
+import com.nbatch.job.core.thread.TriggerCallbackThread;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.List;
@@ -10,6 +12,8 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import static com.nbatch.job.core.enums.CallbackTypeEnum.NODE_STATUS_CALLBACK;
 
 /**
  * @description: 线程池
@@ -66,12 +70,29 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
 
     @Override
     protected void afterExecute(Runnable r, Throwable t) {
+        HandleCallbackParam handleCallbackParam = new HandleCallbackParam();
+        handleCallbackParam.setCallBackType(NODE_STATUS_CALLBACK.getValue());
         if (t != null) {
             log.error("execute Runnable error, hashCode:{}", r.hashCode(), t);
+            if (r instanceof BatchRunnable) {
+                BatchRunnable batchRunnable = (BatchRunnable) r;
+                handleCallbackParam.getNodeStatusCallbackParam()
+                        .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
+                        .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
+                        .setHandleCode(0)
+                        .setHandleMsg(t.getMessage());
+            }
         }
         if (r instanceof BatchRunnable) {
+            BatchRunnable batchRunnable = (BatchRunnable) r;
+            handleCallbackParam.getNodeStatusCallbackParam()
+                    .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
+                    .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
+                    .setHandleCode(1)
+                    .setHandleMsg("执行成功");
             currentRunningTaskList.remove(r);
         }
+        TriggerCallbackThread.pushCallBack(handleCallbackParam);
         super.afterExecute(r, t);
     }
 

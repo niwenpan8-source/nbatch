@@ -47,6 +47,11 @@
 			<artifactId>spring-aop</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-beans</artifactId>
+		</dependency>
+
 		<!-- ********************** base ********************** -->
 
 		<!-- javax.annotation-api -->
@@ -58,6 +63,11 @@
 		<dependency>
 			<groupId>cn.hutool</groupId>
 			<artifactId>hutool-core</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>cn.hutool</groupId>
+			<artifactId>hutool-extra</artifactId>
 		</dependency>
 
 		<dependency>

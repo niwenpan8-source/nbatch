@@ -32,7 +32,8 @@ import java.util.concurrent.TimeUnit;
 public class TriggerCallbackThread {
 
     private static final TriggerCallbackThread INSTANCE = new TriggerCallbackThread();
-    public static TriggerCallbackThread getInstance(){
+
+    public static TriggerCallbackThread getInstance() {
         return INSTANCE;
     }
 
@@ -40,9 +41,10 @@ public class TriggerCallbackThread {
      * job results callback queue
      */
     private final LinkedBlockingQueue<HandleCallbackParam> callBackQueue = new LinkedBlockingQueue<>();
-    public static void pushCallBack(HandleCallbackParam callback){
+
+    public static void pushCallBack(HandleCallbackParam callback) {
         getInstance().callBackQueue.add(callback);
-        log.debug(">>>>>>>>>>> job, push callback request, logId:{}", callback.getLogId());
+        log.debug(">>>>>>>>>>> job, push callback request, logId:{}", callback.getLogCallBackParam().getLogId());
     }
 
     /**
@@ -51,6 +53,7 @@ public class TriggerCallbackThread {
     private Thread triggerCallbackThread;
     private Thread triggerRetryCallbackThread;
     private volatile boolean toStop = false;
+
     public void start() {
 
         // valid
@@ -63,7 +66,7 @@ public class TriggerCallbackThread {
         triggerCallbackThread = new Thread(() -> {
 
             // normal callback
-            while(!toStop){
+            while (!toStop) {
                 try {
                     HandleCallbackParam callback = getInstance().callBackQueue.take();
                     if (ObjUtil.isNotEmpty(callback)) {
@@ -107,7 +110,7 @@ public class TriggerCallbackThread {
 
         // retry
         triggerRetryCallbackThread = new Thread(() -> {
-            while(!toStop){
+            while (!toStop) {
                 try {
                     retryFailCallbackFile();
                 } catch (Throwable e) {
@@ -130,7 +133,8 @@ public class TriggerCallbackThread {
         triggerRetryCallbackThread.start();
 
     }
-    public void toStop(){
+
+    public void toStop() {
         toStop = true;
         // stop callback, interrupt and wait
         // support empty admin address
@@ -159,13 +163,13 @@ public class TriggerCallbackThread {
      * do callback, will retry if error
      * @param callbackParamList 回调参数list
      */
-    private void doCallback(List<HandleCallbackParam> callbackParamList){
+    private void doCallback(List<HandleCallbackParam> callbackParamList) {
         boolean callbackRet = false;
         // callback, will retry if error
-        for (AdminBiz adminBiz: BatchJobExecutor.getAdminBizList()) {
+        for (AdminBiz adminBiz : BatchJobExecutor.getAdminBizList()) {
             try {
                 ReturnT<String> callbackResult = adminBiz.callback(callbackParamList);
-                if (callbackResult!=null && ReturnT.SUCCESS_CODE == callbackResult.getCode()) {
+                if (callbackResult != null && ReturnT.SUCCESS_CODE == callbackResult.getCode()) {
                     callbackLog(callbackParamList, "<br>----------- job job callback finish.");
                     callbackRet = true;
                     break;
@@ -184,9 +188,9 @@ public class TriggerCallbackThread {
     /**
      * callback log
      */
-    private void callbackLog(List<HandleCallbackParam> callbackParamList, String logContent){
-        for (HandleCallbackParam callbackParam: callbackParamList) {
-            String logFileName = JobFileAppender.makeLogFileName(new Date(callbackParam.getLogDateTim()), callbackParam.getLogId());
+    private void callbackLog(List<HandleCallbackParam> callbackParamList, String logContent) {
+        for (HandleCallbackParam callbackParam : callbackParamList) {
+            String logFileName = JobFileAppender.makeLogFileName(new Date(callbackParam.getLogCallBackParam().getLogDateTim()), callbackParam.getLogCallBackParam().getLogId());
             BatchJobContext.setXxlJobContext(new BatchJobContext(
                     null,
                     null,
@@ -203,7 +207,7 @@ public class TriggerCallbackThread {
     private static final String FAIL_CALLBACK_FILE_PATH = JobFileAppender.getLogPath().concat(File.separator).concat("callbacklog").concat(File.separator);
     private static final String FAIL_CALLBACK_FILE_NAME = FAIL_CALLBACK_FILE_PATH.concat("job-callback-{x}").concat(".log");
 
-    private void appendFailCallbackFile(List<HandleCallbackParam> callbackParamList){
+    private void appendFailCallbackFile(List<HandleCallbackParam> callbackParamList) {
         // valid
         if (CollUtil.isEmpty(callbackParamList)) {
             return;
@@ -215,7 +219,7 @@ public class TriggerCallbackThread {
         File callbackLogFile = new File(FAIL_CALLBACK_FILE_NAME.replace("{x}", String.valueOf(System.currentTimeMillis())));
         if (callbackLogFile.exists()) {
             for (int i = 0; i < 100; i++) {
-                callbackLogFile = new File(FAIL_CALLBACK_FILE_NAME.replace("{x}", String.valueOf(System.currentTimeMillis()).concat("-").concat(String.valueOf(i)) ));
+                callbackLogFile = new File(FAIL_CALLBACK_FILE_NAME.replace("{x}", String.valueOf(System.currentTimeMillis()).concat("-").concat(String.valueOf(i))));
                 if (!callbackLogFile.exists()) {
                     break;
                 }
@@ -227,7 +231,7 @@ public class TriggerCallbackThread {
 
     }
 
-    private void retryFailCallbackFile(){
+    private void retryFailCallbackFile() {
 
         // valid
         File callbackLogPath = new File(FAIL_CALLBACK_FILE_PATH);
@@ -242,11 +246,11 @@ public class TriggerCallbackThread {
         }
 
         // load and clear file, retry
-        for (File callbaclLogFile: Objects.requireNonNull(callbackLogPath.listFiles())) {
+        for (File callbaclLogFile : Objects.requireNonNull(callbackLogPath.listFiles())) {
             byte[] callbackParamListBytes = FileUtil.readBytes(callbaclLogFile);
 
             // avoid empty file
-            if(callbackParamListBytes == null || callbackParamListBytes.length < 1){
+            if (callbackParamListBytes == null || callbackParamListBytes.length < 1) {
                 cn.hutool.core.io.FileUtil.del(callbaclLogFile);
                 continue;
             }

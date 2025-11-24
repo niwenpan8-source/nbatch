@@ -14,6 +14,7 @@ import com.nbatch.job.core.glue.GlueTypeEnum;
 import com.nbatch.job.core.handler.IJobHandler;
 import com.nbatch.job.core.handler.impl.GlueJobHandler;
 import com.nbatch.job.core.handler.impl.ScriptJobHandler;
+import com.nbatch.job.core.handler.impl.WorkJobHandler;
 import com.nbatch.job.core.log.JobFileAppender;
 import com.nbatch.job.core.thread.JobThread;
 import lombok.extern.slf4j.Slf4j;
@@ -78,6 +79,23 @@ public class ExecutorBizImpl implements ExecutorBiz {
                 if (jobHandler == null) {
                     return new ReturnT<>(ReturnT.FAIL_CODE, "job handler [" + triggerParam.getExecutorHandler() + "] not found.");
                 }
+            }
+
+        } else if (GlueTypeEnum.WORK == glueTypeEnum) {
+            // valid old jobThread
+            if (jobThread != null && !(jobThread.getHandler() instanceof WorkJobHandler)) {
+                removeOldReason = "change job source or glue type, and terminate the old job thread.";
+
+                jobThread = null;
+                jobHandler = null;
+            }
+
+            // valid handler
+            if (jobHandler == null) {
+                jobHandler = new WorkJobHandler(triggerParam.getJobId(), triggerParam.getExecuteWorkParam());
+            } else {
+                WorkJobHandler handler = (WorkJobHandler) jobThread.getHandler();
+                handler.setWorkNodeParam(triggerParam.getExecuteWorkParam());
             }
 
         } else if (GlueTypeEnum.GLUE_GROOVY == glueTypeEnum) {

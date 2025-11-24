@@ -70,7 +70,7 @@ public class JobLogPo extends Model<JobLogPo> {
     /**
      * 调度-结果
      */
-    private int triggerCode;
+    private Integer triggerCode;
 
     /**
      * 调度-日志
@@ -85,7 +85,7 @@ public class JobLogPo extends Model<JobLogPo> {
     /**
      * 执行-状态
      */
-    private int handleCode;
+    private Integer handleCode;
 
     /**
      * 执行-日志

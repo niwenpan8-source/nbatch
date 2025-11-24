@@ -37,10 +37,11 @@ public class JobWorkParam {
      */
     private Integer workStatus;
 
+
     /**
-     * 翻牌时间
+     * 翻牌日期
      */
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private Date turnTime;
+    private Date turnDate;
 
 }

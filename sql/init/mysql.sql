@@ -47,7 +47,7 @@ CREATE TABLE `nbatch_job_info`
     `executor_block_strategy`   varchar(50)           DEFAULT NULL COMMENT '阻塞处理策略',
     `executor_timeout`          int(11)      NOT NULL DEFAULT '0' COMMENT '任务执行超时时间，单位秒',
     `executor_fail_retry_count` int(11)      NOT NULL DEFAULT '0' COMMENT '失败重试次数',
-    `glue_type`                 varchar(50)  NOT NULL COMMENT 'GLUE类型',
+    `glue_type`                 varchar(50)  NOT NULL COMMENT 'GLUE类型，BEAN类型（任务执行类型），WORK类型',
     `glue_source`               mediumtext COMMENT 'GLUE源代码',
     `glue_remark`               varchar(128)          DEFAULT NULL COMMENT 'GLUE备注',
     `glue_updatetime`           datetime              DEFAULT NULL COMMENT 'GLUE更新时间',
@@ -55,6 +55,7 @@ CREATE TABLE `nbatch_job_info`
     `trigger_status`            tinyint(4)   NOT NULL DEFAULT '0' COMMENT '调度状态：0-停止，1-运行',
     `trigger_last_time`         bigint(13)   NOT NULL DEFAULT '0' COMMENT '上次调度时间',
     `trigger_next_time`         bigint(13)   NOT NULL DEFAULT '0' COMMENT '下次调度时间',
+    `work_id`         varchar(50)   NOT NULL DEFAULT '0' COMMENT '作业id',
     PRIMARY KEY (`id`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4;
@@ -190,7 +191,7 @@ create table nbatch_job_work
     work_name    varchar(300) not null comment '作业名',
     work_desc    varchar(300) comment '作业描述',
     work_status  tinyint(4)  not null default 0 comment '作业状态：0=停用、1=启用',
-    turn_time  datetime comment '翻牌时间',
+    turn_date  date comment '翻牌时间',
     primary key (work_id)
 ) engine = innodb comment = '作业表'
   default charset = utf8mb4;
@@ -203,6 +204,7 @@ create table nbatch_job_work_node
     node_name    varchar(300) not null comment '节点名称',
     node_desc    varchar(300) comment '节点描述',
     node_status  tinyint(4)  not null default 0 comment '节点状态：0=停用、1=启用',
+    node_run_status  tinyint(4)  not null default 0 comment '节点运行状态：0=未运行、1=运行节点',
     node_type  varchar(20)  not null comment 'script:脚本,store_procedure:存储过程,execute_sql:执行sql,file_to_db:文件导入到数据库,db_to_file:数据库导出到文件',
     turn_date  date comment '翻牌日期',
     primary key (node_id)
@@ -213,7 +215,6 @@ create table nbatch_job_work_node
 drop table if exists nbatch_job_work_export_file;
 create table nbatch_job_work_export_file (
     export_file_id varchar(32) not null comment '导出文件id',
-    work_id varchar(32) not null comment '作业id',
     node_id varchar(32) not null comment '作业节点id',
     file_name varchar(200) not null comment '导出的文件名',
     export_table_name varchar(200) not null comment '导出的表名',
@@ -223,6 +224,7 @@ create table nbatch_job_work_export_file (
     sep varchar(32) comment '分隔符',
     all_update int default 0 comment '是否全量文件：1全量 0增量',
     is_gzip int default 0  comment '是否压缩：1压缩 0不压缩',
+    db_type varchar(32) default 0  comment '数据库类型',
     primary key (export_file_id)
 ) engine = innodb comment = '作业节点导出文件表'
   default charset = utf8mb4;
@@ -231,7 +233,6 @@ create table nbatch_job_work_export_file (
 drop table if exists nbatch_job_work_import_file;
 create table nbatch_job_work_import_file (
     import_file_id varchar(32) not null comment '导入文件id',
-    work_id varchar(32) not null comment '作业id',
     node_id varchar(32) not null comment '作业节点id',
     file_name              varchar(200) not null comment '导入的文件名',
     import_table_name      varchar(200) not null comment '导入的表名',
@@ -241,6 +242,7 @@ create table nbatch_job_work_import_file (
     sep                    varchar(32) comment '分隔符',
     all_update             int default 0 comment '是否全量文件：1全量 0增量',
     is_gzip                int default 0 comment '是否压缩：1压缩 0不压缩',
+    db_type varchar(32) default 0  comment '数据库类型',
     primary key (import_file_id)
 ) engine = innodb comment = '作业节点导入文件表'
   default charset = utf8mb4;
@@ -248,11 +250,24 @@ create table nbatch_job_work_import_file (
 # 作业节点关系表
 drop table if exists nbatch_job_work_node_relation;
 create table nbatch_job_work_node_relation (
-                                               node_relation_id varchar(32) not null comment '作业节点关系id',
-                                               node_id1 varchar(32) not null comment '节点1',
-                                               node_id2 varchar(32) not null comment '节点2',
-                                               node_order tinyint(4)  not null comment '节点顺序',
-                                               primary key (node_relation_id)
+    node_relation_id varchar(32) not null comment '作业节点关系id',
+    work_id varchar(32) not null comment '作业id',
+    node_id1 varchar(32) not null comment '节点1',
+    node_id2 varchar(32) not null comment '节点2',
+    node_order tinyint(4)  not null comment '节点顺序',
+    primary key (node_relation_id)
 ) engine = innodb comment = '作业节点关系表'
+  default charset = utf8mb4;
+
+# 运行节点表
+drop table if exists nbatch_job_work_run_node;
+create table nbatch_job_work_run_node
+(
+    run_node_id      varchar(32) not null comment '运行节点id',
+    work_id      varchar(32) not null comment '作业id',
+    node_id      varchar(32) not null comment '作业节点id',
+    node_sequence  tinyint(4) not null comment '节点顺序',
+    primary key (run_node_id)
+) engine = innodb comment = '作业运行节点表'
   default charset = utf8mb4;
 

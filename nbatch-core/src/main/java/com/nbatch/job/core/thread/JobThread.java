@@ -22,6 +22,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static com.nbatch.job.core.enums.CallbackTypeEnum.LOG_CALLBACK;
+
 
 /**
  * handler thread
@@ -197,7 +199,7 @@ public class JobThread extends Thread{
 
 				// handle result
                 String errorMsg = ThrowableUtil.toString(e);
-
+				log.error("处理器执行任务发生错误！", e);
 				BatchJobHelper.handleFail(errorMsg);
 
 				BatchJobHelper.log("<br>----------- JobThread Exception:" + errorMsg + "<br>----------- job job execute end(error) -----------");
@@ -205,21 +207,24 @@ public class JobThread extends Thread{
                 if(triggerParam != null) {
                     // callback handler info
                     if (!toStop) {
-                        // commonm
-                        TriggerCallbackThread.pushCallBack(new HandleCallbackParam(
-                        		triggerParam.getLogId(),
-								triggerParam.getLogDateTime(),
-								BatchJobContext.getXxlJobContext().getHandleCode(),
-								BatchJobContext.getXxlJobContext().getHandleMsg() )
-						);
+						HandleCallbackParam handleCallbackParam = new HandleCallbackParam();
+						handleCallbackParam.setCallBackType(LOG_CALLBACK.getValue());
+						handleCallbackParam.getLogCallBackParam()
+								.setLogId(triggerParam.getLogId())
+								.setLogDateTim(triggerParam.getLogDateTime())
+								.setHandleCode(BatchJobContext.getXxlJobContext().getHandleCode())
+								.setHandleMsg(BatchJobContext.getXxlJobContext().getHandleMsg());
+						TriggerCallbackThread.pushCallBack(handleCallbackParam);
                     } else {
+						HandleCallbackParam handleCallbackParam = new HandleCallbackParam();
+						handleCallbackParam.setCallBackType(LOG_CALLBACK.getValue());
+						handleCallbackParam.getLogCallBackParam()
+								.setLogId(triggerParam.getLogId())
+								.setLogDateTim(triggerParam.getLogDateTime())
+								.setHandleCode(BatchJobContext.HANDLE_CODE_FAIL)
+								.setHandleMsg(stopReason + " [job running, killed]");
                         // is killed
-                        TriggerCallbackThread.pushCallBack(new HandleCallbackParam(
-                        		triggerParam.getLogId(),
-								triggerParam.getLogDateTime(),
-								BatchJobContext.HANDLE_CODE_FAIL,
-								stopReason + " [job running, killed]" )
-						);
+                        TriggerCallbackThread.pushCallBack(handleCallbackParam);
                     }
                 }
             }
@@ -229,13 +234,15 @@ public class JobThread extends Thread{
 		while(CollUtil.isNotEmpty(triggerQueue)){
 			TriggerParam triggerParam = triggerQueue.poll();
 			if (triggerParam!=null) {
+				HandleCallbackParam handleCallbackParam = new HandleCallbackParam();
+				handleCallbackParam.setCallBackType(LOG_CALLBACK.getValue());
+				handleCallbackParam.getLogCallBackParam()
+						.setLogId(triggerParam.getLogId())
+						.setLogDateTim(triggerParam.getLogDateTime())
+						.setHandleCode(BatchJobContext.HANDLE_CODE_FAIL)
+						.setHandleMsg(stopReason + " [job not executed, in the job queue, killed.]");
 				// is killed
-				TriggerCallbackThread.pushCallBack(new HandleCallbackParam(
-						triggerParam.getLogId(),
-						triggerParam.getLogDateTime(),
-						BatchJobContext.HANDLE_CODE_FAIL,
-						stopReason + " [job not executed, in the job queue, killed.]")
-				);
+				TriggerCallbackThread.pushCallBack(handleCallbackParam);
 			}
 		}
 

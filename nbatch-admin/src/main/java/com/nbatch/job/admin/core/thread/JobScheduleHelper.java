@@ -62,6 +62,7 @@ public class JobScheduleHelper {
             // pre-read count: treadpool-size * trigger-qps (each trigger cost 50ms, qps = 1000/50 = 20)
             int preReadCount = (JobAdminConfig.getAdminConfig().getTriggerPoolFastMax() + JobAdminConfig.getAdminConfig().getTriggerPoolSlowMax()) * 20;
 
+
             while (!scheduleThreadToStop) {
 
                 // Scan Job
@@ -105,7 +106,7 @@ public class JobScheduleHelper {
                                 if (MisfireStrategyEnum.FIRE_ONCE_NOW == misfireStrategyEnum) {
                                     // FIRE_ONCE_NOW 》 trigger
                                     JobTriggerPoolHelper.trigger(jobInfo.getId(), TriggerTypeEnum.MISFIRE, -1, null, null, null);
-                                    log.debug(">>>>>>>>>>> job, schedule push trigger : jobId = " + jobInfo.getId());
+                                    log.debug(">>>>>>>>>>> job, schedule push trigger : jobId = {}", jobInfo.getId());
                                 }
 
                                 // 2、fresh next
@@ -116,7 +117,7 @@ public class JobScheduleHelper {
 
                                 // 1、trigger
                                 JobTriggerPoolHelper.trigger(jobInfo.getId(), TriggerTypeEnum.CRON, -1, null, null, null);
-                                log.debug(">>>>>>>>>>> job, schedule push trigger : jobId = " + jobInfo.getId());
+                                log.debug(">>>>>>>>>>> job, schedule push trigger : jobId = {}", jobInfo.getId());
 
                                 // 2、fresh next
                                 refreshNextValidTime(jobInfo, new Date());

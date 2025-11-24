@@ -11,6 +11,7 @@ import lombok.Getter;
 public enum GlueTypeEnum {
 
     BEAN("BEAN", false, null, null),
+    WORK("WORK", false, null, null),
     GLUE_GROOVY("GLUE(Java)", false, null, null),
     GLUE_SHELL("GLUE(Shell)", true, "bash", ".sh"),
     GLUE_PYTHON("GLUE(Python)", true, "python", ".py"),

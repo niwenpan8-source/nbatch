@@ -45,7 +45,7 @@
     </appender>
 
     <!-- 根日志级别 -->
-    <root level="info">
+    <root level="debug">
         <appender-ref ref="console" />
         <appender-ref ref="log_debug" />
     </root>

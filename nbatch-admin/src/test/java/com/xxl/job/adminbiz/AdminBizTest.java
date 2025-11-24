@@ -28,12 +28,12 @@ public class AdminBizTest {
 
 
     @Test
-    public void callback() throws Exception {
+    public void callback() {
         AdminBiz adminBiz = new AdminBizClient(addressUrl, accessToken, timeoutSecond);
 
         HandleCallbackParam param = new HandleCallbackParam();
-        param.setLogId("1");
-        param.setHandleCode(BatchJobContext.HANDLE_CODE_SUCCESS);
+        param.getLogCallBackParam().setLogId("1");
+        param.getLogCallBackParam().setHandleCode(BatchJobContext.HANDLE_CODE_SUCCESS);
 
         List<HandleCallbackParam> callbackParamList = Arrays.asList(param);
 
@@ -45,10 +45,9 @@ public class AdminBizTest {
     /**
      * registry executor
      *
-     * @throws Exception
      */
     @Test
-    public void registry() throws Exception {
+    public void registry() {
         AdminBiz adminBiz = new AdminBizClient(addressUrl, accessToken, timeoutSecond);
 
         RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), "job-executor-example", "127.0.0.1:9999");
@@ -60,10 +59,9 @@ public class AdminBizTest {
     /**
      * registry executor remove
      *
-     * @throws Exception
      */
     @Test
-    public void registryRemove() throws Exception {
+    public void registryRemove() {
         AdminBiz adminBiz = new AdminBizClient(addressUrl, accessToken, timeoutSecond);
 
         RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), "job-executor-example", "127.0.0.1:9999");

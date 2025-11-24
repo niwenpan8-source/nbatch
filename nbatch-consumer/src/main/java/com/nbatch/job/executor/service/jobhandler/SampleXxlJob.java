@@ -40,6 +40,7 @@ public class SampleXxlJob {
         BatchJobHelper.log("XXL-JOB, Hello World.");
 
         for (int i = 0; i < 5; i++) {
+            log.info("beat at:" + i);
             BatchJobHelper.log("beat at:" + i);
             TimeUnit.SECONDS.sleep(2);
         }

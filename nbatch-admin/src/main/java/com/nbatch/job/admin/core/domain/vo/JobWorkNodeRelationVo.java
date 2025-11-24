@@ -23,6 +23,11 @@ public class JobWorkNodeRelationVo {
     private String nodeRelationId;
 
     /**
+     * 作业id
+     */
+    private String workId;
+
+    /**
      * 节点1
      */
     private String nodeId1;

@@ -17,7 +17,7 @@ import lombok.extern.log4j.Log4j2;
 @AllArgsConstructor
 public class BatchRunnable implements Runnable{
 
-    private JSONObject cacheObj;
+    private JSONObject cacheObj = new JSONObject();
 
     @Override
     public void run() {
