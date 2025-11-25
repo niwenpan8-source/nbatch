@@ -1,11 +1,15 @@
 package com.nbatch.job.handler.thread;
 
 import cn.hutool.core.collection.CollUtil;
+import com.nbatch.job.core.biz.AdminBiz;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
+import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.constant.HandleCodeConstant;
+import com.nbatch.job.core.executor.BatchJobExecutor;
 import com.nbatch.job.core.thread.TriggerCallbackThread;
 import lombok.extern.log4j.Log4j2;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -107,12 +111,52 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
     @Override
     public void shutdown() {
         log.info("shutdown threadPool:{}", threadPoolKey);
+        List<HandleCallbackParam> currentNotRunningFinishTaskList = new ArrayList<>();
         if (CollUtil.isNotEmpty(currentRunningTaskList)) {
-
-            for (BatchRunnable batchRunnable : currentRunningTaskList) {
-                log.info("shutdown threadPool:{}, task:{}", threadPoolKey, batchRunnable);
+            BlockingQueue<Runnable> queue = this.getQueue();
+            for (Runnable runnable : queue) {
+                if (runnable instanceof BatchRunnable) {
+                    BatchRunnable batchRunnable = (BatchRunnable) runnable;
+                    HandleCallbackParam handleCallbackParam = new HandleCallbackParam();
+                    handleCallbackParam.setCallBackType(NODE_STATUS_CALLBACK.getValue());
+                    handleCallbackParam.setLogId(batchRunnable.getCacheObj().getStr("logId"));
+                    handleCallbackParam.setLogId(batchRunnable.getCacheObj().getStr("logId"));
+                    handleCallbackParam.setCallBackType(NODE_STATUS_CALLBACK.getValue());
+                    handleCallbackParam.getNodeStatusCallbackParam()
+                            .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
+                            .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
+                            .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
+                            .setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
+                            .setHandleMsg("系统优雅关闭，任务停止");
+                    currentNotRunningFinishTaskList.add(handleCallbackParam);
+                }
             }
-            currentRunningTaskList.clear();
+            for (BatchRunnable batchRunnable : currentRunningTaskList) {
+                HandleCallbackParam handleCallbackParam = new HandleCallbackParam();
+                handleCallbackParam.setCallBackType(NODE_STATUS_CALLBACK.getValue());
+                handleCallbackParam.setLogId(batchRunnable.getCacheObj().getStr("logId"));
+                handleCallbackParam.getNodeStatusCallbackParam()
+                        .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
+                        .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
+                        .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
+                        .setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
+                        .setHandleMsg("系统优雅关闭，任务停止");
+                currentNotRunningFinishTaskList.add(handleCallbackParam);
+            }
         }
+        log.info("currentNotRunningFinishTaskList:{}", currentNotRunningFinishTaskList);
+        for (AdminBiz adminBiz : BatchJobExecutor.getAdminBizList()) {
+            try {
+                ReturnT<String> callbackResult = adminBiz.callback(currentNotRunningFinishTaskList);
+                if (callbackResult != null && ReturnT.SUCCESS_CODE == callbackResult.getCode()) {
+                    log.error("<br>----------- graceful shutdown finish.");
+                } else {
+                    log.error("<br>----------- graceful shutdown fail, callbackResult:{}", callbackResult);
+                }
+            } catch (Throwable e) {
+                log.error("<br>----------- graceful shutdown error, errorMsg:{}", e.getMessage());
+            }
+        }
+        this.shutdownNow();
     }
 }

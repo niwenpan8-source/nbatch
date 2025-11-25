@@ -8,11 +8,13 @@ import com.nbatch.job.handler.handler.JobHandlerHolder;
 import com.nbatch.job.handler.handler.impl.DbToFileHandler;
 import com.nbatch.job.handler.handler.impl.FileToDbHandler;
 import com.nbatch.job.handler.helper.DialectHelper;
+import com.nbatch.job.handler.utils.BatchThreadPoolUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.Map;
@@ -98,6 +100,12 @@ public class JobConsumerConfig {
     @Bean(name = "jobHandlerHolder")
     public JobHandlerHolder jobHandlerHolder(Map<String, JobHandlerAdapter> jobHandlerAdapterMap) {
         return new JobHandlerHolder(jobHandlerAdapterMap);
+    }
+
+    @PreDestroy
+    public void destroy() {
+        BatchThreadPoolUtil.shutdownAllThreadPool();
+        log.info(">>>>>>>>>>> job destroy.");
     }
     
 

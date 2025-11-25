@@ -28,7 +28,7 @@ public class DbToFileHandler implements JobHandlerAdapter {
 
     @Override
     public void execute(ExecuteNodeParam nodeParam) throws Exception {
-        // todo 临时文件路径
+        Thread.sleep(1000 * 5);
         String tempFilePath = "C:/disk/project/work/2025/nbatch/file/123.csv";
         FileUtil.touch(tempFilePath);
         ExecuteDbToFileParam executeDbToFileParam = nodeParam.getExecuteDbToFileParam();
