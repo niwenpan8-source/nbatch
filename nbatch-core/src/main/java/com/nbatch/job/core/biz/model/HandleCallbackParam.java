@@ -72,6 +72,11 @@ public class HandleCallbackParam implements Serializable {
         private String nodeId;
 
         /**
+         * 节点日志id
+         */
+        private String nodeLogId;
+
+        /**
          * 处理时间
          */
         private long handleTime;

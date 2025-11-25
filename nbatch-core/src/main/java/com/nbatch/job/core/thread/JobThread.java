@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.TriggerParam;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.context.BatchJobContext;
 import com.nbatch.job.core.context.BatchJobHelper;
 import com.nbatch.job.core.executor.BatchJobExecutor;
@@ -221,7 +222,7 @@ public class JobThread extends Thread{
 						handleCallbackParam.setLogId(triggerParam.getLogId());
 						handleCallbackParam.getLogCallBackParam()
 								.setLogDateTim(triggerParam.getLogDateTime())
-								.setHandleCode(BatchJobContext.HANDLE_CODE_FAIL)
+								.setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
 								.setHandleMsg(stopReason + " [job running, killed]");
                         // is killed
                         TriggerCallbackThread.pushCallBack(handleCallbackParam);
@@ -239,7 +240,7 @@ public class JobThread extends Thread{
 				handleCallbackParam.setLogId(triggerParam.getLogId());
 				handleCallbackParam.getLogCallBackParam()
 						.setLogDateTim(triggerParam.getLogDateTime())
-						.setHandleCode(BatchJobContext.HANDLE_CODE_FAIL)
+						.setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
 						.setHandleMsg(stopReason + " [job not executed, in the job queue, killed.]");
 				// is killed
 				TriggerCallbackThread.pushCallBack(handleCallbackParam);

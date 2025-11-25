@@ -2,6 +2,7 @@ package com.nbatch.job.core.context;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.log.JobFileAppender;
 import com.nbatch.job.core.util.ThrowableUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -149,7 +150,7 @@ public class BatchJobHelper {
      * handle success
      */
     public static boolean handleSuccess() {
-        return handleResult(BatchJobContext.HANDLE_CODE_SUCCESS, null);
+        return handleResult(HandleCodeConstant.HANDLE_CODE_SUCCESS, null);
     }
 
     /**
@@ -158,14 +159,14 @@ public class BatchJobHelper {
      * @param handleMsg handleMsg
      */
     public static boolean handleSuccess(String handleMsg) {
-        return handleResult(BatchJobContext.HANDLE_CODE_SUCCESS, handleMsg);
+        return handleResult(HandleCodeConstant.HANDLE_CODE_SUCCESS, handleMsg);
     }
 
     /**
      * handle fail
      */
     public static boolean handleFail() {
-        return handleResult(BatchJobContext.HANDLE_CODE_FAIL, null);
+        return handleResult(HandleCodeConstant.HANDLE_CODE_FAIL, null);
     }
 
     /**
@@ -174,14 +175,14 @@ public class BatchJobHelper {
      * @param handleMsg handleMsg
      */
     public static boolean handleFail(String handleMsg) {
-        return handleResult(BatchJobContext.HANDLE_CODE_FAIL, handleMsg);
+        return handleResult(HandleCodeConstant.HANDLE_CODE_FAIL, handleMsg);
     }
 
     /**
      * handle timeout
      */
     public static boolean handleTimeout() {
-        return handleResult(BatchJobContext.HANDLE_CODE_TIMEOUT, null);
+        return handleResult(HandleCodeConstant.HANDLE_CODE_TIMEOUT, null);
     }
 
     /**
@@ -190,7 +191,7 @@ public class BatchJobHelper {
      * @param handleMsg handleMsg
      */
     public static boolean handleTimeout(String handleMsg) {
-        return handleResult(BatchJobContext.HANDLE_CODE_TIMEOUT, handleMsg);
+        return handleResult(HandleCodeConstant.HANDLE_CODE_TIMEOUT, handleMsg);
     }
 
     /**

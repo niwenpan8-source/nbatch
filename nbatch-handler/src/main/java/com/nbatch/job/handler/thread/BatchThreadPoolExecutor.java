@@ -2,6 +2,7 @@ package com.nbatch.job.handler.thread;
 
 import cn.hutool.core.collection.CollUtil;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.thread.TriggerCallbackThread;
 import lombok.extern.log4j.Log4j2;
 
@@ -80,7 +81,8 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
                 handleCallbackParam.getNodeStatusCallbackParam()
                         .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
                         .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
-                        .setHandleCode(0)
+                        .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
+                        .setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
                         .setHandleMsg(t.getMessage());
             }
         }
@@ -90,7 +92,8 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
             handleCallbackParam.getNodeStatusCallbackParam()
                     .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
                     .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
-                    .setHandleCode(1)
+                    .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
+                    .setHandleCode(HandleCodeConstant.HANDLE_CODE_SUCCESS)
                     .setHandleMsg("执行成功");
             currentRunningTaskList.remove(r);
         }
@@ -101,10 +104,11 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
     /**
      * 清空等待任务队列，执行完成当前任务
      */
+    @Override
     public void shutdown() {
         log.info("shutdown threadPool:{}", threadPoolKey);
-        super.shutdownNow();
         if (CollUtil.isNotEmpty(currentRunningTaskList)) {
+
             for (BatchRunnable batchRunnable : currentRunningTaskList) {
                 log.info("shutdown threadPool:{}, task:{}", threadPoolKey, batchRunnable);
             }

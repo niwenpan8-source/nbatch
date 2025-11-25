@@ -8,9 +8,11 @@ import com.nbatch.job.admin.core.complete.JobCompleter;
 import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
 import com.nbatch.job.admin.core.domain.po.JobRegistryPo;
+import com.nbatch.job.admin.core.enums.WorkStatusEnum;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Date;
@@ -87,13 +89,13 @@ public class JobCompleteHelper {
                             .selectList(Wrappers.lambdaQuery(JobRegistryPo.class));
                     List<String> registryValueList = jobRegistryPos.stream().map(JobRegistryPo::getRegistryValue)
                             .filter(Objects::nonNull).collect(Collectors.toList());
-                    List<String> losedJobIds = jobLogList.stream()
+                    List<String> loseJobIds = jobLogList.stream()
                             .filter(jobLogPo -> !registryValueList.contains(jobLogPo.getExecutorAddress()))
                             .map(JobLogPo::getId).collect(Collectors.toList());
 
 
-                    if (CollUtil.isNotEmpty(losedJobIds)) {
-                        for (String logId : losedJobIds) {
+                    if (CollUtil.isNotEmpty(loseJobIds)) {
+                        for (String logId : loseJobIds) {
 
                             JobLogPo jobLog = new JobLogPo();
                             jobLog.setId(logId);
@@ -162,10 +164,9 @@ public class JobCompleteHelper {
     }
 
     private ReturnT<String> callback(HandleCallbackParam handleCallbackParam) {
-        log.info("执行回调callback,{}", handleCallbackParam);
         if (StrUtil.equals(handleCallbackParam.getCallBackType(), LOG_CALLBACK.getValue())) {
             return logCallback(handleCallbackParam);
-        } else if (StrUtil.equals(handleCallbackParam.getCallBackType(), NODE_STATUS_CALLBACK.getValue())){
+        } else if (StrUtil.equals(handleCallbackParam.getCallBackType(), NODE_STATUS_CALLBACK.getValue())) {
             return nodeStatusCallback(handleCallbackParam);
         }
         return ReturnT.SUCCESS;
@@ -184,7 +185,6 @@ public class JobCompleteHelper {
             // avoid repeat callback, trigger child job etc
             return new ReturnT<>(ReturnT.FAIL_CODE, "log repeat callback.");
         }
-
         // handle msg
         StringBuilder handleMsg = new StringBuilder();
         if (logInfo.getHandleMsg() != null) {
@@ -208,8 +208,22 @@ public class JobCompleteHelper {
      * node status callback
      */
     private ReturnT<String> nodeStatusCallback(HandleCallbackParam handleCallbackParam) {
-        // todo node status callback
+
         log.info(">>>>>>>>>>> job, node status callback, handleCallbackParam: {}", handleCallbackParam);
+        HandleCallbackParam.NodeStatusCallbackParam nodeStatusCallbackParam
+                = handleCallbackParam.getNodeStatusCallbackParam();
+        if (nodeStatusCallbackParam.getHandleCode() == HandleCodeConstant.HANDLE_CODE_SUCCESS) {
+            JobAdminConfig.getAdminConfig().getRunNodeHelper()
+                    .updateNodeTurnDate(nodeStatusCallbackParam.getNodeId(), nodeStatusCallbackParam.getWorkId());
+        } else {
+            JobAdminConfig.getAdminConfig().getRunNodeHelper()
+                    .updateNodeStatusById(nodeStatusCallbackParam.getNodeId(), WorkStatusEnum.STOP.getCode());
+        }
+
+        JobAdminConfig.getAdminConfig().getRunNodeHelper()
+                .updateRunNodeLogStatus(nodeStatusCallbackParam.getNodeLogId()
+                        , nodeStatusCallbackParam.getHandleCode()
+                        , nodeStatusCallbackParam.getHandleMsg());
         return ReturnT.SUCCESS;
     }
 

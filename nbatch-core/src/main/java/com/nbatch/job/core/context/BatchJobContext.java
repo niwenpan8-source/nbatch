@@ -1,20 +1,16 @@
 package com.nbatch.job.core.context;
 
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import lombok.Getter;
 import lombok.Setter;
 
 /**
  * job context
  *
- * @author Mr.ni 2020-05-21
- * [Dear hj]
+ * @author Mr.ni
  */
 @Getter
 public class BatchJobContext {
-
-    public static final int HANDLE_CODE_SUCCESS = 200;
-    public static final int HANDLE_CODE_FAIL = 500;
-    public static final int HANDLE_CODE_TIMEOUT = 502;
 
     // ---------------------- base info ----------------------
 
@@ -73,7 +69,7 @@ public class BatchJobContext {
         this.shardIndex = shardIndex;
         this.shardTotal = shardTotal;
         // default success
-        this.handleCode = HANDLE_CODE_SUCCESS;
+        this.handleCode = HandleCodeConstant.HANDLE_CODE_SUCCESS;
     }
 
     // ---------------------- tool ----------------------

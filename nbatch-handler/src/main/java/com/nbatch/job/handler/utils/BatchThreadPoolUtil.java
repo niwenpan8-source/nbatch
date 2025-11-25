@@ -3,6 +3,7 @@ package com.nbatch.job.handler.utils;
 
 import cn.hutool.core.text.StrPool;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.thread.TriggerCallbackThread;
 import com.nbatch.job.handler.thread.BatchRunnable;
 import com.nbatch.job.handler.thread.BatchThreadPoolExecutor;
@@ -118,7 +119,8 @@ public class BatchThreadPoolUtil {
             handleCallbackParam.getNodeStatusCallbackParam()
                     .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
                     .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
-                    .setHandleCode(0)
+                    .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
+                    .setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
                     .setHandleMsg("线程被抛弃");
             TriggerCallbackThread.pushCallBack(handleCallbackParam);
         }

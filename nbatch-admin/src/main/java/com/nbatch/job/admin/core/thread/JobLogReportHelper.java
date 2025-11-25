@@ -103,7 +103,7 @@ public class JobLogReportHelper {
                     }
                 }
 
-                // 2、log-clean: switch open & once each day
+                // 2、log-clean: switch open & once each day, 每天清理配置时间之前的
                 if (JobAdminConfig.getAdminConfig().getLogretentiondays() > 0
                         && System.currentTimeMillis() - lastCleanLogTime > 24 * 60 * 60 * 1000) {
 

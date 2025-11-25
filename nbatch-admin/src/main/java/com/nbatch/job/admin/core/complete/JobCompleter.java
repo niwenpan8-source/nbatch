@@ -6,11 +6,11 @@ import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.domain.po.JobInfoPo;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
-import com.nbatch.job.admin.core.thread.JobTriggerPoolHelper;
 import com.nbatch.job.admin.core.enums.TriggerTypeEnum;
+import com.nbatch.job.admin.core.thread.JobTriggerPoolHelper;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.model.ReturnT;
-import com.nbatch.job.core.context.BatchJobContext;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import lombok.extern.slf4j.Slf4j;
 
 import java.text.MessageFormat;
@@ -42,11 +42,11 @@ public class JobCompleter {
     /**
      * do somethind to finish job
      */
-    private static void finishJob(JobLogPo jobLogPo){
+    private static void finishJob(JobLogPo jobLogPo) {
 
         // 1、handle success, to trigger child job
         StringBuilder triggerChildMsg = null;
-        if (BatchJobContext.HANDLE_CODE_SUCCESS == jobLogPo.getHandleCode()) {
+        if (HandleCodeConstant.HANDLE_CODE_SUCCESS == jobLogPo.getHandleCode()) {
             JobInfoPo jobInfo = JobAdminConfig.getAdminConfig().getJobInfoMapper().selectById(jobLogPo.getJobId());
             if (jobInfo != null && StrUtil.isNotBlank(jobInfo.getChildJobid())) {
                 triggerChildMsg = new StringBuilder("<br><br><span style=\"color:#00c0ef;\" > >>>>>>>>>>>" + I18nUtil.getString("jobconf_trigger_child_run") + "<<<<<<<<<<< </span><br>");

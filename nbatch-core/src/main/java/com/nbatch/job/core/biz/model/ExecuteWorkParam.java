@@ -1,5 +1,6 @@
 package com.nbatch.job.core.biz.model;
 
+import cn.hutool.core.util.IdUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

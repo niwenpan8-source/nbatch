@@ -49,7 +49,7 @@ public class JobHandlerHolder implements IJobHandlerHolder {
                 }
                 Integer threadPoolNum = nodeTypeEnum.getThreadPoolNum();
                 batchThreadPoolExecutor = BatchThreadPoolUtil.newThreadPoolExecutorDiscard(nodeParam.getNodeType(), threadPoolNum,
-                        threadPoolNum, 30, TimeUnit.MINUTES, 1);
+                        threadPoolNum, 30, TimeUnit.MINUTES, 1000);
             }
             JobHandlerAdapter jobHandlerAdapter = jobHandlerAdapterMap.get(nodeParam.getNodeType());
             JSONObject cacheObj = new JSONObject();
@@ -57,6 +57,7 @@ public class JobHandlerHolder implements IJobHandlerHolder {
             cacheObj.putOpt("jobId", workNodeParam.getJobId());
             cacheObj.putOpt("nodeId", nodeParam.getNodeId());
             cacheObj.putOpt("logId", workNodeParam.getJobLogId());
+            cacheObj.putOpt("nodeLogId", nodeParam.getNodeLogId());
             batchThreadPoolExecutor.executeBatch(new BatchRunnable(cacheObj) {
                 @Override
                 public void run() {
