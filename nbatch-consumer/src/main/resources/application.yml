@@ -8,22 +8,6 @@ logging:
   level:
     org.apache.ibatis: DEBUG
     com.dmap: DEBUG
-
-# xxl-job configuration
-nbatch:
-  job:
-    admin:
-      addresses: http://127.0.0.1:8080/xxl-job-admin
-      accessToken: default_token
-      timeout: 3
-    executor:
-      appName: xxl-job-executor-sample
-      address:
-      ip:
-      port: 9999
-      logpath: log/nbatch/jobhandler
-      logretentiondays: 30
-
 spring:
   datasource:
     dynamic:
@@ -62,3 +46,20 @@ spring:
             validation-timeout: 1000
   jackson:
     time-zone: GMT+8
+# xxl-job configuration
+nbatch:
+  job:
+    admin:
+      addresses: http://127.0.0.1:8080/xxl-job-admin
+      accessToken: default_token
+      timeout: 3
+    executor:
+      appName: xxl-job-executor-sample
+      address:
+      ip:
+      port: 9999
+      logpath: log/nbatch/jobhandler
+      logretentiondays: 30
+    file:
+      tempPath: C:\disk\project\work\2025\nbatch\file\temp
+

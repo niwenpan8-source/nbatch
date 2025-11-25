@@ -1,0 +1,1 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.nbatch.job.handler.config.NbatchHandlerConfig

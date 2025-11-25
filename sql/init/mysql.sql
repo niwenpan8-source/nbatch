@@ -280,6 +280,8 @@ create table nbatch_job_work_run_node_log
     node_id      varchar(32) not null comment '作业节点id',
     handle_code  int not null comment '执行状态',
     handle_msg  text comment '执行信息',
+    create_time datetime COMMENT '执行-时间',
+    call_back_time datetime COMMENT '执行-时间',
     primary key (node_log_id)
 ) engine = innodb comment = '作业运行节点日志表'
   default charset = utf8mb4;

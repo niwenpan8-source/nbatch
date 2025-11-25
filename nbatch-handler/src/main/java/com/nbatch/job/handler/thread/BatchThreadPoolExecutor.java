@@ -89,18 +89,20 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
                         .setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
                         .setHandleMsg(t.getMessage());
             }
+        } else {
+            if (r instanceof BatchRunnable) {
+                BatchRunnable batchRunnable = (BatchRunnable) r;
+                handleCallbackParam.setLogId(batchRunnable.getCacheObj().getStr("logId"));
+                handleCallbackParam.getNodeStatusCallbackParam()
+                        .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
+                        .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
+                        .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
+                        .setHandleCode(HandleCodeConstant.HANDLE_CODE_SUCCESS)
+                        .setHandleMsg("执行成功");
+                currentRunningTaskList.remove(r);
+            }
         }
-        if (r instanceof BatchRunnable) {
-            BatchRunnable batchRunnable = (BatchRunnable) r;
-            handleCallbackParam.setLogId(batchRunnable.getCacheObj().getStr("logId"));
-            handleCallbackParam.getNodeStatusCallbackParam()
-                    .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
-                    .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
-                    .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
-                    .setHandleCode(HandleCodeConstant.HANDLE_CODE_SUCCESS)
-                    .setHandleMsg("执行成功");
-            currentRunningTaskList.remove(r);
-        }
+
         TriggerCallbackThread.pushCallBack(handleCallbackParam);
         super.afterExecute(r, t);
     }

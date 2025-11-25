@@ -4,7 +4,6 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.core.biz.model.ExecuteDbToFileParam;
 import com.nbatch.job.core.biz.model.ExecuteNodeParam;
-import com.nbatch.job.handler.enums.DbTypeEnum;
 import com.nbatch.job.handler.handler.JobHandlerAdapter;
 import com.nbatch.job.handler.helper.DialectHelper;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +27,6 @@ public class DbToFileHandler implements JobHandlerAdapter {
 
     @Override
     public void execute(ExecuteNodeParam nodeParam) throws Exception {
-        Thread.sleep(1000 * 5);
         String tempFilePath = "C:/disk/project/work/2025/nbatch/file/123.csv";
         FileUtil.touch(tempFilePath);
         ExecuteDbToFileParam executeDbToFileParam = nodeParam.getExecuteDbToFileParam();

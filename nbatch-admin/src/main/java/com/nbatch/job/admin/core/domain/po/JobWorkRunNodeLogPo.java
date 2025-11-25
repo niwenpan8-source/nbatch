@@ -9,6 +9,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
 import lombok.experimental.Accessors;
 
+import java.util.Date;
+
 /**
  * @description: 作业运行节点日志
  * @author: Mr.ni
@@ -47,5 +49,15 @@ public class JobWorkRunNodeLogPo extends Model<JobWorkRunNodeLogPo> {
 	 * 执行信息
 	 */
 	private String handleMsg;
+
+	/**
+	 * 创建时间
+	 */
+	private Date createTime;
+
+	/**
+	 * 回调时间
+	 */
+	private Date callBackTime;
 
 }

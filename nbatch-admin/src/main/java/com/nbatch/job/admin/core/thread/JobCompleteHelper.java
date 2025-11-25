@@ -208,7 +208,6 @@ public class JobCompleteHelper {
      * node status callback
      */
     private ReturnT<String> nodeStatusCallback(HandleCallbackParam handleCallbackParam) {
-
         log.info(">>>>>>>>>>> job, node status callback, handleCallbackParam: {}", handleCallbackParam);
         HandleCallbackParam.NodeStatusCallbackParam nodeStatusCallbackParam
                 = handleCallbackParam.getNodeStatusCallbackParam();
@@ -219,9 +218,8 @@ public class JobCompleteHelper {
             JobAdminConfig.getAdminConfig().getRunNodeHelper()
                     .updateNodeStatusById(nodeStatusCallbackParam.getNodeId(), WorkStatusEnum.STOP.getCode());
         }
-
         JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                .updateRunNodeLogStatus(nodeStatusCallbackParam.getNodeLogId()
+                .updateCallBackRunNodeLog(nodeStatusCallbackParam.getNodeLogId()
                         , nodeStatusCallbackParam.getHandleCode()
                         , nodeStatusCallbackParam.getHandleMsg());
         return ReturnT.SUCCESS;

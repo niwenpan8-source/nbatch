@@ -190,6 +190,7 @@ public class RunNodeHelper {
 
                     jobWorkRunNodeLogPo.setWorkId(executeWorkParam.getWorkId());
                     jobWorkRunNodeLogPo.setHandleCode(0);
+                    jobWorkRunNodeLogPo.setCreateTime(DateUtil.date());
                     return jobWorkRunNodeLogPo;
                 }).collect(Collectors.toList());
         for (JobWorkRunNodeLogPo jobWorkRunNodeLogPo : nodeLogList) {
@@ -259,13 +260,13 @@ public class RunNodeHelper {
     /**
      * 修改运行节点日志状态
      */
-    public int updateRunNodeLogStatus(String nodeLogId,
+    public int updateCallBackRunNodeLog(String nodeLogId,
                                       Integer handleCode,
                                       String handleMsg) {
         JobWorkRunNodeLogPo jobWorkRunNodeLogPo = new JobWorkRunNodeLogPo();
 
         jobWorkRunNodeLogPo.setNodeLogId(nodeLogId)
-                .setHandleCode(handleCode).setHandleMsg(handleMsg);
+                .setHandleCode(handleCode).setHandleMsg(handleMsg).setCallBackTime(DateUtil.date());
         return jobWorkRunNodeLogMapper.updateById(jobWorkRunNodeLogPo);
     }
 
