@@ -1,66 +1,80 @@
 package com.nbatch.job.executor.core.config;
 
+import com.baomidou.dynamic.datasource.DynamicRoutingDataSource;
 import com.nbatch.job.core.executor.impl.BatchJobSpringExecutor;
 import com.nbatch.job.core.util.SpringUtil;
+import com.nbatch.job.handler.handler.JobHandlerAdapter;
 import com.nbatch.job.handler.handler.JobHandlerHolder;
+import com.nbatch.job.handler.handler.impl.DbToFileHandler;
+import com.nbatch.job.handler.handler.impl.FileToDbHandler;
+import com.nbatch.job.handler.helper.DialectHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+
+import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.nbatch.job.handler.enums.NodeTypeEnum.NODE_TYPE_DB_TO_FILE;
+import static com.nbatch.job.handler.enums.NodeTypeEnum.NODE_TYPE_FILE_TO_DB;
 
 /**
  * job config
  *
- * @author Mr.ni 2017-04-28
+ * @author Mr.ni
  */
 @Slf4j
 @Configuration
 public class JobConsumerConfig {
 
-    @Value("${xxl.job.admin.addresses}")
+    @Value("${nbatch.job.admin.addresses}")
     private String adminAddresses;
 
-    @Value("${xxl.job.admin.accessToken}")
+    @Value("${nbatch.job.admin.accessToken}")
     private String accessToken;
 
-    @Value("${xxl.job.admin.timeout}")
+    @Value("${nbatch.job.admin.timeout}")
     private int timeout;
 
-    @Value("${xxl.job.executor.appName}")
+    @Value("${nbatch.job.executor.appName}")
     private String appName;
 
-    @Value("${xxl.job.executor.address}")
+    @Value("${nbatch.job.executor.address}")
     private String address;
 
-    @Value("${xxl.job.executor.ip}")
+    @Value("${nbatch.job.executor.ip}")
     private String ip;
 
-    @Value("${xxl.job.executor.port}")
+    @Value("${nbatch.job.executor.port}")
     private int port;
 
-    @Value("${xxl.job.executor.logpath}")
+    @Value("${nbatch.job.executor.logpath}")
     private String logPath;
 
-    @Value("${xxl.job.executor.logretentiondays}")
+    @Value("${nbatch.job.executor.logretentiondays}")
     private int logRetentionDays;
+
+    @Resource
+    private DynamicRoutingDataSource dataSource;
 
 
     @Bean
     public BatchJobSpringExecutor xxlJobExecutor() {
         log.info(">>>>>>>>>>> job config init.");
-        BatchJobSpringExecutor xxlJobSpringExecutor = new BatchJobSpringExecutor();
-        xxlJobSpringExecutor.setAdminAddresses(adminAddresses);
-        xxlJobSpringExecutor.setAppName(appName);
-        xxlJobSpringExecutor.setAddress(address);
-        xxlJobSpringExecutor.setIp(ip);
-        xxlJobSpringExecutor.setPort(port);
-        xxlJobSpringExecutor.setAccessToken(accessToken);
-        xxlJobSpringExecutor.setTimeout(timeout);
-        xxlJobSpringExecutor.setLogPath(logPath);
-        xxlJobSpringExecutor.setLogRetentionDays(logRetentionDays);
+        BatchJobSpringExecutor jobSpringExecutor = new BatchJobSpringExecutor();
+        jobSpringExecutor.setAdminAddresses(adminAddresses);
+        jobSpringExecutor.setAppName(appName);
+        jobSpringExecutor.setAddress(address);
+        jobSpringExecutor.setIp(ip);
+        jobSpringExecutor.setPort(port);
+        jobSpringExecutor.setAccessToken(accessToken);
+        jobSpringExecutor.setTimeout(timeout);
+        jobSpringExecutor.setLogPath(logPath);
+        jobSpringExecutor.setLogRetentionDays(logRetentionDays);
 
-        return xxlJobSpringExecutor;
+        return jobSpringExecutor;
     }
 
     @Bean
@@ -68,10 +82,24 @@ public class JobConsumerConfig {
         return new SpringUtil();
     }
 
-    @Bean(name = "jobHandlerHolder")
-    public JobHandlerHolder jobHandlerHolder() {
-        return new JobHandlerHolder();
+    @Bean("dialectHelper")
+    public DialectHelper dialectHelper() {
+        return new DialectHelper(dataSource);
     }
+    
+    @Bean("jobHandlerAdapterMap")
+    public Map<String, JobHandlerAdapter> jobHandlerAdapterMap(DialectHelper dialectHelper) {
+        Map<String, JobHandlerAdapter> jobHandlerAdapterMap = new HashMap<>();
+        jobHandlerAdapterMap.put(NODE_TYPE_FILE_TO_DB.getCode(), new FileToDbHandler(dialectHelper));
+        jobHandlerAdapterMap.put(NODE_TYPE_DB_TO_FILE.getCode(), new DbToFileHandler(dialectHelper));
+        return jobHandlerAdapterMap;
+    }
+
+    @Bean(name = "jobHandlerHolder")
+    public JobHandlerHolder jobHandlerHolder(Map<String, JobHandlerAdapter> jobHandlerAdapterMap) {
+        return new JobHandlerHolder(jobHandlerAdapterMap);
+    }
+    
 
 
 }

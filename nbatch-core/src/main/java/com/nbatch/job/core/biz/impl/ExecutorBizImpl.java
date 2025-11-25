@@ -1,6 +1,7 @@
 package com.nbatch.job.core.biz.impl;
 
 import com.nbatch.job.core.biz.ExecutorBiz;
+import com.nbatch.job.core.biz.model.ExecuteWorkParam;
 import com.nbatch.job.core.biz.model.IdleBeatParam;
 import com.nbatch.job.core.biz.model.KillParam;
 import com.nbatch.job.core.biz.model.LogParam;
@@ -89,13 +90,15 @@ public class ExecutorBizImpl implements ExecutorBiz {
                 jobThread = null;
                 jobHandler = null;
             }
-
+            ExecuteWorkParam executeWorkParam = triggerParam.getExecuteWorkParam();
+            executeWorkParam.setJobId(triggerParam.getJobId());
+            executeWorkParam.setJobLogId(triggerParam.getLogId());
             // valid handler
             if (jobHandler == null) {
-                jobHandler = new WorkJobHandler(triggerParam.getJobId(), triggerParam.getExecuteWorkParam());
+                jobHandler = new WorkJobHandler(executeWorkParam);
             } else {
                 WorkJobHandler handler = (WorkJobHandler) jobThread.getHandler();
-                handler.setWorkNodeParam(triggerParam.getExecuteWorkParam());
+                handler.setWorkNodeParam(executeWorkParam);
             }
 
         } else if (GlueTypeEnum.GLUE_GROOVY == glueTypeEnum) {

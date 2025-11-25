@@ -78,7 +78,7 @@ public class BatchJobContext {
 
     // ---------------------- tool ----------------------
 
-    // support for child thread of job handler)
+    // support for child thread of job handler
     private static final InheritableThreadLocal<BatchJobContext> CONTEXT_HOLDER = new InheritableThreadLocal<>();
 
     public static void setXxlJobContext(BatchJobContext xxlJobContext){

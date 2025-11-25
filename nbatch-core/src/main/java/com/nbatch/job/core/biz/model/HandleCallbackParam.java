@@ -22,6 +22,8 @@ public class HandleCallbackParam implements Serializable {
 
     private static final long serialVersionUID = 42L;
 
+    private String logId;
+
     private String callBackType;
 
     private LogCallBackParam logCallBackParam = new LogCallBackParam();
@@ -34,11 +36,6 @@ public class HandleCallbackParam implements Serializable {
     @Data
     @Accessors(chain = true)
     public static class LogCallBackParam {
-
-        /**
-         * 日志id
-         */
-        private String logId;
 
         /**
          * 日志时间

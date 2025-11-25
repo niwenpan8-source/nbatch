@@ -4,11 +4,11 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.dynamic.datasource.DynamicRoutingDataSource;
 import com.nbatch.job.handler.dialect.BaseDialect;
 import com.nbatch.job.handler.dialect.GBaseDialect;
+import com.nbatch.job.handler.dialect.GaussDialect;
 import com.nbatch.job.handler.enums.DbTypeEnum;
 import com.nbatch.job.handler.exception.HandlerException;
-import org.springframework.stereotype.Component;
+import lombok.RequiredArgsConstructor;
 
-import javax.annotation.Resource;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -20,20 +20,19 @@ import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_UPDATE_SQL_
  * @author: Mr.ni
  * @date: 2025/11/19
  */
-@Component
+@RequiredArgsConstructor
 public class DialectHelper {
 
-    @Resource
-    private DynamicRoutingDataSource dataSource;
-
+    private final DynamicRoutingDataSource dataSource;
 
     /**
      * 获取数据库连接
      * @param dbType 数据库类型枚举
      * @return 数据库连接
      */
-    public Connection getConnection(DbTypeEnum dbType) {
-        DataSource gbaseDataSource = dataSource.getDataSource(dbType.getDb());
+    public Connection getConnection(String dbType) {
+        DataSource gbaseDataSource = dataSource.getDataSource(dbType);
+
         if (gbaseDataSource == null) {
             return null;
         }
@@ -49,9 +48,11 @@ public class DialectHelper {
      * @param dbType 数据库类型枚举
      * @return 数据库方言
      */
-    public BaseDialect getDialect(DbTypeEnum dbType) {
-        if (StrUtil.equals(dbType.getDb(), DbTypeEnum.GBASE.getDb())) {
+    public BaseDialect getDialect(String dbType) {
+        if (StrUtil.equals(dbType, DbTypeEnum.GBASE.getDb())) {
             return new GBaseDialect();
+        } else if (StrUtil.equals(dbType, DbTypeEnum.GAUSS.getDb())) {
+            return new GaussDialect();
         }
         return null;
     }

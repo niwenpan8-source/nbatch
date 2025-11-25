@@ -16,22 +16,19 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class WorkJobHandler extends IJobHandler {
 
-    private final String jobId;
-
     @Setter
     private ExecuteWorkParam workNodeParam;
 
-    public WorkJobHandler(String jobId, ExecuteWorkParam workNodeParam) {
-        this.jobId = jobId;
+    public WorkJobHandler(ExecuteWorkParam workNodeParam) {
         this.workNodeParam = workNodeParam;
     }
 
     @Override
     public void execute() throws Exception {
-        BatchJobHelper.log("作业执行器开始执行作业：{}", jobId);
+        BatchJobHelper.log("作业执行器开始执行作业：{}", workNodeParam.getJobId());
         IJobHandlerHolder handlerHolder = (IJobHandlerHolder) SpringUtil.getBean("jobHandlerHolder");
-        workNodeParam.setWorkId(jobId);
+        workNodeParam.setWorkId(workNodeParam.getJobId());
         handlerHolder.handle(workNodeParam);
-        BatchJobHelper.log("作业执行器执行作业结束：{}", jobId);
+        BatchJobHelper.log("作业执行器执行作业结束：{}", workNodeParam.getJobId());
     }
 }

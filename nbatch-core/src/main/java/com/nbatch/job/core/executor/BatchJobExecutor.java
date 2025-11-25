@@ -197,7 +197,7 @@ public class BatchJobExecutor {
                 initMethod = clazz.getDeclaredMethod(xxlJob.init());
                 initMethod.setAccessible(true);
             } catch (NoSuchMethodException e) {
-                throw new RuntimeException("xxl-job method-jobhandler initMethod invalid, for[" + clazz + "#" + methodName + "] .");
+                throw new RuntimeException("job method-jobhandler initMethod invalid, for[" + clazz + "#" + methodName + "] .");
             }
         }
         if (StrUtil.isNotBlank(xxlJob.destroy())) {
@@ -205,7 +205,7 @@ public class BatchJobExecutor {
                 destroyMethod = clazz.getDeclaredMethod(xxlJob.destroy());
                 destroyMethod.setAccessible(true);
             } catch (NoSuchMethodException e) {
-                throw new RuntimeException("xxl-job method-jobhandler destroyMethod invalid, for[" + clazz + "#" + methodName + "] .");
+                throw new RuntimeException("job method-jobhandler destroyMethod invalid, for[" + clazz + "#" + methodName + "] .");
             }
         }
 
@@ -220,7 +220,7 @@ public class BatchJobExecutor {
     public static JobThread registJobThread(String jobId, IJobHandler handler, String removeOldReason){
         JobThread newJobThread = new JobThread(jobId, handler);
         newJobThread.start();
-        log.info(">>>>>>>>>>> xxl-job regist JobThread success, jobId:{}, handler:{}", jobId, handler);
+        log.info(">>>>>>>>>>> job regist JobThread success, jobId:{}, handler:{}", jobId, handler);
         // putIfAbsent | oh my god, map's put method return the old value!!!
         JobThread oldJobThread = JOB_THREAD_REPOSITORY.put(jobId, newJobThread);
         if (oldJobThread != null) {

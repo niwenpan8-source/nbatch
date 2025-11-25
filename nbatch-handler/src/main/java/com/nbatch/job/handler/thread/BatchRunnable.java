@@ -15,12 +15,10 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class BatchRunnable implements Runnable{
+public abstract class BatchRunnable implements Runnable{
 
-    private JSONObject cacheObj = new JSONObject();
+    private JSONObject cacheObj;
 
     @Override
-    public void run() {
-        // nothing to do
-    }
+    public abstract void run();
 }

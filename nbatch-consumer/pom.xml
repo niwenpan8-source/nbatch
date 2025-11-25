@@ -26,7 +26,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- nbatch -->
         <dependency>
             <groupId>com.nbatch</groupId>
             <artifactId>nbatch-handler</artifactId>

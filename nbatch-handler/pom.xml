@@ -74,6 +74,17 @@
 			<artifactId>nbatch-core</artifactId>
 		</dependency>
 
+
+		<dependency>
+			<groupId>com.gbase</groupId>
+			<artifactId>gbase-jdbc</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.opengauss</groupId>
+			<artifactId>opengauss-jdbc</artifactId>
+		</dependency>
+
 	</dependencies>
 
 </project>

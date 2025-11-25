@@ -16,6 +16,11 @@ public class ExecuteFileToDbParam {
     private String fileName;
 
     /**
+     * 导入的文件名-需要再程序里面生成
+     */
+    private String filePath;
+
+    /**
      * 导入的表名
      */
     private String importTableName;
@@ -49,5 +54,10 @@ public class ExecuteFileToDbParam {
      * 是否压缩：1压缩 0不压缩
      */
     private Integer isGzip;
+
+    /**
+     * 数据库类型
+     */
+    private String dbType;
 
 }

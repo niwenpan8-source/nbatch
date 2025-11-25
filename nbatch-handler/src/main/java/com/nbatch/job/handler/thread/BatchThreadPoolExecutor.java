@@ -30,7 +30,7 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
      */
     private final List<BatchRunnable> currentRunningTaskList = new CopyOnWriteArrayList<>();
 
-    BatchThreadPoolExecutor(String threadPoolKey,
+    public BatchThreadPoolExecutor(String threadPoolKey,
                             int corePoolSize,
                             int maximumPoolSize,
                             long keepAliveTime,
@@ -76,6 +76,7 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
             log.error("execute Runnable error, hashCode:{}", r.hashCode(), t);
             if (r instanceof BatchRunnable) {
                 BatchRunnable batchRunnable = (BatchRunnable) r;
+                handleCallbackParam.setLogId(batchRunnable.getCacheObj().getStr("logId"));
                 handleCallbackParam.getNodeStatusCallbackParam()
                         .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
                         .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
@@ -85,6 +86,7 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
         }
         if (r instanceof BatchRunnable) {
             BatchRunnable batchRunnable = (BatchRunnable) r;
+            handleCallbackParam.setLogId(batchRunnable.getCacheObj().getStr("logId"));
             handleCallbackParam.getNodeStatusCallbackParam()
                     .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
                     .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))

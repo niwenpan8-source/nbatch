@@ -271,3 +271,17 @@ create table nbatch_job_work_run_node
 ) engine = innodb comment = '作业运行节点表'
   default charset = utf8mb4;
 
+# 运行节点表
+drop table if exists nbatch_job_work_run_node_log;
+create table nbatch_job_work_run_node_log
+(
+    node_log_id      varchar(32) not null comment '节点日志id',
+    work_id      varchar(32) not null comment '作业id',
+    node_id      varchar(32) not null comment '作业节点id',
+    execute_status  tinyint(4) not null comment '执行状态',
+    execute_msg  text not null comment '执行信息',
+    primary key (node_log_id)
+) engine = innodb comment = '作业运行节点日志表'
+  default charset = utf8mb4;
+
+

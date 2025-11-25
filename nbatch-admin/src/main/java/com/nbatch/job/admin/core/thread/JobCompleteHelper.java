@@ -176,7 +176,7 @@ public class JobCompleteHelper {
      */
     private ReturnT<String> logCallback(HandleCallbackParam handleCallbackParam) {
         // valid log item
-        JobLogPo logInfo = JobAdminConfig.getAdminConfig().getJobLogMapper().selectById(handleCallbackParam.getLogCallBackParam().getLogId());
+        JobLogPo logInfo = JobAdminConfig.getAdminConfig().getJobLogMapper().selectById(handleCallbackParam.getLogId());
         if (logInfo == null) {
             return new ReturnT<>(ReturnT.FAIL_CODE, "log item not found.");
         }

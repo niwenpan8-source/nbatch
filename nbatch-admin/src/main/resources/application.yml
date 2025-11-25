@@ -66,6 +66,9 @@ spring:
 # application.yml
 logging:
   config: classpath:logback-spring.xml
+  level:
+    org.apache.ibatis: DEBUG
+    com.dmap: DEBUG
 
 ### mybatis
 mybatis-plus:

@@ -47,6 +47,8 @@
 		<lombok.version>1.18.12</lombok.version>
 		<mybatisplus.version>3.4.3.1</mybatisplus.version>
 		<dynamic-mybatisplus.version>3.4.1</dynamic-mybatisplus.version>
+		<gbase.version>9.5.0.7</gbase.version>
+		<opengauss.version>6.0.0-og</opengauss.version>
 	</properties>
 
 	<dependencyManagement>
@@ -220,6 +222,19 @@
 				<artifactId>dynamic-datasource-spring-boot-starter</artifactId>
 				<version>${dynamic-mybatisplus.version}</version>
 			</dependency>
+
+			<dependency>
+				<groupId>com.gbase</groupId>
+				<artifactId>gbase-jdbc</artifactId>
+				<version>${gbase.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.opengauss</groupId>
+				<artifactId>opengauss-jdbc</artifactId>
+				<version>${opengauss.version}</version>
+			</dependency>
+
 		</dependencies>
 	</dependencyManagement>
 

@@ -1,0 +1,7 @@
+mvn install:install-file -DgroupId=com.gbase -DartifactId=gbase-jdbc -Dversion=9.5.0.7
+-Dpackaging=jar -Dfile=C:\disk\project\work\2025\nbatch\config\lib\gbase-connector-java-9.5.0.7.jar
+
+
+mvn install:install-file -DgroupId=com.bocssop -DartifactId=bocssop -Dversion=1.0.0
+-Dpackaging=jar -Dfile=C:\disk\project\work\2025\nbatch\config\lib\bocssop.jar
+

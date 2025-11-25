@@ -101,7 +101,7 @@ public class EmbedServer {
             } catch (InterruptedException e) {
                 log.info(">>>>>>>>>>> job remoting server stop.");
             } catch (Throwable e) {
-                log.error(">>>>>>>>>>> xxl-job remoting server error.", e);
+                log.error(">>>>>>>>>>> job remoting server error.", e);
             } finally {
                 // stop
                 try {
@@ -125,7 +125,7 @@ public class EmbedServer {
 
         // stop registry
         stopRegistry();
-        log.info(">>>>>>>>>>> xxl-job remoting server destroy success.");
+        log.info(">>>>>>>>>>> job remoting server destroy success.");
     }
 
 
@@ -229,7 +229,7 @@ public class EmbedServer {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            log.error(">>>>>>>>>>> xxl-job provider netty_http server caught exception", cause);
+            log.error(">>>>>>>>>>> job provider netty_http server caught exception", cause);
             ctx.close();
         }
 
@@ -237,7 +237,7 @@ public class EmbedServer {
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
             if (evt instanceof IdleStateEvent) {
                 ctx.channel().close();      // beat 3N, close if idle
-                log.debug(">>>>>>>>>>> xxl-job provider netty_http server close an idle channel.");
+                log.debug(">>>>>>>>>>> job provider netty_http server close an idle channel.");
             } else {
                 super.userEventTriggered(ctx, evt);
             }

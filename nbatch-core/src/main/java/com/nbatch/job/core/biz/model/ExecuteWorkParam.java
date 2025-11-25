@@ -27,6 +27,11 @@ public class ExecuteWorkParam {
     private String workId;
 
     /**
+     * 日志
+     */
+    private String jobLogId;
+
+    /**
      * 执行节点参数列表
      */
     List<ExecuteNodeParam> executeNodeParamList;

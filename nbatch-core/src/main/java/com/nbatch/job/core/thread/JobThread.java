@@ -208,9 +208,9 @@ public class JobThread extends Thread{
                     // callback handler info
                     if (!toStop) {
 						HandleCallbackParam handleCallbackParam = new HandleCallbackParam();
+						handleCallbackParam.setLogId(triggerParam.getLogId());
 						handleCallbackParam.setCallBackType(LOG_CALLBACK.getValue());
 						handleCallbackParam.getLogCallBackParam()
-								.setLogId(triggerParam.getLogId())
 								.setLogDateTim(triggerParam.getLogDateTime())
 								.setHandleCode(BatchJobContext.getXxlJobContext().getHandleCode())
 								.setHandleMsg(BatchJobContext.getXxlJobContext().getHandleMsg());
@@ -218,8 +218,8 @@ public class JobThread extends Thread{
                     } else {
 						HandleCallbackParam handleCallbackParam = new HandleCallbackParam();
 						handleCallbackParam.setCallBackType(LOG_CALLBACK.getValue());
+						handleCallbackParam.setLogId(triggerParam.getLogId());
 						handleCallbackParam.getLogCallBackParam()
-								.setLogId(triggerParam.getLogId())
 								.setLogDateTim(triggerParam.getLogDateTime())
 								.setHandleCode(BatchJobContext.HANDLE_CODE_FAIL)
 								.setHandleMsg(stopReason + " [job running, killed]");
@@ -236,8 +236,8 @@ public class JobThread extends Thread{
 			if (triggerParam!=null) {
 				HandleCallbackParam handleCallbackParam = new HandleCallbackParam();
 				handleCallbackParam.setCallBackType(LOG_CALLBACK.getValue());
+				handleCallbackParam.setLogId(triggerParam.getLogId());
 				handleCallbackParam.getLogCallBackParam()
-						.setLogId(triggerParam.getLogId())
 						.setLogDateTim(triggerParam.getLogDateTime())
 						.setHandleCode(BatchJobContext.HANDLE_CODE_FAIL)
 						.setHandleMsg(stopReason + " [job not executed, in the job queue, killed.]");

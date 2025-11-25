@@ -1,0 +1,64 @@
+# web port
+server:
+  port: 8081
+
+# log config
+logging:
+  config: classpath:logback-spring.xml
+  level:
+    org.apache.ibatis: DEBUG
+    com.dmap: DEBUG
+
+# xxl-job configuration
+nbatch:
+  job:
+    admin:
+      addresses: http://127.0.0.1:8080/xxl-job-admin
+      accessToken: default_token
+      timeout: 3
+    executor:
+      appName: xxl-job-executor-sample
+      address:
+      ip:
+      port: 9999
+      logpath: log/nbatch/jobhandler
+      logretentiondays: 30
+
+spring:
+  datasource:
+    dynamic:
+      # 配置默认数据库,及没有注解指定时走的数据库
+      primary: gauss
+      #严格匹配数据源,默认false. true未匹配到指定数据源时抛异常,false使用默认数据源
+      strict: false
+      datasource:
+        gauss:
+          url: jdbc:opengauss://192.168.10.196:4432/dmap_zgyh_guangdong?currentSchema=dmap_schema_dev&serverTimezone=Asia/Shanghai
+          username: dmapuser
+          password: dmap@123
+          driver-class-name: org.opengauss.Driver
+          hikari:
+            min-idle: 1
+            max-pool-size: 1
+            is-auto-commit: true
+            idle-timeout: 30000
+            max-lifetime: 900000
+            connection-timeout: 10000
+            connection-test-query: SELECT 1
+            validation-timeout: 1000
+        gbase:
+          url: jdbc:gbase://192.168.10.160:5258/dmap_zgyh_guangdong_dev
+          username: dmapuser
+          password: bankfund
+          driver-class-name: com.gbase.jdbc.Driver
+          hikari:
+            min-idle: 1
+            max-pool-size: 1
+            is-auto-commit: true
+            idle-timeout: 30000
+            max-lifetime: 900000
+            connection-timeout: 10000
+            connection-test-query: SELECT 1
+            validation-timeout: 1000
+  jackson:
+    time-zone: GMT+8

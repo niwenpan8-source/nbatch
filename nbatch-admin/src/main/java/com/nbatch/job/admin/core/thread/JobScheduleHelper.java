@@ -317,7 +317,7 @@ public class JobScheduleHelper {
         List<String> ringItemData = RING_DATA.computeIfAbsent(ringSecond, k -> new ArrayList<>());
         ringItemData.add(jobId);
 
-        log.debug(">>>>>>>>>>> xxl-job, schedule push time-ring : {} = {}", ringSecond, Collections.singletonList(ringItemData));
+        log.debug(">>>>>>>>>>> job, schedule push time-ring : {} = {}", ringSecond, Collections.singletonList(ringItemData));
     }
 
     public void toStop() {
@@ -375,7 +375,7 @@ public class JobScheduleHelper {
             }
         }
 
-        log.info(">>>>>>>>>>> xxl-job, JobScheduleHelper stop");
+        log.info(">>>>>>>>>>> job, JobScheduleHelper stop");
     }
 
 

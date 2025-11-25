@@ -79,7 +79,7 @@ public class BatchJobSpringExecutor extends BatchJobExecutor implements Applicat
                 annotatedMethods = MethodIntrospector.selectMethods(bean.getClass(),
                         (MethodIntrospector.MetadataLookup<BatchJob>) method -> AnnotatedElementUtils.findMergedAnnotation(method, BatchJob.class));
             } catch (Throwable ex) {
-                log.error("xxl-job method-jobhandler resolve error for bean[{}].", beanDefinitionName, ex);
+                log.error("job method-jobhandler resolve error for bean[{}].", beanDefinitionName, ex);
             }
             if (annotatedMethods==null || annotatedMethods.isEmpty()) {
                 continue;

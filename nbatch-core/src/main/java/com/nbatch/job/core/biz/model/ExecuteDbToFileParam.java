@@ -10,11 +10,15 @@ import lombok.Data;
 @Data
 public class ExecuteDbToFileParam {
 
-
     /**
      * 导出的文件名
      */
     private String fileName;
+
+    /**
+     * 导出文件路径
+     */
+    private String filePath;
 
     /**
      * 导出的表名
@@ -50,5 +54,10 @@ public class ExecuteDbToFileParam {
      * 是否压缩：1压缩 0不压缩
      */
     private Integer isGzip;
+
+    /**
+     * 数据库类型
+     */
+    private String dbType;
 
 }

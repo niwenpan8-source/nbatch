@@ -1,6 +1,6 @@
 package com.nbatch.job.handler.handler;
 
-import cn.hutool.json.JSONObject;
+import com.nbatch.job.core.biz.model.ExecuteNodeParam;
 
 /**
  * @description: 适配器
@@ -18,8 +18,8 @@ public interface JobHandlerAdapter {
 
     /**
      * 执行作业
-     * @param executeParam 执行参数
+     * @param nodeParam 执行参数
      */
-    void execute(JSONObject executeParam);
+    void execute(ExecuteNodeParam nodeParam) throws Exception;
 
 }

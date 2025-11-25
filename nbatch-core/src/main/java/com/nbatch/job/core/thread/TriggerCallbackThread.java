@@ -44,7 +44,7 @@ public class TriggerCallbackThread {
 
     public static void pushCallBack(HandleCallbackParam callback) {
         getInstance().callBackQueue.add(callback);
-        log.debug(">>>>>>>>>>> job, push callback request, logId:{}", callback.getLogCallBackParam().getLogId());
+        log.debug(">>>>>>>>>>> job, push callback request, logId:{}", callback.getLogId());
     }
 
     /**
@@ -190,7 +190,7 @@ public class TriggerCallbackThread {
      */
     private void callbackLog(List<HandleCallbackParam> callbackParamList, String logContent) {
         for (HandleCallbackParam callbackParam : callbackParamList) {
-            String logFileName = JobFileAppender.makeLogFileName(new Date(callbackParam.getLogCallBackParam().getLogDateTim()), callbackParam.getLogCallBackParam().getLogId());
+            String logFileName = JobFileAppender.makeLogFileName(new Date(callbackParam.getLogCallBackParam().getLogDateTim()), callbackParam.getLogId());
             BatchJobContext.setXxlJobContext(new BatchJobContext(
                     null,
                     null,
@@ -239,7 +239,7 @@ public class TriggerCallbackThread {
             return;
         }
         if (callbackLogPath.isFile()) {
-            cn.hutool.core.io.FileUtil.del(callbackLogPath);
+            FileUtil.del(callbackLogPath);
         }
         if (!(callbackLogPath.isDirectory() && ArrayUtil.isNotEmpty(callbackLogPath.list()))) {
             return;
@@ -251,12 +251,12 @@ public class TriggerCallbackThread {
 
             // avoid empty file
             if (callbackParamListBytes == null || callbackParamListBytes.length < 1) {
-                cn.hutool.core.io.FileUtil.del(callbaclLogFile);
+                FileUtil.del(callbaclLogFile);
                 continue;
             }
 
             List<HandleCallbackParam> callbackParamList = (List<HandleCallbackParam>) JdkSerializeTool.deserialize(callbackParamListBytes, List.class);
-            cn.hutool.core.io.FileUtil.del(callbaclLogFile);
+            FileUtil.del(callbaclLogFile);
             doCallback(callbackParamList);
         }
 

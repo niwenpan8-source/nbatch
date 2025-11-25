@@ -1,7 +1,7 @@
 package com.nbatch.job.handler.dialect;
 
-import com.nbatch.job.handler.domain.param.JobWorkExportFileParam;
-import com.nbatch.job.handler.domain.param.JobWorkImportFileParam;
+import com.nbatch.job.core.biz.model.ExecuteDbToFileParam;
+import com.nbatch.job.core.biz.model.ExecuteFileToDbParam;
 
 import java.sql.Connection;
 import java.util.List;
@@ -16,17 +16,17 @@ public interface BaseDialect {
     /**
      * 将文件从文件导入到数据库
      */
-    long fileToDb(Connection connection, JobWorkImportFileParam param);
+    long fileToDb(Connection connection, ExecuteFileToDbParam param) throws Exception;
 
     /**
      * 将文件从数据库导入到文件
      */
-    long dbToFile(Connection connection, JobWorkExportFileParam param);
+    boolean dbToFile(Connection connection, ExecuteDbToFileParam param) throws Exception;
 
     /**
      * 执行存储过程
      */
-    int executeSql(Connection connection, String tableSql, List<Object> params);
+    int executeFunction(Connection connection, String tableSql, List<Object> params) throws Exception;
 
 
 }

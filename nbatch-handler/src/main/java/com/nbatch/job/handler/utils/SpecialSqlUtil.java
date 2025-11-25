@@ -30,20 +30,44 @@ public class SpecialSqlUtil {
     /**
      * 执行更新sql
      */
-    public static long executeUpdate(Connection conn, String boundSql) {
-        long num;
+    public static boolean execute(Connection conn, String boundSql) throws SQLException {
+        boolean executeFlag;
         try (PreparedStatement preparedStatement = conn.prepareStatement(boundSql)) {
-            num = preparedStatement.executeUpdate();
+            executeFlag = preparedStatement.execute();
         } catch (SQLException e) {
             throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
+        } finally {
+            // 这里使用连接代理关闭，重置线程池属性
+            if (conn != null && !conn.isClosed()) {
+                conn.close();
+            }
         }
-        return num;
+        return executeFlag;
+    }
+
+
+    /**
+     * 执行更新sql
+     */
+    public static int executeUpdate(Connection conn, String boundSql) throws SQLException {
+        int executeNum;
+        try (PreparedStatement preparedStatement = conn.prepareStatement(boundSql)) {
+            executeNum = preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
+        } finally {
+            // 这里使用连接代理关闭，重置线程池属性
+            if (conn != null && !conn.isClosed()) {
+                conn.close();
+            }
+        }
+        return executeNum;
     }
 
     /**
      * 执行查询sql
      */
-    public static List<Map<String, Object>> queryList(Connection conn, String sqlCmd, long rowsLimt) {
+    public static List<Map<String, Object>> queryList(Connection conn, String sqlCmd, long rowsLimt) throws SQLException {
         List<Map<String, Object>> result = new ArrayList<>();
         AtomicLong total = new AtomicLong(0L);
         ResultSet resultSet = null;
@@ -89,6 +113,10 @@ public class SpecialSqlUtil {
                     log.error("关闭preparedStatement异常-{}", e.getMessage());
                 }
             }
+            // 这里使用连接代理关闭，重置线程池属性
+            if (conn != null && !conn.isClosed()) {
+                conn.close();
+            }
 
         }
         return result;
@@ -97,7 +125,7 @@ public class SpecialSqlUtil {
     /**
      * 运行需要回调的语句
      */
-    public static int executeSql(Connection conn, String tableSql, List<Object> params) {
+    public static int executeSql(Connection conn, String tableSql, List<Object> params) throws SQLException {
         try (
                 CallableStatement call = conn.prepareCall(tableSql);
         ) {
@@ -118,6 +146,11 @@ public class SpecialSqlUtil {
         } catch (Exception e) {
             log.error("执行SQL发生异常");
             throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
+        } finally {
+            // 这里使用连接代理关闭，重置线程池属性
+            if (conn != null && !conn.isClosed()) {
+                conn.close();
+            }
         }
     }
 
