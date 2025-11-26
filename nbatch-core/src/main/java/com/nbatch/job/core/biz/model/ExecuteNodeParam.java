@@ -3,6 +3,8 @@ package com.nbatch.job.core.biz.model;
 import cn.hutool.core.util.IdUtil;
 import lombok.Data;
 
+import java.util.Date;
+
 /**
  * @description: 执行节点参数
  * @author: Mr.ni
@@ -30,6 +32,11 @@ public class ExecuteNodeParam {
      * 节点参数
      */
     private String nodeParams;
+
+    /**
+     * 翻牌日期
+     */
+    private Date turnDate;
 
     /**
      * 执行文件导入数据库参数
