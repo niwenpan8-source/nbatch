@@ -225,6 +225,7 @@ create table nbatch_job_work_export_file (
     all_update int default 0 comment '是否全量文件：1全量 0增量',
     is_gzip int default 0  comment '是否压缩：1压缩 0不压缩',
     db_type varchar(32) default 0  comment '数据库类型',
+    file_name_param varchar(500) comment '生成文件名时，特殊参数参数',
     primary key (export_file_id)
 ) engine = innodb comment = '作业节点导出文件表'
   default charset = utf8mb4;
@@ -243,6 +244,7 @@ create table nbatch_job_work_import_file (
     all_update             int default 0 comment '是否全量文件：1全量 0增量',
     is_gzip                int default 0 comment '是否压缩：1压缩 0不压缩',
     db_type varchar(32) default 0  comment '数据库类型',
+    file_name_param varchar(500) comment '生成文件名时，特殊参数参数',
     primary key (import_file_id)
 ) engine = innodb comment = '作业节点导入文件表'
   default charset = utf8mb4;

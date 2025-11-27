@@ -27,12 +27,12 @@ public class GaussDialect implements BaseDialect {
     @Override
     public long fileToDb(Connection connection, ExecuteFileToDbParam param) throws Exception {
         try (
-                FileInputStream fileInputStream = new FileInputStream(param.getFileName())
+                FileInputStream fileInputStream = new FileInputStream(param.getFilePath())
         ) {
             BaseConnection baseConnection = connection.unwrap(BaseConnection.class);
             CopyManager copyManager = new CopyManager(baseConnection);
             String importSql = generateFileToDbExecuteSql(param);
-
+            log.info("高斯数据库导入sql：{}", importSql);
             return copyManager.copyIn(importSql, fileInputStream);
         } catch (Exception e) {
             log.error("高斯数据库导入数据异常");
@@ -69,7 +69,14 @@ public class GaussDialect implements BaseDialect {
 
     @Override
     public int executeFunction(Connection connection, String tableSql, List<Object> params) throws Exception{
+        log.info("执行 function sql：{}", tableSql);
         return SpecialSqlUtil.executeSql(connection, tableSql, params);
+    }
+
+    @Override
+    public int executeUpdate(Connection connection, String sql) throws Exception {
+        log.info("执行 update sql：{}", sql);
+        return SpecialSqlUtil.executeUpdate(connection, sql);
     }
 
     /**

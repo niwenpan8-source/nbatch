@@ -32,6 +32,7 @@ public class SpecialSqlUtil {
      */
     public static boolean execute(Connection conn, String boundSql) throws SQLException {
         boolean executeFlag;
+        log.info("执行sql：{}", boundSql);
         try (PreparedStatement preparedStatement = conn.prepareStatement(boundSql)) {
             executeFlag = preparedStatement.execute();
         } catch (SQLException e) {
@@ -45,12 +46,26 @@ public class SpecialSqlUtil {
         return executeFlag;
     }
 
+    /**
+     * 执行更新sql
+     */
+    public static boolean executeNotCloseConnect(Connection conn, String boundSql) throws SQLException {
+        boolean executeFlag;
+        try (PreparedStatement preparedStatement = conn.prepareStatement(boundSql)) {
+            executeFlag = preparedStatement.execute();
+        } catch (SQLException e) {
+            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
+        }
+        return executeFlag;
+    }
+
 
     /**
      * 执行更新sql
      */
     public static int executeUpdate(Connection conn, String boundSql) throws SQLException {
         int executeNum;
+        log.info("执行更新sql：{}", boundSql);
         try (PreparedStatement preparedStatement = conn.prepareStatement(boundSql)) {
             executeNum = preparedStatement.executeUpdate();
         } catch (SQLException e) {

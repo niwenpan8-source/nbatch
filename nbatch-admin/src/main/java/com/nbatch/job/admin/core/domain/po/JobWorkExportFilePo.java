@@ -76,4 +76,9 @@ public class JobWorkExportFilePo extends Model<JobWorkExportFilePo> {
 	 */
 	private String dbType;
 
+	/**
+	 * 生成文件名，特殊替换字符
+	 */
+	private String fileNameParam;
+
 }

@@ -1,13 +1,29 @@
 package com.nbatch.job.handler.handler.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.nbatch.job.core.biz.model.ExecuteFileToDbParam;
 import com.nbatch.job.core.biz.model.ExecuteNodeParam;
 import com.nbatch.job.handler.constant.JobHandlerPropertiesConstant;
+import com.nbatch.job.handler.dialect.BaseDialect;
+import com.nbatch.job.handler.enums.DbTypeEnum;
+import com.nbatch.job.handler.exception.HandlerException;
 import com.nbatch.job.handler.handler.JobHandlerAdapter;
 import com.nbatch.job.handler.helper.DialectHelper;
+import com.nbatch.job.handler.utils.NbatchFileUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+import java.io.File;
+import java.util.List;
+
+import static com.nbatch.job.handler.constant.JobHandlerConstant.FILE_TYPE_SUFFIX_CSV;
+import static com.nbatch.job.handler.constant.JobHandlerConstant.TODAY_TABLE_SUFFIX;
+import static com.nbatch.job.handler.enums.ExceptionCodeEnum.FILE_TO_DB_FAIL;
 import static com.nbatch.job.handler.enums.NodeTypeEnum.NODE_TYPE_FILE_TO_DB;
 
 /**
@@ -15,6 +31,7 @@ import static com.nbatch.job.handler.enums.NodeTypeEnum.NODE_TYPE_FILE_TO_DB;
  * @author: Mr.ni
  * @date: 2025/11/19
  */
+@Slf4j
 @RequiredArgsConstructor
 public class FileToDbHandler implements JobHandlerAdapter {
 
@@ -30,8 +47,129 @@ public class FileToDbHandler implements JobHandlerAdapter {
     @Override
     public void execute(ExecuteNodeParam nodeParam) throws Exception {
         ExecuteFileToDbParam param = nodeParam.getExecuteFileToDbParam();
-        dialectHelper.getDialect(param.getDbType())
-                .fileToDb(dialectHelper.getConnection(param.getDbType()), param);
+        String tempPath = handlerPropertiesConstant.getTempPath();
+        JSONObject replaceObj = JSONUtil.parseObj(param.getFileNameParam());
+        replaceObj.putOpt("date", nodeParam.getTurnDate());
+        String finishGenerateFileName = NbatchFileUtil.generateFileName(param.getFileName(), replaceObj);
+        // 文件导入到数据库压缩文件名称
+        String fileImportCompressDbPath = tempPath + File.separator + finishGenerateFileName;
+        log.info("文件导入数据库压缩文件名称：{}", fileImportCompressDbPath);
+        if (!FileUtil.exist(fileImportCompressDbPath)) {
+            throw new HandlerException(FILE_TO_DB_FAIL.getCode(),
+                    StrUtil.format("文件不存在:{}", fileImportCompressDbPath));
+        }
+        // 文件导入到数据库解压文件名称
+        String fileImportDbPath = tempPath + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_CSV;
+        NbatchFileUtil.unGzipFile(fileImportCompressDbPath, fileImportDbPath);
+        setFilePath(param, finishGenerateFileName);
+        BaseDialect dialect = dialectHelper.getDialect(param.getDbType());
+        // 导入的逻辑首先将数据导入到中间表，然后进行数据校验
+        String importTableName = param.getImportTableName();
+        String importTodayTableName = importTableName + TODAY_TABLE_SUFFIX;
+        long importDbCount;
+        // 全量导入
+        if (param.getAllUpdate() == 1) {
+            String deleteAllSql = getDeleteAllSql(importTableName);
+            dialect.executeUpdate(dialectHelper.getConnection(param.getDbType()), deleteAllSql);
+            importDbCount = dialect.fileToDb(dialectHelper.getConnection(param.getDbType()), param);
+        } else {
+            importDbCount = handleUpdateTable(importTableName, importTodayTableName, param, dialect);
+        }
+        int totalLines = FileUtil.getTotalLines(new File(fileImportDbPath));
+        FileUtil.del(fileImportDbPath);
+        NbatchFileUtil.checkImportDataNum(totalLines, importDbCount);
     }
+
+    /**
+     * 设置文件路径
+     */
+    private void setFilePath(ExecuteFileToDbParam param, String finishGenerateFileName) {
+        String tempPath = handlerPropertiesConstant.getTempPath();
+        if (StrUtil.equals(param.getDbType(), DbTypeEnum.GBASE.getDb())) {
+            tempPath = handlerPropertiesConstant.getRemoteTempPath();
+        }
+        String dbExportFilePath = tempPath + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_CSV;
+        param.setFilePath(dbExportFilePath);
+    }
+
+
+    private String getDeleteAllSql(String tableName) {
+        return "truncate table " + tableName;
+    }
+
+    private String getDeleteByConditionSql(String tableName, String condition) {
+        return "delete from " + tableName + " t where " + condition;
+    }
+
+    /**
+     * 获取导入正式表sql
+     */
+    private String getInsertFormalTable(String tableName, String tableFiled,
+                                        String tempTableName) {
+        return "insert into " + tableName + " (" + tableFiled + ")" +
+                " select " + tableFiled + " from " + tempTableName;
+    }
+
+
+    /**
+     * 处理增量数据
+     */
+    private long handleUpdateTable(String importTableName,
+                                   String importTodayTableName,
+                                   ExecuteFileToDbParam param,
+                                   BaseDialect dialect) throws Exception {
+        long importDbCount;
+        // 删除临时表数据
+        String deleteAllSql = getDeleteAllSql(importTodayTableName);
+        dialect.executeUpdate(dialectHelper.getConnection(param.getDbType()), deleteAllSql);
+        ExecuteFileToDbParam copyParam = BeanUtil.toBean(param, ExecuteFileToDbParam.class);
+        copyParam.setImportTableName(importTodayTableName);
+        importDbCount = dialect.fileToDb(dialectHelper.getConnection(param.getDbType()), copyParam);
+        String importTableCondition = param.getImportTableCondition();
+        if (StrUtil.isEmpty(importTableCondition)) {
+            throw new HandlerException(FILE_TO_DB_FAIL.getCode(), "导入文件表条件列不可为空！");
+        }
+        String deleteCondition = generateUpdateCondition(importTableCondition, importTodayTableName);
+        dialect.executeUpdate(dialectHelper.getConnection(param.getDbType()),
+                getDeleteByConditionSql(importTableName, deleteCondition));
+        String tableFiled = param.getImportTableFiled();
+        if (StrUtil.isEmpty(tableFiled)) {
+            log.info("===================导入增量文件导入文件表列不可为空！==================");
+            throw new HandlerException(FILE_TO_DB_FAIL.getCode(), "导入文件表列不可为空！");
+        }
+
+        String insertFormalTable = getInsertFormalTable(importTableName, tableFiled, importTodayTableName);
+        dialect.executeUpdate(dialectHelper.getConnection(param.getDbType()),
+                insertFormalTable);
+        return importDbCount;
+
+    }
+
+    private String generateUpdateCondition(String importTableCondition,
+                                           String importTodayTableName) {
+        List<String> conditionColumnList = StrUtil.split(importTableCondition, StrPool.COMMA);
+        StringBuilder conditionSql = new StringBuilder();
+        conditionSql.append(" exists(" +
+                        "select 1 from ")
+                .append(importTodayTableName)
+                .append(" today ");
+        for (int i = 0; i < conditionColumnList.size(); i++) {
+            if (i == 0) {
+                conditionSql.append("where t.")
+                        .append(conditionColumnList.get(i))
+                        .append(" = today.")
+                        .append(conditionColumnList.get(i));
+            } else {
+                conditionSql.append(" and t.")
+                        .append(conditionColumnList.get(i))
+                        .append(" = today.")
+                        .append(conditionColumnList.get(i));
+            }
+        }
+        conditionSql.append(")");
+        return conditionSql.toString();
+    }
+
+
 
 }

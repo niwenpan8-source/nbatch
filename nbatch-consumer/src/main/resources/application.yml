@@ -50,7 +50,7 @@ spring:
 nbatch:
   job:
     admin:
-      addresses: http://127.0.0.1:8080/xxl-job-admin
+      addresses: http://192.168.10.225:8095/xxl-job-admin
       accessToken: default_token
       timeout: 3
     executor:
@@ -62,4 +62,5 @@ nbatch:
       logretentiondays: 30
     file:
       tempPath: C:\disk\project\work\2025\nbatch\file\temp
+      remoteTempPath: ftpC:\disk\project\work\2025\nbatch\file\temp
 

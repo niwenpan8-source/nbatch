@@ -1,6 +1,6 @@
 ### web
 server:
-  port: 8080
+  port: 8095
   servlet:
     context-path: /xxl-job-admin
 

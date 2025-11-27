@@ -28,5 +28,8 @@ public interface BaseDialect {
      */
     int executeFunction(Connection connection, String tableSql, List<Object> params) throws Exception;
 
-
+    /**
+     * 执行修改
+     */
+    int executeUpdate(Connection connection, String sql) throws Exception;
 }

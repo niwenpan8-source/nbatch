@@ -17,4 +17,11 @@ public class JobHandlerPropertiesConstant {
     @Value("${nbatch.job.file.tempPath}")
     private String tempPath;
 
+    /**
+     * 文件远程临时路径
+     */
+    @Value("${nbatch.job.file.remoteTempPath}")
+    private String remoteTempPath;
+
+
 }

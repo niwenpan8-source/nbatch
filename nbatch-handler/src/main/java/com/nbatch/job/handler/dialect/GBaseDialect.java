@@ -1,11 +1,18 @@
 package com.nbatch.job.handler.dialect;
 
+import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.core.biz.model.ExecuteDbToFileParam;
 import com.nbatch.job.core.biz.model.ExecuteFileToDbParam;
 import com.nbatch.job.handler.exception.HandlerException;
+import com.nbatch.job.handler.utils.AsciiUtil;
 import com.nbatch.job.handler.utils.SpecialSqlUtil;
+import lombok.extern.slf4j.Slf4j;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.util.List;
 
@@ -16,25 +23,84 @@ import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_UPDATE_SQL_
  * @author: Mr.ni
  * @date: 2025/11/19
  */
+@Slf4j
 public class GBaseDialect implements BaseDialect {
 
     @Override
     public long fileToDb(Connection connection, ExecuteFileToDbParam param) throws Exception {
         String executeSql = generateFileToDbExecuteSql(param);
+        initImportFileFields(param);
+        log.info("执行 file to db sql：{}", executeSql);
         return SpecialSqlUtil.executeUpdate(connection, executeSql);
     }
 
     @Override
     public boolean dbToFile(Connection connection, ExecuteDbToFileParam param) throws Exception {
         String setExportDirSql = "SET gbase_export_directory = 0";
-        SpecialSqlUtil.execute(connection, setExportDirSql);
+        log.info("执行 set export sql：{}", setExportDirSql);
+        SpecialSqlUtil.executeNotCloseConnect(connection, setExportDirSql);
         String executeSql = generateDbToFileExecuteSql(param);
-        return SpecialSqlUtil.execute(connection, executeSql);
+        log.info("执行 db to file sql：{}", executeSql);
+        SpecialSqlUtil.execute(connection, executeSql);
+        return true;
     }
 
     @Override
     public int executeFunction(Connection connection, String tableSql, List<Object> params) throws Exception {
+        log.info("执行 function sql：{}", tableSql);
         return SpecialSqlUtil.executeSql(connection, tableSql, params);
+    }
+
+    @Override
+    public int executeUpdate(Connection connection, String sql) throws Exception {
+        log.info("执行 update sql：{}", sql);
+        return SpecialSqlUtil.executeUpdate(connection, sql);
+    }
+
+    /**
+     * 获取导入文件字段
+     */
+    private void initImportFileFields(ExecuteFileToDbParam param) {
+        if (StrUtil.isEmpty(param.getImportTableFiled())) {
+            return;
+        }
+        String separator = param.getSep();
+        if (StrUtil.contains(separator, "X'")) {
+            // 3. 处理原始字符串中的十六进制部分
+            String hexPart = separator.replaceAll("X'|'", "");
+            separator = AsciiUtil.hexToAscii(hexPart);
+        }
+        if (StrUtil.isEmpty(separator)) {
+            separator = " | ";
+        }
+        int actualColumnSize = readCsvFirstSize(param.getFilePath(), separator);
+        List<String> templateColumns = StrUtil.split(param.getImportTableFiled(), StrPool.COMMA);
+        if (actualColumnSize > templateColumns.size()) {
+            StringBuilder importTableFiled = new StringBuilder(param.getImportTableFiled());
+            for (int i = 0; i < actualColumnSize - templateColumns.size(); i++) {
+                importTableFiled.append(", " + "@c").append(i + 1);
+            }
+            param.setImportTableFiled(importTableFiled.toString());
+        }
+    }
+
+    /**
+     * 测试写入csv
+     */
+    public int readCsvFirstSize(String filePath, String separator) {
+        try (
+                FileInputStream fileInputStream = new FileInputStream(filePath);
+                InputStreamReader isr = new InputStreamReader(fileInputStream, StandardCharsets.UTF_8);
+                BufferedReader reader = new BufferedReader(isr)
+        ) {
+            String firstLine = reader.readLine();
+            //CSV格式文件为逗号分隔符文件，这里根据逗号切分
+            List<String> itemList = StrUtil.split(firstLine, separator);
+            return itemList.size();
+        } catch (Exception e) {
+            log.error("读取csv文件异常");
+        }
+        return 0;
     }
 
     /**
