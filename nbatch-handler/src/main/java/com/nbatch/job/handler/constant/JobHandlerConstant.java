@@ -32,4 +32,14 @@ public interface JobHandlerConstant {
      */
     String TODAY_TABLE_SUFFIX = "_today";
 
+    /**
+     * sql字段替换正则
+     */
+    String SQL_FIELD_REPLACE_REGEX = "#\\{([^}]+)\\}";
+
+    /**
+     * sql字段字符
+     */
+    String SQL_FIELD_REPLACE_CHAR = "?";
+
 }

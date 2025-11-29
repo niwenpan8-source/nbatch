@@ -204,11 +204,27 @@ create table nbatch_job_work_node
     node_name    varchar(300) not null comment '节点名称',
     node_desc    varchar(300) comment '节点描述',
     node_status  tinyint(4)  not null default 0 comment '节点状态：0=停用、1=启用',
-    node_run_status  tinyint(4)  not null default 0 comment '节点运行状态：0=未运行、1=运行节点',
     node_type  varchar(20)  not null comment 'script:脚本,store_procedure:存储过程,execute_sql:执行sql,file_to_db:文件导入到数据库,db_to_file:数据库导出到文件',
-    turn_date  date comment '翻牌日期',
+    db_type  varchar(32) comment '翻牌日期',
+    execute_sql  text comment '翻牌日期',
+    execute_sql_param  text comment '翻牌日期',
+    execute_handler  text comment 'bean执行器',
     primary key (node_id)
 ) engine = innodb comment = '作业节点表'
+  default charset = utf8mb4;
+
+# 运行节点表
+drop table if exists nbatch_job_work_run_node;
+create table nbatch_job_work_run_node
+(
+    run_node_id      varchar(32) not null comment '运行节点id',
+    work_id      varchar(32) not null comment '作业id',
+    node_id      varchar(32) not null comment '作业节点id',
+    node_sequence  tinyint(4) not null comment '节点顺序',
+    node_run_status  tinyint(4)  not null default 0 comment '节点运行状态：0=未运行、1=运行节点',
+    turn_date  date comment '翻牌日期',
+    primary key (run_node_id)
+) engine = innodb comment = '作业运行节点表'
   default charset = utf8mb4;
 
 # 作业节点导出文件表
@@ -259,18 +275,6 @@ create table nbatch_job_work_node_relation (
     node_order tinyint(4)  not null comment '节点顺序',
     primary key (node_relation_id)
 ) engine = innodb comment = '作业节点关系表'
-  default charset = utf8mb4;
-
-# 运行节点表
-drop table if exists nbatch_job_work_run_node;
-create table nbatch_job_work_run_node
-(
-    run_node_id      varchar(32) not null comment '运行节点id',
-    work_id      varchar(32) not null comment '作业id',
-    node_id      varchar(32) not null comment '作业节点id',
-    node_sequence  tinyint(4) not null comment '节点顺序',
-    primary key (run_node_id)
-) engine = innodb comment = '作业运行节点表'
   default charset = utf8mb4;
 
 # 运行节点表

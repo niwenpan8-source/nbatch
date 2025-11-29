@@ -72,11 +72,6 @@ public class JobWorkExportFilePo extends Model<JobWorkExportFilePo> {
 	private Integer isGzip;
 
 	/**
-	 * 数据库类型
-	 */
-	private String dbType;
-
-	/**
 	 * 生成文件名，特殊替换字符
 	 */
 	private String fileNameParam;

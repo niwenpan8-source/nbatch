@@ -1,6 +1,7 @@
 package com.nbatch.job.handler.dialect;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import com.nbatch.job.core.biz.model.ExecuteDbToFileParam;
 import com.nbatch.job.core.biz.model.ExecuteFileToDbParam;
 import com.nbatch.job.handler.exception.HandlerException;
@@ -12,7 +13,6 @@ import org.opengauss.core.BaseConnection;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.sql.Connection;
-import java.util.List;
 
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_UPDATE_SQL_FAIL;
 
@@ -68,9 +68,9 @@ public class GaussDialect implements BaseDialect {
     }
 
     @Override
-    public int executeFunction(Connection connection, String tableSql, List<Object> params) throws Exception{
-        log.info("执行 function sql：{}", tableSql);
-        return SpecialSqlUtil.executeSql(connection, tableSql, params);
+    public void executeFunction(Connection connection, String sql, JSONObject paramObj) throws Exception {
+        log.info("执行 function paramObj sql：{}, paramObj:{}", sql, paramObj);
+        SpecialSqlUtil.executeStoreProcedure(connection, sql, paramObj);
     }
 
     @Override

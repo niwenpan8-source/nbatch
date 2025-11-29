@@ -7,6 +7,7 @@ import com.nbatch.job.core.biz.AdminBiz;
 import com.nbatch.job.core.biz.client.AdminBizClient;
 import com.nbatch.job.core.handler.IJobHandler;
 import com.nbatch.job.core.handler.annotation.BatchJob;
+import com.nbatch.job.core.handler.annotation.BatchJobWorkNode;
 import com.nbatch.job.core.handler.impl.MethodJobHandler;
 import com.nbatch.job.core.log.JobFileAppender;
 import com.nbatch.job.core.server.EmbedServer;
@@ -27,7 +28,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Created by nbatch on 2016/3/2 21:14.
+ * job executor
+ * @author Mr.ni
  */
 @Slf4j
 public class BatchJobExecutor {
@@ -166,24 +168,24 @@ public class BatchJobExecutor {
     public static IJobHandler loadJobHandler(String name){
         return JOB_HANDLER_REPOSITORY.get(name);
     }
-    public static IJobHandler registJobHandler(String name, IJobHandler jobHandler){
-        log.info(">>>>>>>>>>> job register jobhandler success, name:{}, jobHandler:{}", name, jobHandler);
+    public static IJobHandler registerJobHandler(String name, IJobHandler jobHandler){
+        log.info(">>>>>>>>>>> job register jobHandler success, name:{}, jobHandler:{}", name, jobHandler);
         return JOB_HANDLER_REPOSITORY.put(name, jobHandler);
     }
-    protected void registJobHandler(BatchJob xxlJob, Object bean, Method executeMethod){
-        if (xxlJob == null) {
+    protected void registerJobHandler(BatchJob batchJob, Object bean, Method executeMethod){
+        if (batchJob == null) {
             return;
         }
 
-        String name = xxlJob.value();
+        String name = batchJob.value();
         //make and simplify the variables since they'll be called several times later
         Class<?> clazz = bean.getClass();
         String methodName = executeMethod.getName();
         if (StrUtil.isBlank(name)) {
-            throw new RuntimeException("job method-jobhandler name invalid, for[" + clazz + "#" + methodName + "] .");
+            throw new RuntimeException("job method-jobHandler name invalid, for[" + clazz + "#" + methodName + "] .");
         }
         if (loadJobHandler(name) != null) {
-            throw new RuntimeException("job jobhandler[" + name + "] naming conflicts.");
+            throw new RuntimeException("job jobHandler[" + name + "] naming conflicts.");
         }
 
         executeMethod.setAccessible(true);
@@ -192,32 +194,32 @@ public class BatchJobExecutor {
         Method initMethod = null;
         Method destroyMethod = null;
 
-        if (StrUtil.isNotBlank(xxlJob.init())) {
+        if (StrUtil.isNotBlank(batchJob.init())) {
             try {
-                initMethod = clazz.getDeclaredMethod(xxlJob.init());
+                initMethod = clazz.getDeclaredMethod(batchJob.init());
                 initMethod.setAccessible(true);
             } catch (NoSuchMethodException e) {
-                throw new RuntimeException("job method-jobhandler initMethod invalid, for[" + clazz + "#" + methodName + "] .");
+                throw new RuntimeException("job method-jobHandler initMethod invalid, for[" + clazz + "#" + methodName + "] .");
             }
         }
-        if (StrUtil.isNotBlank(xxlJob.destroy())) {
+        if (StrUtil.isNotBlank(batchJob.destroy())) {
             try {
-                destroyMethod = clazz.getDeclaredMethod(xxlJob.destroy());
+                destroyMethod = clazz.getDeclaredMethod(batchJob.destroy());
                 destroyMethod.setAccessible(true);
             } catch (NoSuchMethodException e) {
-                throw new RuntimeException("job method-jobhandler destroyMethod invalid, for[" + clazz + "#" + methodName + "] .");
+                throw new RuntimeException("job method-jobHandler destroyMethod invalid, for[" + clazz + "#" + methodName + "] .");
             }
         }
 
-        // registry jobhandler
-        registJobHandler(name, new MethodJobHandler(bean, executeMethod, initMethod, destroyMethod));
+        // registry jobHandler
+        registerJobHandler(name, new MethodJobHandler(bean, executeMethod, initMethod, destroyMethod));
 
     }
 
 
     // ---------------------- job thread repository ----------------------
     private static final ConcurrentMap<String, JobThread> JOB_THREAD_REPOSITORY = new ConcurrentHashMap<>();
-    public static JobThread registJobThread(String jobId, IJobHandler handler, String removeOldReason){
+    public static JobThread registerJobThread(String jobId, IJobHandler handler, String removeOldReason){
         JobThread newJobThread = new JobThread(jobId, handler);
         newJobThread.start();
         log.info(">>>>>>>>>>> job regist JobThread success, jobId:{}, handler:{}", jobId, handler);

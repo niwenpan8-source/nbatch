@@ -35,13 +35,28 @@ public class JobWorkNodeParam {
     private Integer nodeStatus;
 
     /**
-     * 节点运行状态：0=未运行、1=运行节点
-     */
-    private Integer nodeRunStatus;
-
-    /**
      * script:脚本,store_procedure:存储过程,execute_sql:执行sql,file_to_db:文件导入到数据库,db_to_file:数据库导出到文件
      */
     private String nodeType;
+
+    /**
+     * 数据库类型
+     */
+    private String dbType;
+
+    /**
+     * 执行sql
+     */
+    private String executeSql;
+
+    /**
+     * 执行sql参数
+     */
+    private String executeSqlParam;
+
+    /**
+     * 执行器
+     */
+    private String executeHandler;
 
 }

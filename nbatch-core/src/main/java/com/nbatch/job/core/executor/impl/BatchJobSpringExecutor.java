@@ -85,12 +85,12 @@ public class BatchJobSpringExecutor extends BatchJobExecutor implements Applicat
                 continue;
             }
 
-            // generate and regist method job handler
+            // generate and register method job handler
             for (Map.Entry<Method, BatchJob> methodXxlJobEntry : annotatedMethods.entrySet()) {
                 Method executeMethod = methodXxlJobEntry.getKey();
                 BatchJob batchJob = methodXxlJobEntry.getValue();
-                // regist
-                registJobHandler(batchJob, bean, executeMethod);
+                // register
+                registerJobHandler(batchJob, bean, executeMethod);
             }
 
         }

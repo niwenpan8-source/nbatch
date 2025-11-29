@@ -1,5 +1,6 @@
 package com.nbatch.job.handler.dialect;
 
+import cn.hutool.json.JSONObject;
 import com.nbatch.job.core.biz.model.ExecuteDbToFileParam;
 import com.nbatch.job.core.biz.model.ExecuteFileToDbParam;
 
@@ -26,7 +27,7 @@ public interface BaseDialect {
     /**
      * 执行存储过程
      */
-    int executeFunction(Connection connection, String tableSql, List<Object> params) throws Exception;
+    void executeFunction(Connection connection, String tableSql, JSONObject paramObj) throws Exception;
 
     /**
      * 执行修改

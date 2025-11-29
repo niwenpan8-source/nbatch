@@ -29,14 +29,29 @@ public class ExecuteNodeParam {
     private String nodeType;
 
     /**
-     * 节点参数
+     * 数据库类型
      */
-    private String nodeParams;
+    private String dbType;
 
     /**
      * 翻牌日期
      */
     private Date turnDate;
+
+    /**
+     * 执行sql
+     */
+    private String executeSql;
+
+    /**
+     * 执行sql参数
+     */
+    private String executeSqlParam;
+
+    /**
+     * 执行器
+     */
+    private String executeHandler;
 
     /**
      * 执行文件导入数据库参数

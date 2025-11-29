@@ -31,7 +31,7 @@ spring:
             connection-test-query: SELECT 1
             validation-timeout: 1000
         gbase:
-          url: jdbc:gbase://192.168.10.160:5258/dmap_zgyh_guangdong_dev
+          url: jdbc:gbase://192.168.10.160:5258/dmap_zgyh_guangdong_prd
           username: dmapuser
           password: bankfund
           driver-class-name: com.gbase.jdbc.Driver

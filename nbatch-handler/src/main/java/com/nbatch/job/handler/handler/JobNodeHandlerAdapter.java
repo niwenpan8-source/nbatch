@@ -7,7 +7,7 @@ import com.nbatch.job.core.biz.model.ExecuteNodeParam;
  * @author: Mr.ni
  * @date: 2025/11/19
  */
-public interface JobHandlerAdapter {
+public interface JobNodeHandlerAdapter {
 
     /**
      * 是否支持该作业类型

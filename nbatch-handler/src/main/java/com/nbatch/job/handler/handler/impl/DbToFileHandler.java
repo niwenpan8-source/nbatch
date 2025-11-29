@@ -9,7 +9,7 @@ import com.nbatch.job.core.biz.model.ExecuteNodeParam;
 import com.nbatch.job.handler.constant.JobHandlerPropertiesConstant;
 import com.nbatch.job.handler.enums.DbTypeEnum;
 import com.nbatch.job.handler.exception.HandlerException;
-import com.nbatch.job.handler.handler.JobHandlerAdapter;
+import com.nbatch.job.handler.handler.JobNodeHandlerAdapter;
 import com.nbatch.job.handler.helper.DialectHelper;
 import com.nbatch.job.handler.utils.NbatchFileUtil;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ import static com.nbatch.job.handler.enums.NodeTypeEnum.NODE_TYPE_FILE_TO_DB;
  * @date: 2025/11/19
  */
 @RequiredArgsConstructor
-public class DbToFileHandler implements JobHandlerAdapter {
+public class DbToFileHandler implements JobNodeHandlerAdapter {
 
     private final DialectHelper dialectHelper;
 
@@ -52,13 +52,15 @@ public class DbToFileHandler implements JobHandlerAdapter {
         String finishGenerateFilePath = tempPath + File.separator + finishGenerateFileName;
         // 生成最终文件的中间文件
         String executeFinishGenerateFilePath = finishGenerateFilePath + FILE_TYPE_SUFFIX_EXECUTE;
+        if (FileUtil.exist(dbExportFilePath)) {
+            FileUtil.del(dbExportFilePath);
+        }
         // 创建文件
         //FileUtil.touch(dbExportFilePath);
-        setFilePath(param, finishGenerateFileName);
-        FileUtil.del(param.getFilePath());
+        setFilePath(param, finishGenerateFileName, nodeParam.getDbType());
         // 导出相关文件
-        boolean flag = dialectHelper.getDialect(param.getDbType())
-                .dbToFile(dialectHelper.getConnection(param.getDbType()), param);
+        boolean flag = dialectHelper.getDialect(nodeParam.getDbType())
+                .dbToFile(dialectHelper.getConnection(nodeParam.getDbType()), param);
 
         // 将数据库导出文件进行压缩
         NbatchFileUtil.gzipFile(dbExportFilePath, executeFinishGenerateFilePath);
@@ -72,9 +74,9 @@ public class DbToFileHandler implements JobHandlerAdapter {
     }
 
 
-    private void setFilePath(ExecuteDbToFileParam param, String finishGenerateFileName) {
+    private void setFilePath(ExecuteDbToFileParam param, String finishGenerateFileName, String dbType) {
         String tempPath = handlerPropertiesConstant.getTempPath();
-        if (StrUtil.equals(param.getDbType(), DbTypeEnum.GBASE.getDb())) {
+        if (StrUtil.equals(dbType, DbTypeEnum.GBASE.getDb())) {
             tempPath = handlerPropertiesConstant.getRemoteTempPath();
         }
         String dbExportFilePath = tempPath + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_CSV;

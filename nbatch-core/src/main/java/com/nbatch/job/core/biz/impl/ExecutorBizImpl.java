@@ -167,7 +167,7 @@ public class ExecutorBizImpl implements ExecutorBiz {
 
         // replace thread (new or exists invalid)
         if (jobThread == null) {
-            jobThread = BatchJobExecutor.registJobThread(triggerParam.getJobId(), jobHandler, removeOldReason);
+            jobThread = BatchJobExecutor.registerJobThread(triggerParam.getJobId(), jobHandler, removeOldReason);
         }
 
         // push data to queue

@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class JobHandlerHolder implements IJobHandlerHolder {
 
-    private final Map<String, JobHandlerAdapter> jobHandlerAdapterMap;
+    private final Map<String, JobNodeHandlerAdapter> jobHandlerAdapterMap;
 
     /**
      * 测试
@@ -51,7 +51,7 @@ public class JobHandlerHolder implements IJobHandlerHolder {
                 batchThreadPoolExecutor = BatchThreadPoolUtil.newThreadPoolExecutorDiscard(nodeParam.getNodeType(), threadPoolNum,
                         threadPoolNum, 30, TimeUnit.MINUTES, 1000);
             }
-            JobHandlerAdapter jobHandlerAdapter = jobHandlerAdapterMap.get(nodeParam.getNodeType());
+            JobNodeHandlerAdapter jobHandlerAdapter = jobHandlerAdapterMap.get(nodeParam.getNodeType());
             JSONObject cacheObj = new JSONObject();
             cacheObj.putOpt("workId", workNodeParam.getWorkId());
             cacheObj.putOpt("jobId", workNodeParam.getJobId());

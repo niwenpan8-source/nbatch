@@ -63,7 +63,7 @@ public class BatchJobSimpleExecutor extends BatchJobExecutor {
             for (Method executeMethod : methods) {
                 BatchJob xxlJob = executeMethod.getAnnotation(BatchJob.class);
                 // registry
-                registJobHandler(xxlJob, bean, executeMethod);
+                registerJobHandler(xxlJob, bean, executeMethod);
             }
 
         }

@@ -216,7 +216,9 @@ public class JobCompleteHelper {
                     .updateNodeTurnDate(nodeStatusCallbackParam.getNodeId(), nodeStatusCallbackParam.getWorkId());
         } else {
             JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                    .updateNodeStatusById(nodeStatusCallbackParam.getNodeId(), WorkStatusEnum.STOP.getCode());
+                    .updateNodeStatusById(nodeStatusCallbackParam.getWorkId(),
+                            nodeStatusCallbackParam.getNodeId(),
+                            WorkStatusEnum.STOP.getCode());
         }
         JobAdminConfig.getAdminConfig().getRunNodeHelper()
                 .updateCallBackRunNodeLog(nodeStatusCallbackParam.getNodeLogId()

@@ -2,6 +2,7 @@ package com.nbatch.job.handler.dialect;
 
 import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import com.nbatch.job.core.biz.model.ExecuteDbToFileParam;
 import com.nbatch.job.core.biz.model.ExecuteFileToDbParam;
 import com.nbatch.job.handler.exception.HandlerException;
@@ -46,9 +47,9 @@ public class GBaseDialect implements BaseDialect {
     }
 
     @Override
-    public int executeFunction(Connection connection, String tableSql, List<Object> params) throws Exception {
-        log.info("执行 function sql：{}", tableSql);
-        return SpecialSqlUtil.executeSql(connection, tableSql, params);
+    public void executeFunction(Connection connection, String sql, JSONObject paramObj) throws Exception {
+        log.info("执行 function paramObj sql：{}", sql);
+        SpecialSqlUtil.executeStoreProcedure(connection, sql, paramObj);
     }
 
     @Override

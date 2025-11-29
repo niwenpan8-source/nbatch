@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
 
+import java.util.Date;
+
 /**
  * @description: 作业运行节点
  * @author: Mr.ni
@@ -40,5 +42,15 @@ public class JobWorkRunNodePo extends Model<JobWorkRunNodePo> {
 	 * 节点顺序
 	 */
 	private Integer nodeSequence;
+
+	/**
+	 * 节点运行状态：0=未运行、1=运行节点
+	 */
+	private Integer nodeRunStatus;
+
+	/**
+	 * 翻牌日期
+	 */
+	private Date turnDate;
 
 }

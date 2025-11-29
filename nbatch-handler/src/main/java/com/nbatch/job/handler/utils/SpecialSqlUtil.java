@@ -2,6 +2,7 @@ package com.nbatch.job.handler.utils;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import com.nbatch.job.handler.exception.HandlerException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -16,7 +17,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import static com.nbatch.job.handler.constant.JobHandlerConstant.SQL_FIELD_REPLACE_CHAR;
+import static com.nbatch.job.handler.constant.JobHandlerConstant.SQL_FIELD_REPLACE_REGEX;
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_UPDATE_SQL_FAIL;
 
 /**
@@ -138,28 +143,29 @@ public class SpecialSqlUtil {
     }
 
     /**
-     * 运行需要回调的语句
+     * 执行函数
      */
-    public static int executeSql(Connection conn, String tableSql, List<Object> params) throws SQLException {
+    public static int executeCallFunction(Connection conn, String sql, JSONObject paramMap) throws SQLException {
+        List<Object> params = new ArrayList<>();
+        sql = replacePlaceholders(sql, paramMap, params);
+        if (StrUtil.count(sql, SQL_FIELD_REPLACE_CHAR) == params.size()) {
+            sql = "{ ? = " + sql + " }";
+        }
         try (
-                CallableStatement call = conn.prepareCall(tableSql);
+                CallableStatement call = conn.prepareCall(sql);
         ) {
+            call.registerOutParameter(1, Types.INTEGER);
             if (CollUtil.isNotEmpty(params)) {
                 for (int i = 0; i < params.size(); i++) {
                     Object param = params.get(i);
-                    call.setObject(i + 1, param);
+                    call.setObject(i + 2, param);
                 }
             }
-            call.registerOutParameter(params.size() + 1, Types.INTEGER);
-            try (ResultSet ignored = call.executeQuery()) {
-                // 输出OUT的值
-                return call.getInt(params.size() + 1);
-            } catch (SQLException e) {
-                log.error("得到执行结果发生异常");
-                throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
-            }
+            // 输出OUT的值
+            call.execute();
+            return call.getInt(1);
         } catch (Exception e) {
-            log.error("执行SQL发生异常");
+            log.error("执行函数SQL发生异常");
             throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
         } finally {
             // 这里使用连接代理关闭，重置线程池属性
@@ -168,5 +174,50 @@ public class SpecialSqlUtil {
             }
         }
     }
+
+    /**
+     * 执行存储过程
+     */
+    public static void executeStoreProcedure(Connection conn, String sql, JSONObject paramMap) throws SQLException {
+        List<Object> params = new ArrayList<>();
+        sql = replacePlaceholders(sql, paramMap, params);
+        try (
+                CallableStatement call = conn.prepareCall(sql);
+        ) {
+            if (CollUtil.isNotEmpty(params)) {
+                for (int i = 0; i < params.size(); i++) {
+                    Object param = params.get(i);
+                    call.setObject(i + 1, param);
+                }
+            }
+            // 输出OUT的值
+            call.execute();
+        } catch (Exception e) {
+            log.error("执行存储过程SQL发生异常");
+            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
+        } finally {
+            // 这里使用连接代理关闭，重置线程池属性
+            if (conn != null && !conn.isClosed()) {
+                conn.close();
+            }
+        }
+    }
+
+    public static String replacePlaceholders(String template, JSONObject values, List<Object> params) {
+        Pattern pattern = Pattern.compile(SQL_FIELD_REPLACE_REGEX);
+        Matcher matcher = pattern.matcher(template);
+
+        StringBuffer result = new StringBuffer();
+        while (matcher.find()) {
+            String key = matcher.group(1);
+            String value = values.getStr(key, "{" + key + "}");
+            matcher.appendReplacement(result, SQL_FIELD_REPLACE_CHAR);
+            params.add(value);
+        }
+        matcher.appendTail(result);
+        return result.toString();
+    }
+
+
 
 }
