@@ -19,22 +19,18 @@ public class JobWorkRunNodeVo {
     /**
      * 运行节点id
      */
+    private String nodeId;
     private String runNodeId;
 
     /**
-     * 作业id
+     * 执行作业id
      */
-    private String workId;
+    private String runWorkId;
 
     /**
-     * 作业节点id
+     * script:脚本,store_procedure:存储过程,execute_sql:执行sql,file_to_db:文件导入到数据库,db_to_file:数据库导出到文件
      */
-    private String nodeId;
-
-    /**
-     * 节点顺序
-     */
-    private Integer nodeSequence;
+    private String nodeType;
 
     /**
      * 节点运行状态：0=未运行、1=运行节点
@@ -42,8 +38,28 @@ public class JobWorkRunNodeVo {
     private Integer nodeRunStatus;
 
     /**
+     * 节点运行状态：0=未运行、1=运行节点
+     */
+    private String dbType;
+
+    /**
      * 翻牌日期
      */
     private Date turnDate;
+
+    /**
+     * 执行sql
+     */
+    private String executeSql;
+
+    /**
+     * 执行sql参数
+     */
+    private String executeSqlParam;
+
+    /**
+     * 执行器
+     */
+    private String executeHandler;
 
 }

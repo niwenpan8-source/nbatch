@@ -25,6 +25,7 @@ public class ExecuteWorkParam {
      * 作业id
      */
     private String workId;
+    private String runWorkId;
 
     /**
      * 日志

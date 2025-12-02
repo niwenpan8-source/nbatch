@@ -85,6 +85,8 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
                 handleCallbackParam.getNodeStatusCallbackParam()
                         .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
                         .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
+                        .setRunWorkId(batchRunnable.getCacheObj().getStr("runWorkId"))
+                        .setRunNodeId(batchRunnable.getCacheObj().getStr("runNodeId"))
                         .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
                         .setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
                         .setHandleMsg(t.getMessage());
@@ -96,6 +98,8 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
                 handleCallbackParam.getNodeStatusCallbackParam()
                         .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
                         .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
+                        .setRunWorkId(batchRunnable.getCacheObj().getStr("runWorkId"))
+                        .setRunNodeId(batchRunnable.getCacheObj().getStr("runNodeId"))
                         .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
                         .setHandleCode(HandleCodeConstant.HANDLE_CODE_SUCCESS)
                         .setHandleMsg("执行成功");
@@ -127,6 +131,8 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
                     handleCallbackParam.getNodeStatusCallbackParam()
                             .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
                             .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
+                            .setRunWorkId(batchRunnable.getCacheObj().getStr("runWorkId"))
+                            .setRunNodeId(batchRunnable.getCacheObj().getStr("runNodeId"))
                             .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
                             .setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
                             .setHandleMsg("系统优雅关闭，任务停止");
@@ -140,6 +146,8 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
                 handleCallbackParam.getNodeStatusCallbackParam()
                         .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
                         .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
+                        .setRunWorkId(batchRunnable.getCacheObj().getStr("runWorkId"))
+                        .setRunNodeId(batchRunnable.getCacheObj().getStr("runNodeId"))
                         .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
                         .setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
                         .setHandleMsg("系统优雅关闭，任务停止");

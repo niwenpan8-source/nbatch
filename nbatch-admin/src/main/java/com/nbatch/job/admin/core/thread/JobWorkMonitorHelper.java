@@ -40,7 +40,12 @@ public class JobWorkMonitorHelper {
             // monitor
             while (!toStop) {
                 try {
+                    // 初始化运行work以及运行work_node节点
+                    JobAdminConfig.getAdminConfig().getRunWorkHelper().initRunWork();
+                    // 修改节点翻牌时间
                     JobAdminConfig.getAdminConfig().getRunNodeHelper().updateWorkTurnDate();
+                    // 只保留30天的运行数据
+                    JobAdminConfig.getAdminConfig().getRunWorkHelper().deleteRunWork();
                 } catch (Throwable e) {
                     if (!toStop) {
                         log.error(">>>>>>>>>>> job, job fail work thread error:", e);
@@ -48,7 +53,7 @@ public class JobWorkMonitorHelper {
                 }
 
                 try {
-                    TimeUnit.SECONDS.sleep(20);
+                    TimeUnit.SECONDS.sleep(5);
                 } catch (Throwable e) {
                     if (!toStop) {
                         log.error(e.getMessage(), e);

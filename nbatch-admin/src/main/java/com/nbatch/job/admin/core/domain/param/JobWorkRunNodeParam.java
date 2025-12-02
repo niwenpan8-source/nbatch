@@ -32,11 +32,6 @@ public class JobWorkRunNodeParam {
     private String nodeId;
 
     /**
-     * 节点顺序
-     */
-    private Integer nodeSequence;
-
-    /**
      * 节点运行状态：0=未运行、1=运行节点
      */
     private Integer nodeRunStatus;

@@ -29,6 +29,11 @@ public class JobWorkNodePo extends Model<JobWorkNodePo> {
 	private String nodeId;
 
 	/**
+	 * 作业id
+	 */
+	private String workId;
+
+	/**
 	 * 节点名称
 	 */
 	private String nodeName;

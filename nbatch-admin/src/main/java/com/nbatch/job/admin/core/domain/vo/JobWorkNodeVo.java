@@ -22,6 +22,13 @@ public class JobWorkNodeVo {
      * 作业节点id
      */
     private String nodeId;
+    private String runNodeId;
+
+    /**
+     * 作业id
+     */
+    private String workId;
+    private String runWorkId;
 
     /**
      * 节点名称

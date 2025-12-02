@@ -20,6 +20,11 @@ public class JobWorkNodeParam {
     private String nodeId;
 
     /**
+     * 作业id
+     */
+    private String workId;
+
+    /**
      * 节点名称
      */
     private String nodeName;

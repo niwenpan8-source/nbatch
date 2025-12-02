@@ -191,9 +191,21 @@ create table nbatch_job_work
     work_name    varchar(300) not null comment '作业名',
     work_desc    varchar(300) comment '作业描述',
     work_status  tinyint(4)  not null default 0 comment '作业状态：0=停用、1=启用',
-    turn_date  date comment '翻牌时间',
     primary key (work_id)
 ) engine = innodb comment = '作业表'
+  default charset = utf8mb4;
+
+# 作业执行表
+drop table if exists nbatch_job_run_work;
+create table nbatch_job_run_work
+(
+    run_work_id      varchar(32) not null comment '运行作业id',
+    work_id      varchar(32) not null comment '作业id',
+    run_work_status  tinyint(4)  not null default 0 comment '运行状态：0=待执行、1=进行中、2=执行完毕',
+    turn_date  date comment '翻牌日期',
+    create_time  datetime comment '创建时间',
+    primary key (run_work_id)
+) engine = innodb comment = '运行作业表'
   default charset = utf8mb4;
 
 # 作业节点表
@@ -201,6 +213,7 @@ drop table if exists nbatch_job_work_node;
 create table nbatch_job_work_node
 (
     node_id      varchar(32) not null comment '作业节点id',
+    work_id      varchar(32) not null comment '作业id',
     node_name    varchar(300) not null comment '节点名称',
     node_desc    varchar(300) comment '节点描述',
     node_status  tinyint(4)  not null default 0 comment '节点状态：0=停用、1=启用',
@@ -218,11 +231,11 @@ drop table if exists nbatch_job_work_run_node;
 create table nbatch_job_work_run_node
 (
     run_node_id      varchar(32) not null comment '运行节点id',
-    work_id      varchar(32) not null comment '作业id',
+    run_work_id      varchar(32) not null comment '执行作业id',
     node_id      varchar(32) not null comment '作业节点id',
-    node_sequence  tinyint(4) not null comment '节点顺序',
-    node_run_status  tinyint(4)  not null default 0 comment '节点运行状态：0=未运行、1=运行节点',
+    node_run_status  tinyint(4)  not null default 0 comment '运行状态：0=待执行、1=进行中、2=执行完毕',
     turn_date  date comment '翻牌日期',
+    create_time  datetime comment '创建时间',
     primary key (run_node_id)
 ) engine = innodb comment = '作业运行节点表'
   default charset = utf8mb4;
@@ -283,7 +296,9 @@ create table nbatch_job_work_run_node_log
 (
     node_log_id      varchar(32) not null comment '节点日志id',
     work_id      varchar(32) not null comment '作业id',
+    run_work_id      varchar(32) not null comment '运行作业id',
     node_id      varchar(32) not null comment '作业节点id',
+    run_node_id      varchar(32) not null comment '运行作业节点id',
     handle_code  int not null comment '执行状态',
     handle_msg  text comment '执行信息',
     create_time datetime COMMENT '执行-时间',

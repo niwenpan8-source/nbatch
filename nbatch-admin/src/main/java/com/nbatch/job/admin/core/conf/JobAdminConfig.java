@@ -2,6 +2,7 @@ package com.nbatch.job.admin.core.conf;
 
 import com.nbatch.job.admin.core.alarm.JobAlarmer;
 import com.nbatch.job.admin.core.helper.RunNodeHelper;
+import com.nbatch.job.admin.core.helper.RunWorkHelper;
 import com.nbatch.job.admin.core.scheduler.JobScheduler;
 import com.nbatch.job.admin.mapper.IJobGroupMapper;
 import com.nbatch.job.admin.mapper.IJobInfoMapper;
@@ -103,6 +104,9 @@ public class JobAdminConfig implements InitializingBean, DisposableBean {
     @Getter
     @Resource
     private RunNodeHelper runNodeHelper;
+    @Getter
+    @Resource
+    private RunWorkHelper runWorkHelper;
 
     public String getI18n() {
         if (!Arrays.asList("zh_CN", "zh_TC", "en").contains(i18n)) {

@@ -62,14 +62,16 @@ public class HandleCallbackParam implements Serializable {
     public static class NodeStatusCallbackParam {
 
         /**
-         * 作业id
+         * 运行作业id
          */
         private String workId;
+        private String runWorkId;
 
         /**
          * 节点id
          */
         private String nodeId;
+        private String runNodeId;
 
         /**
          * 节点日志id

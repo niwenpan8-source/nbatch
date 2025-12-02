@@ -213,11 +213,10 @@ public class JobCompleteHelper {
                 = handleCallbackParam.getNodeStatusCallbackParam();
         if (nodeStatusCallbackParam.getHandleCode() == HandleCodeConstant.HANDLE_CODE_SUCCESS) {
             JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                    .updateNodeTurnDate(nodeStatusCallbackParam.getNodeId(), nodeStatusCallbackParam.getWorkId());
+                    .updateNodeTurnDate(nodeStatusCallbackParam.getRunNodeId(), nodeStatusCallbackParam.getRunWorkId());
         } else {
             JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                    .updateNodeStatusById(nodeStatusCallbackParam.getWorkId(),
-                            nodeStatusCallbackParam.getNodeId(),
+                    .updateNodeStatusById(nodeStatusCallbackParam.getRunNodeId(),
                             WorkStatusEnum.STOP.getCode());
         }
         JobAdminConfig.getAdminConfig().getRunNodeHelper()

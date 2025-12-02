@@ -29,19 +29,14 @@ public class JobWorkRunNodePo extends Model<JobWorkRunNodePo> {
 	private String runNodeId;
 
 	/**
-	 * 作业id
+	 * 执行作业id
 	 */
-	private String workId;
+	private String runWorkId;
 
 	/**
 	 * 作业节点id
 	 */
 	private String nodeId;
-
-	/**
-	 * 节点顺序
-	 */
-	private Integer nodeSequence;
 
 	/**
 	 * 节点运行状态：0=未运行、1=运行节点
@@ -52,5 +47,10 @@ public class JobWorkRunNodePo extends Model<JobWorkRunNodePo> {
 	 * 翻牌日期
 	 */
 	private Date turnDate;
+
+	/**
+	 * 创建时间
+	 */
+	private Date createTime;
 
 }

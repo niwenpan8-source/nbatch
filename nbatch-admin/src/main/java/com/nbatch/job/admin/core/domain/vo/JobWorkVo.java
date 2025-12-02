@@ -36,9 +36,4 @@ public class JobWorkVo {
      */
     private Integer workStatus;
 
-    /**
-     * 翻牌日期
-     */
-    private Date turnDate;
-
 }

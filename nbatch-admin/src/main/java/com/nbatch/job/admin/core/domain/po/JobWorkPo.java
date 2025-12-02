@@ -46,9 +46,4 @@ public class JobWorkPo extends Model<JobWorkPo> {
 	 */
 	private Integer workStatus;
 
-	/**
-	 * 翻牌日期
-	 */
-	private Date turnDate;
-
 }

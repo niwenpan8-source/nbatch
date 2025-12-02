@@ -52,12 +52,7 @@ public class JobHandlerHolder implements IJobHandlerHolder {
                         threadPoolNum, 30, TimeUnit.MINUTES, 1000);
             }
             JobNodeHandlerAdapter jobHandlerAdapter = jobHandlerAdapterMap.get(nodeParam.getNodeType());
-            JSONObject cacheObj = new JSONObject();
-            cacheObj.putOpt("workId", workNodeParam.getWorkId());
-            cacheObj.putOpt("jobId", workNodeParam.getJobId());
-            cacheObj.putOpt("nodeId", nodeParam.getNodeId());
-            cacheObj.putOpt("logId", workNodeParam.getJobLogId());
-            cacheObj.putOpt("nodeLogId", nodeParam.getNodeLogId());
+            JSONObject cacheObj = getEntries(workNodeParam, nodeParam);
             batchThreadPoolExecutor.executeBatch(new BatchRunnable(cacheObj) {
                 @Override
                 public void run() {
@@ -72,6 +67,21 @@ public class JobHandlerHolder implements IJobHandlerHolder {
             });
 
         }
+    }
+
+    /**
+     * 获取缓存对象
+     */
+    private JSONObject getEntries(ExecuteWorkParam workNodeParam, ExecuteNodeParam nodeParam) {
+        JSONObject cacheObj = new JSONObject();
+        cacheObj.putOpt("jobId", workNodeParam.getJobId());
+        cacheObj.putOpt("logId", workNodeParam.getJobLogId());
+        cacheObj.putOpt("nodeLogId", nodeParam.getNodeLogId());
+        cacheObj.putOpt("workId", workNodeParam.getWorkId());
+        cacheObj.putOpt("runWorkId", workNodeParam.getRunWorkId());
+        cacheObj.putOpt("nodeId", nodeParam.getNodeId());
+        cacheObj.putOpt("runNodeId", nodeParam.getRunNodeId());
+        return cacheObj;
     }
 }
 

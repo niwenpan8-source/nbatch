@@ -14,9 +14,16 @@ import java.util.Date;
 public class ExecuteNodeParam {
 
     /**
+     * 运行作业id
+     */
+    private String workId;
+    private String runWorkId;
+
+    /**
      * 作业节点id
      */
     private String nodeId;
+    private String runNodeId;
 
     /**
      * 运行节点日志id
