@@ -5,7 +5,10 @@ import com.nbatch.job.core.biz.model.KillParam;
 import com.nbatch.job.core.biz.model.LogParam;
 import com.nbatch.job.core.biz.model.LogResult;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.biz.model.RunNodeLogDetailParam;
 import com.nbatch.job.core.biz.model.TriggerParam;
+
+import java.util.List;
 
 /**
  * @description: 执行器服务

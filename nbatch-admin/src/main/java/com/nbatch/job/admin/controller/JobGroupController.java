@@ -66,7 +66,7 @@ public class JobGroupController {
         LambdaQueryWrapper<JobGroupPo> jobGroupQuery = Wrappers.lambdaQuery(JobGroupPo.class)
                 .eq(StrUtil.isNotEmpty(appName), JobGroupPo::getAppName, appName)
                 .eq(StrUtil.isNotEmpty(title), JobGroupPo::getTitle, title);
-        Page<JobGroupPo> jobGroupPage = new Page<>(start, length);
+        Page<JobGroupPo> jobGroupPage = new Page<>((start / length) + 1, length);
         Page<JobGroupPo> list = jobGroupMapper.selectPage(jobGroupPage, jobGroupQuery);
 
         // package result

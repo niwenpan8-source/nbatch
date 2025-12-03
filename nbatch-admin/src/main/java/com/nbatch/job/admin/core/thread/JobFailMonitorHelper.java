@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * job monitor instance
  *
- * @author Mr.ni 2015-9-1 18:05:56
+ * @author Mr.ni
  */
 @Slf4j
 public class JobFailMonitorHelper {

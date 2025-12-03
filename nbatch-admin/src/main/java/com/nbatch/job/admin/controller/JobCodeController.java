@@ -95,7 +95,7 @@ public class JobCodeController {
 		jobLoggluePo.setUpdateTime(new Date());
 		jobLogglueMapper.insert(jobLoggluePo);
 
-		Page<JobLoggluePo> jobLoggluePoPage = jobLogglueMapper.selectPage(new Page<>(1, 30),
+		Page<JobLoggluePo> jobLoggluePoPage = jobLogglueMapper.selectPage(new Page<>(0, 30),
 				Wrappers.lambdaQuery(JobLoggluePo.class).eq(JobLoggluePo::getJobId, existsJobInfo.getId()));
 		if (jobLoggluePoPage != null && jobLoggluePoPage.getTotal() > 0) {
 			List<String> jobLogglueIds = jobLoggluePoPage.getRecords().stream()

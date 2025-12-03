@@ -263,6 +263,7 @@ public class JobTrigger {
      */
     private static void handleWorkTypeTaskParam(TriggerParam triggerParam) {
         // 获取可执行节点
+        JobAdminConfig.getAdminConfig().getRunWorkHelper().initRunWork(triggerParam.getWorkId());
         ExecuteWorkParam executeWorkParam
                 = JobAdminConfig.getAdminConfig().getRunNodeHelper().getEnableExecuteNodeList(triggerParam.getWorkId());
         triggerParam.setExecuteWorkParam(executeWorkParam);

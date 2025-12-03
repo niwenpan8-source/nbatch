@@ -40,8 +40,6 @@ public class JobWorkMonitorHelper {
             // monitor
             while (!toStop) {
                 try {
-                    // 初始化运行work以及运行work_node节点
-                    JobAdminConfig.getAdminConfig().getRunWorkHelper().initRunWork();
                     // 修改节点翻牌时间
                     JobAdminConfig.getAdminConfig().getRunNodeHelper().updateWorkTurnDate();
                     // 只保留30天的运行数据

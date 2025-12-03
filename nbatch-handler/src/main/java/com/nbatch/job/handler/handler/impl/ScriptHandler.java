@@ -36,6 +36,7 @@ public class ScriptHandler implements JobNodeHandlerAdapter {
             throw new HandlerException(SCRIPT_FAIL.getCode()
                     , StrUtil.format("nodeId:{},脚本运行节点,脚本运行类型[{}]不符合规范", nodeParam.getNodeId(), nodeParam.getScriptType()));
         }
+        nodeParam.pushRunNodeLogDetailCallback("=========================任务已经调用=====================================");
         ScriptTypeEnum scriptTypeEnum = ScriptTypeEnum.getByCode(nodeParam.getScriptType());
         // cmd
         if (scriptTypeEnum == null) {

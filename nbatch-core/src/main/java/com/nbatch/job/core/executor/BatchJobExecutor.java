@@ -7,12 +7,12 @@ import com.nbatch.job.core.biz.AdminBiz;
 import com.nbatch.job.core.biz.client.AdminBizClient;
 import com.nbatch.job.core.handler.IJobHandler;
 import com.nbatch.job.core.handler.annotation.BatchJob;
-import com.nbatch.job.core.handler.annotation.BatchJobWorkNode;
 import com.nbatch.job.core.handler.impl.MethodJobHandler;
 import com.nbatch.job.core.log.JobFileAppender;
 import com.nbatch.job.core.server.EmbedServer;
 import com.nbatch.job.core.thread.JobLogFileCleanThread;
 import com.nbatch.job.core.thread.JobThread;
+import com.nbatch.job.core.thread.RunNodeLogDetailCallbackThread;
 import com.nbatch.job.core.thread.TriggerCallbackThread;
 import com.nbatch.job.core.util.IpUtil;
 import com.nbatch.job.core.util.NetUtil;
@@ -71,11 +71,14 @@ public class BatchJobExecutor {
         // init TriggerCallbackThread
         TriggerCallbackThread.getInstance().start();
 
+        // init RunNodeLogDetailCallbackThread
+        RunNodeLogDetailCallbackThread.getInstance().start();
+
         // init executor-server
         initEmbedServer(address, ip, port, appName, accessToken);
     }
 
-    public void destroy(){
+    public void destroy() {
         // destroy executor-server
         stopEmbedServer();
 
@@ -96,12 +99,14 @@ public class BatchJobExecutor {
         }
         JOB_HANDLER_REPOSITORY.clear();
 
-
         // destroy JobLogFileCleanThread
         JobLogFileCleanThread.getInstance().toStop();
 
         // destroy TriggerCallbackThread
         TriggerCallbackThread.getInstance().toStop();
+
+        // destroy RunNodeLogDetailCallbackThread
+        RunNodeLogDetailCallbackThread.getInstance().toStop();
 
     }
 
@@ -109,9 +114,10 @@ public class BatchJobExecutor {
     // ---------------------- admin-client (rpc invoker) ----------------------
     @Getter
     private static List<AdminBiz> adminBizList;
+
     private void initAdminBizList(String adminAddresses, String accessToken, int timeout) {
         if (StrUtil.isNotBlank(adminAddresses)) {
-            for (String address: adminAddresses.trim().split(StrPool.COMMA)) {
+            for (String address : adminAddresses.trim().split(StrPool.COMMA)) {
                 if (StrUtil.isNotBlank(address)) {
 
                     AdminBiz adminBiz = new AdminBizClient(address.trim(), accessToken, timeout);
@@ -131,7 +137,7 @@ public class BatchJobExecutor {
     private void initEmbedServer(String address, String ip, int port, String appName, String accessToken) {
 
         // fill ip port
-        port = port>0?port: NetUtil.findAvailablePort(9999);
+        port = port > 0 ? port : NetUtil.findAvailablePort(9999);
         ip = StrUtil.isNotBlank(ip) ? ip : IpUtil.getIp();
 
         // generate address
@@ -165,14 +171,17 @@ public class BatchJobExecutor {
 
     // ---------------------- job handler repository ----------------------
     private static final ConcurrentMap<String, IJobHandler> JOB_HANDLER_REPOSITORY = new ConcurrentHashMap<>();
-    public static IJobHandler loadJobHandler(String name){
+
+    public static IJobHandler loadJobHandler(String name) {
         return JOB_HANDLER_REPOSITORY.get(name);
     }
-    public static IJobHandler registerJobHandler(String name, IJobHandler jobHandler){
+
+    public static IJobHandler registerJobHandler(String name, IJobHandler jobHandler) {
         log.info(">>>>>>>>>>> job register jobHandler success, name:{}, jobHandler:{}", name, jobHandler);
         return JOB_HANDLER_REPOSITORY.put(name, jobHandler);
     }
-    protected void registerJobHandler(BatchJob batchJob, Object bean, Method executeMethod){
+
+    protected void registerJobHandler(BatchJob batchJob, Object bean, Method executeMethod) {
         if (batchJob == null) {
             return;
         }
@@ -219,7 +228,8 @@ public class BatchJobExecutor {
 
     // ---------------------- job thread repository ----------------------
     private static final ConcurrentMap<String, JobThread> JOB_THREAD_REPOSITORY = new ConcurrentHashMap<>();
-    public static JobThread registerJobThread(String jobId, IJobHandler handler, String removeOldReason){
+
+    public static JobThread registerJobThread(String jobId, IJobHandler handler, String removeOldReason) {
         JobThread newJobThread = new JobThread(jobId, handler);
         newJobThread.start();
         log.info(">>>>>>>>>>> job regist JobThread success, jobId:{}, handler:{}", jobId, handler);
@@ -233,7 +243,7 @@ public class BatchJobExecutor {
         return newJobThread;
     }
 
-    public static JobThread removeJobThread(String jobId, String removeOldReason){
+    public static JobThread removeJobThread(String jobId, String removeOldReason) {
         JobThread oldJobThread = JOB_THREAD_REPOSITORY.remove(jobId);
         if (oldJobThread != null) {
             oldJobThread.toStop(removeOldReason);
@@ -244,7 +254,7 @@ public class BatchJobExecutor {
         return null;
     }
 
-    public static JobThread loadJobThread(String jobId){
+    public static JobThread loadJobThread(String jobId) {
         return JOB_THREAD_REPOSITORY.get(jobId);
     }
 }

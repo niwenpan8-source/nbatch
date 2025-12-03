@@ -4,6 +4,7 @@ import com.nbatch.job.core.biz.AdminBiz;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.RegistryParam;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.biz.model.RunNodeLogDetailParam;
 import com.nbatch.job.core.util.JobRemotingUtil;
 
 import java.util.List;
@@ -47,6 +48,12 @@ public class AdminBizClient implements AdminBiz {
     @Override
     public ReturnT<String> registryRemove(RegistryParam registryParam) {
         return JobRemotingUtil.postBody(addressUrl + "api/registryRemove", accessToken, timeout, registryParam, String.class);
+    }
+
+
+    @Override
+    public ReturnT<String> callbackRunNodeLogDetail(List<RunNodeLogDetailParam> callbackParamList) {
+        return JobRemotingUtil.postBody(addressUrl + "api/callbackRunNodeLogDetail", accessToken, timeout, callbackParamList, String.class);
     }
 
 }

@@ -7,6 +7,7 @@ import com.nbatch.job.core.biz.AdminBiz;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.RegistryParam;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.biz.model.RunNodeLogDetailParam;
 import com.nbatch.job.core.util.GsonTool;
 import com.nbatch.job.core.util.JobRemotingUtil;
 import org.springframework.stereotype.Controller;
@@ -64,6 +65,9 @@ public class JobApiController {
         } else if ("registryRemove".equals(uri)) {
             RegistryParam registryParam = GsonTool.fromJson(data, RegistryParam.class);
             return adminBiz.registryRemove(registryParam);
+        } else if ("callbackRunNodeLogDetail".equals(uri)) {
+            List<RunNodeLogDetailParam> callbackParamList = GsonTool.fromJson(data, List.class, RunNodeLogDetailParam.class);
+            return adminBiz.callbackRunNodeLogDetail(callbackParamList);
         } else {
             return new ReturnT<>(ReturnT.FAIL_CODE, "invalid request, uri-mapping(" + uri + ") not found.");
         }

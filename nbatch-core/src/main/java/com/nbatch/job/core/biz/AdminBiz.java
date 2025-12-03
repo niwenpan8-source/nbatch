@@ -3,6 +3,7 @@ package com.nbatch.job.core.biz;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.RegistryParam;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.biz.model.RunNodeLogDetailParam;
 
 import java.util.List;
 
@@ -37,6 +38,19 @@ public interface AdminBiz {
      * @param registryParam registryParam
      */
     ReturnT<String> registryRemove(RegistryParam registryParam);
+
+
+
+
+
+    // ---------------------- callback run node log detail ----------------------
+
+    /**
+     * callbackRunNodeLogDetail
+     *
+     * @param callbackParamList callbackParamList
+     */
+    ReturnT<String> callbackRunNodeLogDetail(List<RunNodeLogDetailParam> callbackParamList);
 
 
     // ---------------------- biz (custome) ----------------------

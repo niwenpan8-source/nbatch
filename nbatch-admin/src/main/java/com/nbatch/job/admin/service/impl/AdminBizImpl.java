@@ -2,10 +2,12 @@ package com.nbatch.job.admin.service.impl;
 
 import com.nbatch.job.admin.core.thread.JobCompleteHelper;
 import com.nbatch.job.admin.core.thread.JobRegistryHelper;
+import com.nbatch.job.admin.core.thread.JobRunNodeLogDetailHelper;
 import com.nbatch.job.core.biz.AdminBiz;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.RegistryParam;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.biz.model.RunNodeLogDetailParam;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,5 +33,13 @@ public class AdminBizImpl implements AdminBiz {
     public ReturnT<String> registryRemove(RegistryParam registryParam) {
         return JobRegistryHelper.getInstance().registryRemove(registryParam);
     }
+
+    @Override
+    public ReturnT<String> callbackRunNodeLogDetail(List<RunNodeLogDetailParam> callbackParamList) {
+        return JobRunNodeLogDetailHelper.getInstance().callbackRunNodeLogDetail(callbackParamList);
+    }
+
+
+
 
 }

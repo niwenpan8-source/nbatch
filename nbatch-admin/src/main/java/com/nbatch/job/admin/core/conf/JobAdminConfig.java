@@ -9,6 +9,7 @@ import com.nbatch.job.admin.mapper.IJobInfoMapper;
 import com.nbatch.job.admin.mapper.IJobLogMapper;
 import com.nbatch.job.admin.mapper.IJobLogReportMapper;
 import com.nbatch.job.admin.mapper.IJobRegistryMapper;
+import com.nbatch.job.admin.mapper.IJobWorkRunNodeLogDetailMapper;
 import lombok.Getter;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -107,6 +108,9 @@ public class JobAdminConfig implements InitializingBean, DisposableBean {
     @Getter
     @Resource
     private RunWorkHelper runWorkHelper;
+    @Getter
+    @Resource
+    private IJobWorkRunNodeLogDetailMapper logDetailMapper;
 
     public String getI18n() {
         if (!Arrays.asList("zh_CN", "zh_TC", "en").contains(i18n)) {

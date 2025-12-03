@@ -62,7 +62,7 @@ public class JobUserController {
                                         @RequestParam(required = false, defaultValue = "10") int length,
                                         String username, int role) {
 
-        Page<JobUserPo> jobUserPoPage = jobUserMapper.selectPage(new Page<>(start, length), Wrappers.lambdaQuery(JobUserPo.class)
+        Page<JobUserPo> jobUserPoPage = jobUserMapper.selectPage(new Page<>((start / length) + 1, length), Wrappers.lambdaQuery(JobUserPo.class)
                 .eq(StrUtil.isNotEmpty(username), JobUserPo::getUsername, username)
                 .eq(role != -1, JobUserPo::getRole, role)
         );

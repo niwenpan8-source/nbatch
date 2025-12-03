@@ -1,6 +1,8 @@
 package com.nbatch.job.core.biz.model;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
+import com.nbatch.job.core.thread.RunNodeLogDetailCallbackThread;
 import lombok.Data;
 
 import java.util.Date;
@@ -79,5 +81,18 @@ public class ExecuteNodeParam {
      * 修改时间
      */
     private Date updateTime;
+
+    /**
+     * 推送运行节点日志详细回调
+     */
+    public void pushRunNodeLogDetailCallback(String msg) {
+        RunNodeLogDetailParam runNodeLogDetailParam = new RunNodeLogDetailParam();
+        runNodeLogDetailParam.setWorkId(workId).setRunWorkId(runWorkId)
+                .setNodeId(nodeId).setRunNodeId(runNodeId)
+                .setExecuteTime(DateUtil.date()).setHandleMsg(msg);
+        RunNodeLogDetailCallbackThread.pushRunNodeLogDetailCallback(runNodeLogDetailParam);
+    }
+
+
 
 }

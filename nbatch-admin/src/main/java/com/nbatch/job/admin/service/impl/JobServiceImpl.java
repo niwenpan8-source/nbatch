@@ -69,7 +69,7 @@ public class JobServiceImpl implements IJobService {
 
     @Override
     public Map<String, Object> pageList(int start, int length, String jobGroup, int triggerStatus, String jobDesc, String executorHandler, String author) {
-        Page<JobInfoPo> jobInfoPoPage = jobInfoMapper.selectPage(new Page<>(start, length), Wrappers.lambdaQuery(JobInfoPo.class)
+        Page<JobInfoPo> jobInfoPoPage = jobInfoMapper.selectPage(new Page<>((start / length) + 1, length), Wrappers.lambdaQuery(JobInfoPo.class)
                 .eq(StrUtil.isNotEmpty(jobGroup), JobInfoPo::getJobGroup, jobGroup)
                 .eq(triggerStatus != -1, JobInfoPo::getTriggerStatus, triggerStatus)
                 .eq(StrUtil.isNotEmpty(jobDesc), JobInfoPo::getJobDesc, jobDesc)

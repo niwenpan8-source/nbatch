@@ -6,6 +6,7 @@ import com.nbatch.job.admin.core.thread.JobCompleteHelper;
 import com.nbatch.job.admin.core.thread.JobFailMonitorHelper;
 import com.nbatch.job.admin.core.thread.JobLogReportHelper;
 import com.nbatch.job.admin.core.thread.JobRegistryHelper;
+import com.nbatch.job.admin.core.thread.JobRunNodeLogDetailHelper;
 import com.nbatch.job.admin.core.thread.JobScheduleHelper;
 import com.nbatch.job.admin.core.thread.JobTriggerPoolHelper;
 import com.nbatch.job.admin.core.thread.JobWorkMonitorHelper;
@@ -50,6 +51,9 @@ public class JobScheduler {
         // start-work-monitor
         JobWorkMonitorHelper.getInstance().start();
 
+        // start-run node log detail-monitor
+        JobRunNodeLogDetailHelper.getInstance().start();
+
         log.info(">>>>>>>>> init job admin success.");
     }
 
@@ -74,8 +78,11 @@ public class JobScheduler {
         // admin trigger pool stop
         JobTriggerPoolHelper.toStop();
 
-        // start-work-monitor
+        // admin work monitor stop
         JobWorkMonitorHelper.getInstance().toStop();
+
+        // admin run node log detail stop
+        JobRunNodeLogDetailHelper.getInstance().toStop();
 
     }
 

@@ -37,7 +37,7 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
      */
     @Override
     public Map<String, Object> pageList(JobWorkNodePageParam param) {
-        Page<JobWorkNodePo> page = jobWorkNodeMapper.selectPage(new Page<>(param.getStart(), param.getLength()),
+        Page<JobWorkNodePo> page = jobWorkNodeMapper.selectPage(new Page<>((param.getStart() / param.getLength()) + 1, param.getLength()),
                 Wrappers.lambdaQuery(JobWorkNodePo.class));
         // package result
         page.convert(jobWorkNodePo -> {

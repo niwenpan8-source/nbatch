@@ -117,7 +117,7 @@ public class JobLogController {
             }
         }
 
-        Page<JobLogPo> jobLogPage = jobLogMapper.selectPage(new Page<>(start, length), Wrappers.lambdaQuery(JobLogPo.class)
+        Page<JobLogPo> jobLogPage = jobLogMapper.selectPage(new Page<>((start / length) + 1, length), Wrappers.lambdaQuery(JobLogPo.class)
                 .eq(StrUtil.isNotEmpty(jobId) && StrUtil.isNotEmpty(jobGroup), JobLogPo::getJobGroup, jobGroup)
                 .eq(StrUtil.isNotEmpty(jobId), JobLogPo::getJobId, jobId)
                 .ge(triggerTimeStart != null, JobLogPo::getTriggerTime, triggerTimeStart)
