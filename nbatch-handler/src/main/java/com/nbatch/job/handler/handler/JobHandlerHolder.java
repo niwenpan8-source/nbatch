@@ -81,6 +81,7 @@ public class JobHandlerHolder implements IJobHandlerHolder {
         cacheObj.putOpt("runWorkId", workNodeParam.getRunWorkId());
         cacheObj.putOpt("nodeId", nodeParam.getNodeId());
         cacheObj.putOpt("runNodeId", nodeParam.getRunNodeId());
+        cacheObj.putOpt("workType", workNodeParam.getWorkType());
         return cacheObj;
     }
 }

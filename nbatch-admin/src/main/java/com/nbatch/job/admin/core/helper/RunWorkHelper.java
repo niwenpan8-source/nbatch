@@ -11,6 +11,7 @@ import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkRunNodePo;
 import com.nbatch.job.admin.core.enums.RunWorkStatusEnum;
 import com.nbatch.job.admin.core.enums.WorkStatusEnum;
+import com.nbatch.job.admin.core.enums.WorkTypeEnum;
 import com.nbatch.job.admin.mapper.IJobRunWorkMapper;
 import com.nbatch.job.admin.mapper.IJobWorkMapper;
 import com.nbatch.job.admin.mapper.IJobWorkNodeMapper;
@@ -43,6 +44,7 @@ public class RunWorkHelper {
     private final IJobWorkRunNodeMapper jobWorkRunNodeMapper;
 
     public void initRunWork() {
+
         List<JobWorkPo> jobWorkPos = jobWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkPo.class)
                 .eq(JobWorkPo::getWorkStatus, WorkStatusEnum.START.getCode()));
         List<JobRunWorkPo> insertRunWorkList = new ArrayList<>();
@@ -52,16 +54,19 @@ public class RunWorkHelper {
                     .eq(JobRunWorkPo::getWorkId, jobWorkPo.getWorkId())
                     .orderByDesc(JobRunWorkPo::getCreateTime));
             if (CollUtil.isEmpty(jobRunWorkList)) {
-                JobRunWorkPo jobRunWorkPo = initRunWork(jobWorkPo.getWorkId(), DateUtil.parseDate(DateUtil.today()));
+                JobRunWorkPo jobRunWorkPo = initRunWork(jobWorkPo.getWorkId(), jobWorkPo.getWorkType(), DateUtil.parseDate(DateUtil.today()));
                 insertRunWorkList.add(jobRunWorkPo);
                 continue;
             }
             JobRunWorkPo jobRunWorkPo = jobRunWorkList.get(0);
             // 如果运行状态为待执行或者进行中，则不处理
             if (jobRunWorkPo.getRunWorkStatus() == RunWorkStatusEnum.COMPLETE.getCode()) {
-                JobRunWorkPo copyJobRunWorkPo = initRunWork(jobRunWorkPo.getWorkId(), jobRunWorkPo.getTurnDate());
+                JobRunWorkPo copyJobRunWorkPo = initRunWork(jobRunWorkPo.getWorkId(), jobWorkPo.getWorkType(), jobRunWorkPo.getTurnDate());
                 insertRunWorkList.add(copyJobRunWorkPo);
             }
+        }
+        if (CollUtil.isEmpty(insertRunWorkList)) {
+            return;
         }
         List<JobWorkRunNodePo> insertRunNodeList = new ArrayList<>();
         List<String> runWorkIdList = insertRunWorkList.stream().map(JobRunWorkPo::getWorkId).collect(Collectors.toList());
@@ -83,7 +88,9 @@ public class RunWorkHelper {
                 jobWorkRunNodePo.setRunWorkId(element.getRunWorkId());
                 jobWorkRunNodePo.setNodeId(elementNode.getNodeId());
                 jobWorkRunNodePo.setNodeRunStatus(RunWorkStatusEnum.WAIT.getCode());
-                jobWorkRunNodePo.setTurnDate(element.getTurnDate());
+                if (element.getWorkType() == WorkTypeEnum.TYPE_TURN.getCode()) {
+                    jobWorkRunNodePo.setTurnDate(element.getTurnDate());
+                }
                 jobWorkRunNodePo.setCreateTime(DateUtil.date());
                 insertRunNodeList.add(jobWorkRunNodePo);
             }
@@ -100,13 +107,16 @@ public class RunWorkHelper {
      * 初始化运行作业
      * @param workId 作业id
      */
-    private JobRunWorkPo initRunWork(String workId, Date turnDate) {
+    private JobRunWorkPo initRunWork(String workId, Integer workType, Date turnDate) {
         String runNodeId = IdUtil.getSnowflakeNextIdStr();
         JobRunWorkPo jobRunWorkPo = new JobRunWorkPo();
         jobRunWorkPo.setRunWorkId(runNodeId);
         jobRunWorkPo.setWorkId(workId);
         jobRunWorkPo.setRunWorkStatus(RunWorkStatusEnum.WAIT.getCode());
-        jobRunWorkPo.setTurnDate(turnDate);
+        if (workType == WorkTypeEnum.TYPE_TURN.getCode()) {
+            jobRunWorkPo.setTurnDate(DateUtil.offset(turnDate, DateField.DAY_OF_MONTH, 1));
+        }
+        jobRunWorkPo.setWorkType(workType);
         jobRunWorkPo.setCreateTime(DateUtil.date());
         return jobRunWorkPo;
     }

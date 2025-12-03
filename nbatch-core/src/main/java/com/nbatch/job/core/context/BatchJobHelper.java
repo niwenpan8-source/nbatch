@@ -25,7 +25,7 @@ public class BatchJobHelper {
      * current JobId
      */
     public static String getJobId() {
-        BatchJobContext xxlJobContext = BatchJobContext.getXxlJobContext();
+        BatchJobContext xxlJobContext = BatchJobContext.getBatchJobContext();
         if (xxlJobContext == null) {
             return null;
         }
@@ -37,7 +37,7 @@ public class BatchJobHelper {
      * current JobParam
      */
     public static String getJobParam() {
-        BatchJobContext xxlJobContext = BatchJobContext.getXxlJobContext();
+        BatchJobContext xxlJobContext = BatchJobContext.getBatchJobContext();
         if (xxlJobContext == null) {
             return null;
         }
@@ -51,7 +51,7 @@ public class BatchJobHelper {
      * current JobLogFileName
      */
     public static String getJobLogFileName() {
-        BatchJobContext xxlJobContext = BatchJobContext.getXxlJobContext();
+        BatchJobContext xxlJobContext = BatchJobContext.getBatchJobContext();
         if (xxlJobContext == null) {
             return null;
         }
@@ -65,7 +65,7 @@ public class BatchJobHelper {
      * current ShardIndex
      */
     public static int getShardIndex() {
-        BatchJobContext xxlJobContext = BatchJobContext.getXxlJobContext();
+        BatchJobContext xxlJobContext = BatchJobContext.getBatchJobContext();
         if (xxlJobContext == null) {
             return -1;
         }
@@ -77,7 +77,7 @@ public class BatchJobHelper {
      * current ShardTotal
      */
     public static int getShardTotal() {
-        BatchJobContext xxlJobContext = BatchJobContext.getXxlJobContext();
+        BatchJobContext xxlJobContext = BatchJobContext.getBatchJobContext();
         if (xxlJobContext == null) {
             return -1;
         }
@@ -121,7 +121,7 @@ public class BatchJobHelper {
      * @param appendLog append log
      */
     private static boolean logDetail(StackTraceElement callInfo, String appendLog) {
-        BatchJobContext xxlJobContext = BatchJobContext.getXxlJobContext();
+        BatchJobContext xxlJobContext = BatchJobContext.getBatchJobContext();
         if (xxlJobContext == null) {
             return false;
         }
@@ -201,7 +201,7 @@ public class BatchJobHelper {
      * @param handleMsg  处理信息
      */
     public static boolean handleResult(int handleCode, String handleMsg) {
-        BatchJobContext xxlJobContext = BatchJobContext.getXxlJobContext();
+        BatchJobContext xxlJobContext = BatchJobContext.getBatchJobContext();
         if (xxlJobContext == null) {
             return false;
         }

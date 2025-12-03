@@ -31,6 +31,11 @@ public enum ExceptionCodeEnum {
      * 文件导入数据库异常
      */
     FILE_TO_DB_FAIL(10004),
+
+    /**
+     * db导出文件异常
+     */
+    SCRIPT_FAIL(10005),
     ;
 
     private final Integer code;

@@ -77,11 +77,11 @@ public class BatchJobContext {
     // support for child thread of job handler
     private static final InheritableThreadLocal<BatchJobContext> CONTEXT_HOLDER = new InheritableThreadLocal<>();
 
-    public static void setXxlJobContext(BatchJobContext xxlJobContext){
+    public static void setBatchJobContext(BatchJobContext xxlJobContext){
         CONTEXT_HOLDER.set(xxlJobContext);
     }
 
-    public static BatchJobContext getXxlJobContext(){
+    public static BatchJobContext getBatchJobContext(){
         return CONTEXT_HOLDER.get();
     }
 

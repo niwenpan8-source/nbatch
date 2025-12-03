@@ -23,7 +23,7 @@ public class BeanHandler implements JobNodeHandlerAdapter {
 
     @Override
     public void execute(ExecuteNodeParam nodeParam) throws Exception {
-        System.out.println("执行sql：" + nodeParam.getExecuteSql());
+        System.out.println("执行sql：" + nodeParam.getExecuteContent());
         // 暂时用不到，不做考虑
         BatchJobExecutor.loadJobHandler(nodeParam.getExecuteHandler()).execute();
 

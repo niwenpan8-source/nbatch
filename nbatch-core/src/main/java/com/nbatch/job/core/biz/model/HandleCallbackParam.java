@@ -79,6 +79,11 @@ public class HandleCallbackParam implements Serializable {
         private String nodeLogId;
 
         /**
+         * 作业类型 => 0:翻牌类型，1：顺序类型
+         */
+        private Integer workType;
+
+        /**
          * 处理时间
          */
         private long handleTime;

@@ -29,14 +29,14 @@ public class StoreProcedureHandler implements JobNodeHandlerAdapter {
     @Override
     public void execute(ExecuteNodeParam nodeParam) throws Exception {
         JSONObject paramObj;
-        if (nodeParam.getExecuteSqlParam() != null) {
-            paramObj = new JSONObject(nodeParam.getExecuteSqlParam());
+        if (nodeParam.getExecuteContentParam() != null) {
+            paramObj = new JSONObject(nodeParam.getExecuteContentParam());
         } else {
             paramObj = new JSONObject();
         }
         paramObj.putOpt("date", DateUtil.format(nodeParam.getTurnDate(), DatePattern.NORM_DATE_FORMAT));
         dialectHelper.getDialect(nodeParam.getDbType())
                 .executeFunction(dialectHelper.getConnection(nodeParam.getDbType()),
-                        nodeParam.getExecuteSql(), paramObj);
+                        nodeParam.getExecuteContent(), paramObj);
     }
 }

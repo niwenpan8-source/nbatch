@@ -117,9 +117,12 @@ public class BatchThreadPoolUtil {
             handleCallbackParam.setCallBackType(NODE_STATUS_CALLBACK.getValue());
             BatchRunnable batchRunnable = (BatchRunnable) r;
             handleCallbackParam.getNodeStatusCallbackParam()
+                    .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
+                    .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
                     .setRunWorkId(batchRunnable.getCacheObj().getStr("runWorkId"))
                     .setRunNodeId(batchRunnable.getCacheObj().getStr("runNodeId"))
                     .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
+                    .setWorkType(batchRunnable.getCacheObj().getInt("workType"))
                     .setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
                     .setHandleMsg("线程被抛弃");
             TriggerCallbackThread.pushCallBack(handleCallbackParam);

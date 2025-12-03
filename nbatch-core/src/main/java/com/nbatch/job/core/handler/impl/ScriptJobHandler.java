@@ -70,13 +70,13 @@ public class ScriptJobHandler extends IJobHandler {
         }
 
         // log file
-        String logFileName = BatchJobContext.getXxlJobContext().getJobLogFileName();
+        String logFileName = BatchJobContext.getBatchJobContext().getJobLogFileName();
 
         // script params：0=param、1=分片序号、2=分片总数
         String[] scriptParams = new String[3];
         scriptParams[0] = BatchJobHelper.getJobParam();
-        scriptParams[1] = String.valueOf(BatchJobContext.getXxlJobContext().getShardIndex());
-        scriptParams[2] = String.valueOf(BatchJobContext.getXxlJobContext().getShardTotal());
+        scriptParams[1] = String.valueOf(BatchJobContext.getBatchJobContext().getShardIndex());
+        scriptParams[2] = String.valueOf(BatchJobContext.getBatchJobContext().getShardTotal());
 
         // invoke
         BatchJobHelper.log("----------- script file:"+ scriptFileName +" -----------");

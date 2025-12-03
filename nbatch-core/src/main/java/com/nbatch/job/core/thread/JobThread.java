@@ -124,7 +124,7 @@ public class JobThread extends Thread{
 
 					// log filename, like "logPath/yyyy-MM-dd/9999.log"
 					String logFileName = JobFileAppender.makeLogFileName(new Date(triggerParam.getLogDateTime()), triggerParam.getLogId());
-					BatchJobContext xxlJobContext = new BatchJobContext(
+					BatchJobContext batchJobContext = new BatchJobContext(
 							triggerParam.getJobId(),
 							triggerParam.getExecutorParams(),
 							logFileName,
@@ -132,10 +132,10 @@ public class JobThread extends Thread{
 							triggerParam.getBroadcastTotal());
 
 					// init job context
-					BatchJobContext.setXxlJobContext(xxlJobContext);
+					BatchJobContext.setBatchJobContext(batchJobContext);
 
 					// execute
-					BatchJobHelper.log("<br>----------- job job execute start -----------<br>----------- Param:" + xxlJobContext.getJobParam());
+					BatchJobHelper.log("<br>----------- job job execute start -----------<br>----------- Param:" + batchJobContext.getJobParam());
 
 					if (triggerParam.getExecutorTimeout() > 0) {
 						// limit timeout
@@ -144,7 +144,7 @@ public class JobThread extends Thread{
 							FutureTask<Boolean> futureTask = new FutureTask<>(() -> {
 
                                 // init job context
-                                BatchJobContext.setXxlJobContext(xxlJobContext);
+                                BatchJobContext.setBatchJobContext(batchJobContext);
 
                                 handler.execute();
                                 return true;
@@ -170,19 +170,19 @@ public class JobThread extends Thread{
 					}
 
 					// valid execute handle data
-					if (BatchJobContext.getXxlJobContext().getHandleCode() <= 0) {
+					if (BatchJobContext.getBatchJobContext().getHandleCode() <= 0) {
 						BatchJobHelper.handleFail("job handle result lost.");
 					} else {
-						String tempHandleMsg = BatchJobContext.getXxlJobContext().getHandleMsg();
-						tempHandleMsg = (tempHandleMsg!=null&&tempHandleMsg.length()>50000)
+						String tempHandleMsg = BatchJobContext.getBatchJobContext().getHandleMsg();
+						tempHandleMsg = (tempHandleMsg!=null && tempHandleMsg.length()>50000)
 								?tempHandleMsg.substring(0, 50000).concat("...")
 								:tempHandleMsg;
-						BatchJobContext.getXxlJobContext().setHandleMsg(tempHandleMsg);
+						BatchJobContext.getBatchJobContext().setHandleMsg(tempHandleMsg);
 					}
 					BatchJobHelper.log("<br>----------- job job execute end(finish) -----------<br>----------- Result: handleCode="
-							+ BatchJobContext.getXxlJobContext().getHandleCode()
+							+ BatchJobContext.getBatchJobContext().getHandleCode()
 							+ ", handleMsg = "
-							+ BatchJobContext.getXxlJobContext().getHandleMsg()
+							+ BatchJobContext.getBatchJobContext().getHandleMsg()
 					);
 
 				} else {
@@ -213,8 +213,8 @@ public class JobThread extends Thread{
 						handleCallbackParam.setCallBackType(LOG_CALLBACK.getValue());
 						handleCallbackParam.getLogCallBackParam()
 								.setLogDateTim(triggerParam.getLogDateTime())
-								.setHandleCode(BatchJobContext.getXxlJobContext().getHandleCode())
-								.setHandleMsg(BatchJobContext.getXxlJobContext().getHandleMsg());
+								.setHandleCode(BatchJobContext.getBatchJobContext().getHandleCode())
+								.setHandleMsg(BatchJobContext.getBatchJobContext().getHandleMsg());
 						TriggerCallbackThread.pushCallBack(handleCallbackParam);
                     } else {
 						HandleCallbackParam handleCallbackParam = new HandleCallbackParam();

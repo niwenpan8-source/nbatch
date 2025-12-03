@@ -190,6 +190,7 @@ create table nbatch_job_work
     work_id      varchar(32) not null comment '作业id',
     work_name    varchar(300) not null comment '作业名',
     work_desc    varchar(300) comment '作业描述',
+    work_type    tinyint(4) not null default 0 comment '作业类型 => 0:翻牌类型，1：顺序类型',
     work_status  tinyint(4)  not null default 0 comment '作业状态：0=停用、1=启用',
     primary key (work_id)
 ) engine = innodb comment = '作业表'
@@ -219,9 +220,11 @@ create table nbatch_job_work_node
     node_status  tinyint(4)  not null default 0 comment '节点状态：0=停用、1=启用',
     node_type  varchar(20)  not null comment 'script:脚本,store_procedure:存储过程,execute_sql:执行sql,file_to_db:文件导入到数据库,db_to_file:数据库导出到文件',
     db_type  varchar(32) comment '翻牌日期',
-    execute_sql  text comment '翻牌日期',
-    execute_sql_param  text comment '翻牌日期',
+    execute_content  text comment '执行内容',
+    execute_content_param  text comment '执行内容参数',
     execute_handler  text comment 'bean执行器',
+    script_type  varchar(32) comment '脚本类型 => Java,Shell,Python,PHP,Nodejs,PowerShell',
+    update_time  datetime not null comment '更新时间',
     primary key (node_id)
 ) engine = innodb comment = '作业节点表'
   default charset = utf8mb4;

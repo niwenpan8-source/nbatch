@@ -1,7 +1,9 @@
 package com.nbatch.job.core.util;
 
 import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.core.context.BatchJobHelper;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -9,6 +11,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -22,6 +25,7 @@ import java.util.List;
  * @author Mr.ni
  * @date 2025/11/05
  */
+@Slf4j
 public class ScriptUtil {
 
     /**
@@ -45,7 +49,7 @@ public class ScriptUtil {
      * @param logFile 日志文件
      * @param params 参数
      */
-    public static int execToFile(String command, String scriptFile, String logFile, String... params) throws IOException {
+    public static int execToFile(String command, String scriptFile, String logFile, String... params) {
 
         FileOutputStream fileOutputStream = null;
         Thread inputThread = null;
@@ -63,6 +67,8 @@ public class ScriptUtil {
             }
             String[] cmdarrayFinal = cmdarray.toArray(new String[0]);
 
+            BatchJobHelper.log(StrUtil.format("----------- nodeId script file:{}-----------", Arrays.toString(cmdarrayFinal)));
+            log.info(StrUtil.format("----------- nodeId script file:{}-----------", Arrays.toString(cmdarrayFinal)));
             // process-exec
             final Process process = Runtime.getRuntime().exec(cmdarrayFinal);
 
@@ -125,7 +131,7 @@ public class ScriptUtil {
     private static long copy(InputStream inputStream, OutputStream outputStream, byte[] buffer) throws IOException {
         try {
             long total = 0;
-            for (;;) {
+            for (; ; ) {
                 int res = inputStream.read(buffer);
                 if (res == -1) {
                     break;

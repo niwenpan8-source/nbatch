@@ -35,7 +35,7 @@ public class JobCodeController {
 	private IJobLogglueMapper jobLogglueMapper;
 
 	@RequestMapping
-	public String index(HttpServletRequest request, Model model, int jobId) {
+	public String index(HttpServletRequest request, Model model, String jobId) {
 		JobInfoPo jobInfo = jobInfoMapper.selectById(jobId);
 		List<JobLoggluePo> jobLogGlues = jobLogglueMapper.selectList(Wrappers.lambdaQuery(JobLoggluePo.class)
 				.eq(JobLoggluePo::getJobId, jobId).orderByDesc(JobLoggluePo::getId));

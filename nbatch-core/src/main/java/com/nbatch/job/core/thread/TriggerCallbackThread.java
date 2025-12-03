@@ -191,7 +191,7 @@ public class TriggerCallbackThread {
     private void callbackLog(List<HandleCallbackParam> callbackParamList, String logContent) {
         for (HandleCallbackParam callbackParam : callbackParamList) {
             String logFileName = JobFileAppender.makeLogFileName(new Date(callbackParam.getLogCallBackParam().getLogDateTim()), callbackParam.getLogId());
-            BatchJobContext.setXxlJobContext(new BatchJobContext(
+            BatchJobContext.setBatchJobContext(new BatchJobContext(
                     null,
                     null,
                     logFileName,

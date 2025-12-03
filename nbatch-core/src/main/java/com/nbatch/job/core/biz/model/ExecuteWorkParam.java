@@ -3,6 +3,7 @@ package com.nbatch.job.core.biz.model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
 
 import java.util.List;
 
@@ -12,6 +13,7 @@ import java.util.List;
  * @date: 2025-11-13
  */
 @Data
+@Accessors(chain = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class ExecuteWorkParam {
@@ -26,6 +28,11 @@ public class ExecuteWorkParam {
      */
     private String workId;
     private String runWorkId;
+
+    /**
+     * 作业类型
+     */
+    private Integer workType;
 
     /**
      * 日志

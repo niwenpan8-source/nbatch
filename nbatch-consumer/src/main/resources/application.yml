@@ -58,7 +58,7 @@ nbatch:
       address:
       ip:
       port: 9999
-      logpath: log/nbatch/jobhandler
+      logpath: /log/nbatch/jobhandler
       logretentiondays: 30
     file:
       tempPath: C:\disk\project\work\2025\nbatch\file\temp

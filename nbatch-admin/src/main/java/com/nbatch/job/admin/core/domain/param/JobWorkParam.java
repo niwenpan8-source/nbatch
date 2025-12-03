@@ -33,6 +33,11 @@ public class JobWorkParam {
     private String workDesc;
 
     /**
+     * 作业类型 => 0:翻牌类型，1：顺序类型
+     */
+    private Integer workType;
+
+    /**
      * 作业状态：0=停用、1=启用
      */
     private Integer workStatus;

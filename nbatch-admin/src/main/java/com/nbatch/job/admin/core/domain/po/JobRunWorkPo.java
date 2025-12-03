@@ -1,6 +1,7 @@
 package com.nbatch.job.admin.core.domain.po;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.EqualsAndHashCode;
 import lombok.Data;
@@ -50,5 +51,11 @@ public class JobRunWorkPo extends Model<JobRunWorkPo> {
 	 * 创建时间
 	 */
 	private Date createTime;
+
+	/**
+	 * 作业类型：0=普通作业、1=定时作业
+	 */
+	@TableField(exist = false)
+	private Integer workType;
 
 }

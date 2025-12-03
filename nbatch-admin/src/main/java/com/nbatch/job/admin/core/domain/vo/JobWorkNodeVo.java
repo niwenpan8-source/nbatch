@@ -67,18 +67,29 @@ public class JobWorkNodeVo {
     private String dbType;
 
     /**
-     * 执行sql
+     * 执行内容
      */
-    private String executeSql;
+    private String executeContent;
 
     /**
-     * 执行sql参数
+     * 执行内容参数
      */
-    private String executeSqlParam;
+    private String executeContentParam;
 
     /**
      * 执行器
      */
     private String executeHandler;
+
+    /**
+     * 脚本类型 => Java,Shell,Python,PHP,Nodejs,PowerShell
+     */
+    private String scriptType;
+
+    /**
+     * 修改时间
+     */
+    private Date updateTime;
+
 
 }

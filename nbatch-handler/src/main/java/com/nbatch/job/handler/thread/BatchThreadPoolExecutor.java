@@ -88,6 +88,7 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
                         .setRunWorkId(batchRunnable.getCacheObj().getStr("runWorkId"))
                         .setRunNodeId(batchRunnable.getCacheObj().getStr("runNodeId"))
                         .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
+                        .setWorkType(batchRunnable.getCacheObj().getInt("workType"))
                         .setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
                         .setHandleMsg(t.getMessage());
             }
@@ -101,6 +102,7 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
                         .setRunWorkId(batchRunnable.getCacheObj().getStr("runWorkId"))
                         .setRunNodeId(batchRunnable.getCacheObj().getStr("runNodeId"))
                         .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
+                        .setWorkType(batchRunnable.getCacheObj().getInt("workType"))
                         .setHandleCode(HandleCodeConstant.HANDLE_CODE_SUCCESS)
                         .setHandleMsg("执行成功");
                 currentRunningTaskList.remove(r);
@@ -134,6 +136,7 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
                             .setRunWorkId(batchRunnable.getCacheObj().getStr("runWorkId"))
                             .setRunNodeId(batchRunnable.getCacheObj().getStr("runNodeId"))
                             .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
+                            .setWorkType(batchRunnable.getCacheObj().getInt("workType"))
                             .setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
                             .setHandleMsg("系统优雅关闭，任务停止");
                     currentNotRunningFinishTaskList.add(handleCallbackParam);
@@ -149,6 +152,7 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
                         .setRunWorkId(batchRunnable.getCacheObj().getStr("runWorkId"))
                         .setRunNodeId(batchRunnable.getCacheObj().getStr("runNodeId"))
                         .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
+                        .setWorkType(batchRunnable.getCacheObj().getInt("workType"))
                         .setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
                         .setHandleMsg("系统优雅关闭，任务停止");
                 currentNotRunningFinishTaskList.add(handleCallbackParam);
