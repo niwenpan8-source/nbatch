@@ -1,7 +1,10 @@
 package com.nbatch.job.core.util;
 
+import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
+import com.nbatch.job.core.biz.model.ExecuteNodeParam;
+import com.nbatch.job.core.biz.model.RunNodeLogDetailParam;
 import com.nbatch.job.core.context.BatchJobHelper;
 import lombok.extern.slf4j.Slf4j;
 
@@ -88,6 +91,7 @@ public class ScriptUtil {
                     BatchJobHelper.log(e);
                 }
             });
+            log.info(StrUtil.format("----------- nodeId script return content:{}-----------", IoUtil.getWriter(finalFileOutputStream, "utf8").getEncoding()));
             inputThread.start();
             errThread.start();
 
@@ -112,6 +116,68 @@ public class ScriptUtil {
                 }
 
             }
+            if (inputThread != null && inputThread.isAlive()) {
+                inputThread.interrupt();
+            }
+            if (errThread != null && errThread.isAlive()) {
+                errThread.interrupt();
+            }
+        }
+    }
+
+    /**
+     * 脚本执行，日志文件实时输出
+     *
+     * @param param 节点参数
+     * @param command 命令
+     * @param scriptFile 脚本文件
+     * @param params 参数
+     */
+    public static int execToFile(ExecuteNodeParam param, String command, String scriptFile, String... params) {
+
+        Thread inputThread = null;
+        Thread errThread = null;
+        try {
+            // command
+            List<String> cmdarray = new ArrayList<>();
+            cmdarray.add(command);
+            cmdarray.add(scriptFile);
+            if (ArrayUtil.isNotEmpty(params)) {
+                Collections.addAll(cmdarray, params);
+            }
+            String[] cmdArrayFinal = cmdarray.toArray(new String[0]);
+            // process-exec
+            final Process process = Runtime.getRuntime().exec(cmdArrayFinal);
+            inputThread = new Thread(() -> {
+                String content = IoUtil.readUtf8(process.getInputStream());
+                log.info("content:{}", content);
+                if (StrUtil.isNotBlank(content)) {
+                    param.pushRunNodeLogDetailCallback(content);
+                }
+            });
+            errThread = new Thread(() -> {
+                String content = IoUtil.readUtf8(process.getErrorStream());
+                log.info("error content:{}", content);
+                if (StrUtil.isNotBlank(content)) {
+                    param.pushRunNodeLogDetailCallback(content);
+                }
+            });
+            inputThread.start();
+            errThread.start();
+
+            // process-wait
+            // exit code: 0=success, 1=error
+            int exitValue = process.waitFor();
+
+            // log-thread join
+            inputThread.join();
+            errThread.join();
+
+            return exitValue;
+        } catch (Exception e) {
+            BatchJobHelper.log(e);
+            return -1;
+        } finally {
             if (inputThread != null && inputThread.isAlive()) {
                 inputThread.interrupt();
             }

@@ -67,7 +67,7 @@ public class ScriptHandler implements JobNodeHandlerAdapter {
 
         // invoke
         BatchJobHelper.log(StrUtil.format("----------- nodeId script file:{}-----------", scriptFileName));
-        int exitValue = ScriptUtil.execToFile(cmd, scriptFileName, logFileName, scriptParams);
+        int exitValue = ScriptUtil.execToFile(nodeParam, cmd, scriptFileName, scriptParams);
 
         if (exitValue != 0) {
             throw new HandlerException(SCRIPT_FAIL.getCode(), StrUtil.format("script exit value({}) is failed", exitValue));
