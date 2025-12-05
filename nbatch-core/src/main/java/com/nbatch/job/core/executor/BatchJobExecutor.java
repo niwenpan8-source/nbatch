@@ -64,7 +64,6 @@ public class BatchJobExecutor {
         // init invoker, admin-client
         initAdminBizList(adminAddresses, accessToken, timeout);
 
-
         // init JobLogFileCleanThread
         JobLogFileCleanThread.getInstance().start(logRetentionDays);
 

@@ -222,7 +222,7 @@ public class JobTrigger {
         try {
             ExecutorBiz executorBiz = JobScheduler.getExecutorBiz(address);
             assert executorBiz != null;
-            // 如果为作业需要将作业节点置为运行
+            // 这一段逻辑需要改为异步的，然后可以进行多次运行
             if (StrUtil.equals(triggerParam.getGlueType(), GlueTypeEnum.WORK.name())) {
                 if (StrUtil.isBlank(triggerParam.getWorkId())) {
                     throw new JobException("如果为作业任务，job需要绑定作业id");
@@ -264,8 +264,10 @@ public class JobTrigger {
     private static void handleWorkTypeTaskParam(TriggerParam triggerParam) {
         // 获取可执行节点
         JobAdminConfig.getAdminConfig().getRunWorkHelper().initRunWork(triggerParam.getWorkId());
+
         ExecuteWorkParam executeWorkParam
-                = JobAdminConfig.getAdminConfig().getRunNodeHelper().getEnableExecuteNodeList(triggerParam.getWorkId());
+                = JobAdminConfig.getAdminConfig().getRunNodeHelper().getExecuteWorkObj(triggerParam.getWorkId());
+
         triggerParam.setExecuteWorkParam(executeWorkParam);
 
         JobAdminConfig.getAdminConfig().getRunNodeHelper()

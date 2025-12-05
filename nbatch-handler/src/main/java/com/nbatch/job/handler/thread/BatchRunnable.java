@@ -19,6 +19,19 @@ public abstract class BatchRunnable implements Runnable{
 
     private JSONObject cacheObj;
 
+    public abstract void runBefore();
+
     @Override
-    public abstract void run();
+    public void run() {
+        runBefore();
+        try {
+            runBatch();
+        } finally {
+            runAfter();
+        }
+    }
+
+    public abstract void runBatch();
+
+    public abstract void runAfter();
 }

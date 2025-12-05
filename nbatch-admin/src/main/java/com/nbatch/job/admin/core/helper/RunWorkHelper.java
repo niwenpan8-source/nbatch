@@ -10,8 +10,8 @@ import com.nbatch.job.admin.core.domain.po.JobRunWorkPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkNodePo;
 import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkRunNodePo;
-import com.nbatch.job.admin.core.enums.RunWorkStatusEnum;
-import com.nbatch.job.admin.core.enums.WorkTypeEnum;
+import com.nbatch.job.core.enums.RunWorkStatusEnum;
+import com.nbatch.job.core.enums.WorkTypeEnum;
 import com.nbatch.job.admin.mapper.IJobRunWorkMapper;
 import com.nbatch.job.admin.mapper.IJobWorkMapper;
 import com.nbatch.job.admin.mapper.IJobWorkNodeMapper;
@@ -40,6 +40,10 @@ public class RunWorkHelper {
 
     private final IJobWorkRunNodeMapper jobWorkRunNodeMapper;
 
+    /**
+     * 初始化运行作业
+     * @param workId 作业id
+     */
     public void initRunWork(String workId) {
 
         JobWorkPo jobWorkPo = jobWorkMapper.selectById(workId);

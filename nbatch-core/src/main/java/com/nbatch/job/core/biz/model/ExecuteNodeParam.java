@@ -6,6 +6,7 @@ import com.nbatch.job.core.thread.RunNodeLogDetailCallbackThread;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * @description: 执行节点参数
@@ -81,6 +82,16 @@ public class ExecuteNodeParam {
      * 修改时间
      */
     private Date updateTime;
+
+    /**
+     * 运行节点状态
+     */
+    private Integer nodeRunStatus;
+
+    /**
+     * 节点关系id列表
+     */
+    private List<String> nodeRelationIdList;
 
     /**
      * 推送运行节点日志详细回调

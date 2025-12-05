@@ -1,4 +1,4 @@
-package com.nbatch.job.admin.core.enums;
+package com.nbatch.job.core.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

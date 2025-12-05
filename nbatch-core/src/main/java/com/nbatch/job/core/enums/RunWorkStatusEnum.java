@@ -1,4 +1,4 @@
-package com.nbatch.job.admin.core.enums;
+package com.nbatch.job.core.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -25,4 +25,13 @@ public enum RunWorkStatusEnum {
      * 状态描述
      */
     private final String value;
+
+    public static String getValueByCode(int code) {
+        for (RunWorkStatusEnum value : RunWorkStatusEnum.values()) {
+            if (value.getCode() == code) {
+                return value.getValue();
+            }
+        }
+        return null;
+    }
 }
