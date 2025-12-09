@@ -3,6 +3,7 @@ package com.nbatch.job.admin.controller.resolver;
 import com.nbatch.job.admin.core.exception.JobException;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.admin.core.util.JacksonUtil;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -42,7 +43,7 @@ public class WebExceptionResolver implements HandlerExceptionResolver {
 		}
 
 		// error result
-		ReturnT<String> errorResult = new ReturnT<>(ReturnT.FAIL_CODE, ex.toString().replaceAll("\n", "<br/>"));
+		ReturnT<String> errorResult = new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, ex.toString().replaceAll("\n", "<br/>"));
 
 		// response
 		ModelAndView mv = new ModelAndView();

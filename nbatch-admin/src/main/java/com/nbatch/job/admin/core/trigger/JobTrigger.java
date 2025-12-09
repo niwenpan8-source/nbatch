@@ -3,20 +3,23 @@ package com.nbatch.job.admin.core.trigger;
 import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.domain.po.JobGroupPo;
 import com.nbatch.job.admin.core.domain.po.JobInfoPo;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
+import com.nbatch.job.admin.core.domain.po.JobRunWorkPo;
 import com.nbatch.job.admin.core.enums.ExecutorRouteStrategyEnum;
 import com.nbatch.job.admin.core.enums.TriggerTypeEnum;
 import com.nbatch.job.admin.core.enums.WorkStatusEnum;
 import com.nbatch.job.admin.core.exception.JobException;
 import com.nbatch.job.admin.core.scheduler.JobScheduler;
+import com.nbatch.job.admin.core.thread.JobWorkRunNodeHelper;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.ExecutorBiz;
-import com.nbatch.job.core.biz.model.ExecuteWorkParam;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.TriggerParam;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.enums.ExecutorBlockStrategyEnum;
 import com.nbatch.job.core.glue.GlueTypeEnum;
 import com.nbatch.job.core.util.IpUtil;
@@ -164,12 +167,12 @@ public class JobTrigger {
                 }
             } else {
                 routeAddressResult = executorRouteStrategyEnum.getRouter().route(triggerParam, group.getRegistryList());
-                if (routeAddressResult.getCode() == ReturnT.SUCCESS_CODE) {
+                if (routeAddressResult.getCode() == HandleCodeConstant.HANDLE_CODE_SUCCESS) {
                     address = routeAddressResult.getContent();
                 }
             }
         } else {
-            routeAddressResult = new ReturnT<>(ReturnT.FAIL_CODE, I18nUtil.getString("jobconf_trigger_address_empty"));
+            routeAddressResult = new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, I18nUtil.getString("jobconf_trigger_address_empty"));
         }
 
         // 4、trigger remote executor
@@ -177,7 +180,7 @@ public class JobTrigger {
         if (address != null) {
             triggerResult = runExecutor(triggerParam, address);
         } else {
-            triggerResult = new ReturnT<>(ReturnT.FAIL_CODE, null);
+            triggerResult = new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, null);
         }
 
         // 5、collection trigger info
@@ -227,13 +230,23 @@ public class JobTrigger {
                 if (StrUtil.isBlank(triggerParam.getWorkId())) {
                     throw new JobException("如果为作业任务，job需要绑定作业id");
                 }
-                handleWorkTypeTaskParam(triggerParam);
+                JobRunWorkPo jobRunWorkPo = handleWorkTypeTaskParam(triggerParam);
+                if (jobRunWorkPo == null) {
+                    runResult = new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "生成运行作业对象为空");
+                    return runResult;
+                }
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.putOpt("address", address);
+                jsonObject.putOpt("triggerParam", triggerParam);
+                JobWorkRunNodeHelper.putRunWorkCache(jobRunWorkPo.getRunWorkId(), jsonObject);
+                // 执行成功
+                runResult = new ReturnT<>(HandleCodeConstant.HANDLE_CODE_SUCCESS, null);
+            } else {
+                runResult = executorBiz.run(triggerParam);
             }
 
-            runResult = executorBiz.run(triggerParam);
-
             // 如果请求失败需要将作业节点置为停止
-            if (runResult.getCode() == ReturnT.FAIL_CODE) {
+            if (runResult.getCode() == HandleCodeConstant.HANDLE_CODE_FAIL) {
                 if (StrUtil.equals(triggerParam.getGlueType(), GlueTypeEnum.WORK.name())) {
                     JobAdminConfig.getAdminConfig().getRunNodeHelper()
                             .updateNodeRunStatus(triggerParam.getExecuteWorkParam(), WorkStatusEnum.STOP.getCode());
@@ -246,7 +259,7 @@ public class JobTrigger {
                         .updateNodeRunStatus(triggerParam.getExecuteWorkParam(), WorkStatusEnum.START.getCode());
             }
             log.error(">>>>>>>>>>> job trigger error, please check if the executor[{}] is running.", address, e);
-            runResult = new ReturnT<>(ReturnT.FAIL_CODE, ThrowableUtil.toString(e));
+            runResult = new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, ThrowableUtil.toString(e));
         }
 
         String runResultStr = I18nUtil.getString("jobconf_trigger_run") + "：" + "<br>address：" + address +
@@ -261,15 +274,9 @@ public class JobTrigger {
      * 处理工作节点任务参数
      * @param triggerParam 调度参数
      */
-    private static void handleWorkTypeTaskParam(TriggerParam triggerParam) {
+    private static JobRunWorkPo handleWorkTypeTaskParam(TriggerParam triggerParam) {
         // 获取可执行节点
-        JobAdminConfig.getAdminConfig().getRunWorkHelper().initRunWork(triggerParam.getWorkId());
-        ExecuteWorkParam executeWorkParam
-                = JobAdminConfig.getAdminConfig().getRunNodeHelper().getEnableExecuteNodeList(triggerParam.getWorkId());
-        triggerParam.setExecuteWorkParam(executeWorkParam);
-
-        JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                .updateNodeRunStatus(triggerParam.getExecuteWorkParam(), WorkStatusEnum.START.getCode());
+        return JobAdminConfig.getAdminConfig().getRunWorkHelper().initRunWork(triggerParam.getWorkId());
     }
 
 }

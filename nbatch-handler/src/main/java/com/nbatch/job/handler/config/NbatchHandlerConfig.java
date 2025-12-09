@@ -97,6 +97,7 @@ public class NbatchHandlerConfig {
      */
     @PreDestroy
     public void destroy() {
+        System.out.println("destroy thread pool");
         BatchThreadPoolUtil.shutdownAllThreadPool();
     }
 }

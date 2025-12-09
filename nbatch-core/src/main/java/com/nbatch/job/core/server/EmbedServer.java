@@ -8,6 +8,7 @@ import com.nbatch.job.core.biz.model.KillParam;
 import com.nbatch.job.core.biz.model.LogParam;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.TriggerParam;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.thread.ExecutorRegistryThread;
 import com.nbatch.job.core.util.GsonTool;
 import com.nbatch.job.core.util.JobRemotingUtil;
@@ -155,7 +156,7 @@ public class EmbedServer {
             String uri = msg.uri();
             HttpMethod httpMethod = msg.method();
             boolean keepAlive = HttpUtil.isKeepAlive(msg);
-            String accessTokenReq = msg.headers().get(JobRemotingUtil.XXL_JOB_ACCESS_TOKEN);
+            String accessTokenReq = msg.headers().get(JobRemotingUtil.BATCH_JOB_ACCESS_TOKEN);
 
             // invoke
             bizThreadPool.execute(() -> {
@@ -173,13 +174,13 @@ public class EmbedServer {
         private Object process(HttpMethod httpMethod, String uri, String requestData, String accessTokenReq) {
             // valid
             if (HttpMethod.POST != httpMethod) {
-                return new ReturnT<String>(ReturnT.FAIL_CODE, "invalid request, HttpMethod not support.");
+                return new ReturnT<String>(HandleCodeConstant.HANDLE_CODE_FAIL, "invalid request, HttpMethod not support.");
             }
             if (StrUtil.isBlank(uri)) {
-                return new ReturnT<String>(ReturnT.FAIL_CODE, "invalid request, uri-mapping empty.");
+                return new ReturnT<String>(HandleCodeConstant.HANDLE_CODE_FAIL, "invalid request, uri-mapping empty.");
             }
             if (StrUtil.isNotBlank(accessToken) && !accessToken.equals(accessTokenReq)) {
-                return new ReturnT<String>(ReturnT.FAIL_CODE, "The access token is wrong.");
+                return new ReturnT<String>(HandleCodeConstant.HANDLE_CODE_FAIL, "The access token is wrong.");
             }
 
             // services mapping
@@ -200,11 +201,11 @@ public class EmbedServer {
                         LogParam logParam = GsonTool.fromJson(requestData, LogParam.class);
                         return executorBiz.log(logParam);
                     default:
-                        return new ReturnT<String>(ReturnT.FAIL_CODE, "invalid request, uri-mapping(" + uri + ") not found.");
+                        return new ReturnT<String>(HandleCodeConstant.HANDLE_CODE_FAIL, "invalid request, uri-mapping(" + uri + ") not found.");
                 }
             } catch (Throwable e) {
                 log.error(e.getMessage(), e);
-                return new ReturnT<String>(ReturnT.FAIL_CODE, "request error:" + ThrowableUtil.toString(e));
+                return new ReturnT<String>(HandleCodeConstant.HANDLE_CODE_FAIL, "request error:" + ThrowableUtil.toString(e));
             }
         }
 

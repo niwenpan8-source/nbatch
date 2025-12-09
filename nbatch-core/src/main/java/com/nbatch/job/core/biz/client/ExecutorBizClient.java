@@ -1,6 +1,7 @@
 package com.nbatch.job.core.biz.client;
 
 import com.nbatch.job.core.biz.ExecutorBiz;
+import com.nbatch.job.core.biz.model.ExecuteWorkParam;
 import com.nbatch.job.core.biz.model.IdleBeatParam;
 import com.nbatch.job.core.biz.model.KillParam;
 import com.nbatch.job.core.biz.model.LogParam;

@@ -149,31 +149,6 @@ INSERT INTO `nbatch_job_group`(`id`, `app_name`, `title`, `address_type`, `addre
 VALUES (1, 'xxl-job-executor-sample', '通用执行器Sample', 0, NULL, now()),
        (2, 'xxl-job-executor-sample-ai', 'AI执行器Sample', 0, NULL, now());
 
-INSERT INTO `nbatch_job_info`(`id`, `job_group`, `job_desc`, `add_time`, `update_time`, `author`, `alarm_email`,
-                              `schedule_type`, `schedule_conf`, `misfire_strategy`, `executor_route_strategy`,
-                              `executor_handler`, `executor_param`, `executor_block_strategy`, `executor_timeout`,
-                              `executor_fail_retry_count`, `glue_type`, `glue_source`, `glue_remark`, `glue_updatetime`,
-                              `child_jobid`)
-VALUES (1, 1, '示例任务01', now(), now(), 'XXL', '', 'CRON', '0 0 0 * * ? *',
-        'DO_NOTHING', 'FIRST', 'demoJobHandler', '', 'SERIAL_EXECUTION', 0, 0, 'BEAN', '', 'GLUE代码初始化',
-        now(), ''),
-       (2, 2, 'Ollama示例任务01', now(), now(), 'XXL', '', 'NONE', '',
-        'DO_NOTHING', 'FIRST', 'ollamaJobHandler', '{
-    "input": "慢SQL问题分析思路",
-    "prompt": "你是一个研发工程师，擅长解决技术类问题。",
-    "model": "qwen3:0.6b"
-}', 'SERIAL_EXECUTION', 0, 0, 'BEAN', '', 'GLUE代码初始化',
-        now(), ''),
-       (3, 2, 'Dify示例任务', now(), now(), 'XXL', '', 'NONE', '',
-        'DO_NOTHING', 'FIRST', 'difyWorkflowJobHandler', '{
-    "inputs":{
-        "input":"查询班级各学科前三名"
-    },
-    "user": "xxl-job",
-    "baseUrl": "http://localhost/v1",
-    "apiKey": "app-OUVgNUOQRIMokfmuJvBJoUTN"
-}', 'SERIAL_EXECUTION', 0, 0, 'BEAN', '', 'GLUE代码初始化',
-        now(), '');
 
 INSERT INTO `nbatch_job_user`(`id`, `username`, `password`, `role`, `permission`)
 VALUES (1, 'admin', 'e10adc3949ba59abbe56e057f20f883e', 1, NULL);
@@ -328,3 +303,71 @@ create table nbatch_job_work_run_node_log_detail
 
 
 
+truncate table nbatch_job_work_node_relation;
+INSERT INTO nbatch_job_work_node_relation (node_relation_id, work_id, node_id1, node_id2, node_order) VALUES ('1', '1991745845269688321', '2', '1', 1);
+INSERT INTO nbatch_job_work_node_relation (node_relation_id, work_id, node_id1, node_id2, node_order) VALUES ('2', '1991745845269688321', '2', '5', 2);
+INSERT INTO nbatch_job_work_node_relation (node_relation_id, work_id, node_id1, node_id2, node_order) VALUES ('3', '1991745845269688321', '3', '2', 3);
+INSERT INTO nbatch_job_work_node_relation (node_relation_id, work_id, node_id1, node_id2, node_order) VALUES ('4', '1991745845269688321', '4', '3', 4);
+INSERT INTO nbatch_job_work_node_relation (node_relation_id, work_id, node_id1, node_id2, node_order) VALUES ('5', '1991745845269688322', '7', '6', 4);
+
+
+truncate table nbatch_job_work_node;
+INSERT INTO nbatch_job_work_node (node_id, work_id, node_name, node_desc, node_status, node_type, db_type, execute_content, execute_content_param, execute_handler, script_type, update_time) VALUES ('1', '1991745845269688321', 'gauss导出1', 'gauss导出', 1, 'db_to_file', 'zenith', null, null, null, null, '2025-12-02 15:36:33');
+INSERT INTO nbatch_job_work_node (node_id, work_id, node_name, node_desc, node_status, node_type, db_type, execute_content, execute_content_param, execute_handler, script_type, update_time) VALUES ('2', '1991745845269688321', 'gbase导入', 'gbase导入', 1, 'file_to_db', 'gbase', null, null, null, null, '2025-12-02 15:36:33');
+INSERT INTO nbatch_job_work_node (node_id, work_id, node_name, node_desc, node_status, node_type, db_type, execute_content, execute_content_param, execute_handler, script_type, update_time) VALUES ('3', '1991745845269688321', 'gauss导出', 'gauss导出', 1, 'db_to_file', 'gbase', null, null, null, null, '2025-12-02 15:36:33');
+INSERT INTO nbatch_job_work_node (node_id, work_id, node_name, node_desc, node_status, node_type, db_type, execute_content, execute_content_param, execute_handler, script_type, update_time) VALUES ('4', '1991745845269688321', 'gbase导入', 'gbase导入', 1, 'file_to_db', 'zenith', null, null, null, null, '2025-12-02 15:36:33');
+INSERT INTO nbatch_job_work_node (node_id, work_id, node_name, node_desc, node_status, node_type, db_type, execute_content, execute_content_param, execute_handler, script_type, update_time) VALUES ('5', '1991745845269688321', 'gauss导出2', 'gauss导出', 1, 'db_to_file', 'zenith', null, null, null, null, '2025-12-02 15:36:33');
+INSERT INTO nbatch_job_work_node (node_id, work_id, node_name, node_desc, node_status, node_type, db_type, execute_content, execute_content_param, execute_handler, script_type, update_time) VALUES ('6', '1991745845269688322', 'shell脚本1', 'gauss导出', 1, 'script', '', '/usr/local/php-fcgi/bin/php /home/www/h.php
+', '', null, 'shell', '2025-12-02 15:36:55');
+INSERT INTO nbatch_job_work_node (node_id, work_id, node_name, node_desc, node_status, node_type, db_type, execute_content, execute_content_param, execute_handler, script_type, update_time) VALUES ('7', '1991745845269688322', 'shell脚本2', 'gauss导出', 1, 'script', '', '/usr/local/php-fcgi/bin/php /home/www/h.php
+', '', null, 'shell', '2025-12-02 15:36:55');
+
+
+
+truncate table nbatch_job_work_import_file;
+INSERT INTO nbatch_job_work_import_file (import_file_id, node_id, file_name, import_table_name, import_table_filed, import_table_condition, file_code, sep, all_update, is_gzip, file_name_param) VALUES ('1', '2', 'gauss_export_dmap_assess_plan_#{special}.gz.#{date}0', 'dmap_assess_plan', 'plan_id, plan_name, plan_cycle_start_time, plan_cycle_end_time, score_type, plan_status, plan_desc, create_time, create_user, create_user_dept, create_user_role_id, is_delete, update_time, review_user, review_time', 'plan_id', 'utf8', ' | ', 0, 1, '{
+    "special": "123"
+}');
+INSERT INTO nbatch_job_work_import_file (import_file_id, node_id, file_name, import_table_name, import_table_filed, import_table_condition, file_code, sep, all_update, is_gzip, file_name_param) VALUES ('2', '4', 'gbase_export_dmap_assess_plan_#{special}.gz.#{date}0', 'dmap_assess_plan', 'plan_id, plan_name, plan_cycle_start_time, plan_cycle_end_time, score_type, plan_status, plan_desc, create_time, create_user, create_user_dept, create_user_role_id, is_delete, update_time, review_user, review_time', 'plan_id', 'utf8', ' | ', 0, 1, '{
+    "special": "123"
+}');
+
+
+
+truncate table nbatch_job_work_export_file;
+INSERT INTO nbatch_job_work_export_file (export_file_id, node_id, file_name, export_table_name, export_table_filed, export_table_condition, file_code, sep, all_update, is_gzip, file_name_param) VALUES ('1', '1', 'gauss_export_dmap_assess_plan_#{special}.gz.#{date}0', 'dmap_assess_plan', 'plan_id, plan_name, plan_cycle_start_time, plan_cycle_end_time, score_type, plan_status, plan_desc, create_time, create_user, create_user_dept, create_user_role_id, is_delete, update_time, review_user, review_time', '', 'utf8', ' | ', 1, 1, '{
+    "special": "123"
+}');
+INSERT INTO nbatch_job_work_export_file (export_file_id, node_id, file_name, export_table_name, export_table_filed, export_table_condition, file_code, sep, all_update, is_gzip, file_name_param) VALUES ('2', '5', 'gauss_export_dmap_assess_plan_assessor_#{special}.gz.#{date}0', 'dmap_assess_plan_assessor', 'plan_assessor_id, plan_id, uid, create_time, is_delete, update_time', '', 'utf8', ' | ', 1, 1, '{
+    "special": "456"
+}');
+INSERT INTO nbatch_job_work_export_file (export_file_id, node_id, file_name, export_table_name, export_table_filed, export_table_condition, file_code, sep, all_update, is_gzip, file_name_param) VALUES ('3', '3', 'gbase_export_dmap_assess_plan_#{special}.gz.#{date}0', 'dmap_assess_plan', 'plan_id, plan_name, plan_cycle_start_time, plan_cycle_end_time, score_type, plan_status, plan_desc, create_time, create_user, create_user_dept, create_user_role_id, is_delete, update_time, review_user, review_time', '', 'utf8', ' | ', 1, 1, '{
+    "special": "123"
+}');
+
+
+truncate table nbatch_job_work;
+INSERT INTO nbatch_job_work (work_id, work_name, work_desc, work_type, work_status) VALUES ('1991745845269688321', '测试作业', '用于测试', 0, 1);
+INSERT INTO nbatch_job_work (work_id, work_name, work_desc, work_type, work_status) VALUES ('1991745845269688322', '测试作业2', '用于测试2', 1, 1);
+
+
+truncate table nbatch_job_user;
+INSERT INTO nbatch_job_user (id, username, password, token, role, permission) VALUES ('1', 'admin', 'e10adc3949ba59abbe56e057f20f883e', null, 1, null);
+
+
+truncate table nbatch_job_lock;
+INSERT INTO nbatch_job_lock (lock_name) VALUES ('schedule_lock');
+
+
+truncate table nbatch_job_info;
+INSERT INTO nbatch_job_info (id, job_group, job_desc, add_time, update_time, author, alarm_email, schedule_type, schedule_conf, misfire_strategy, executor_route_strategy, executor_handler, executor_param, executor_block_strategy, executor_timeout, executor_fail_retry_count, glue_type, glue_source, glue_remark, glue_updatetime, child_jobid, trigger_status, trigger_last_time, trigger_next_time, work_id) VALUES ('1991745682576830464', '1', 'work测试任务', '2025-11-21 13:49:10', '2025-11-21 13:49:10', 'admin', '', 'CRON', '* 0/5 * * * ?', 'DO_NOTHING', 'FIRST', '', '', 'SERIAL_EXECUTION', 0, 0, 'WORK', '', 'GLUE代码初始化', '2025-11-21 13:49:10', null, 0, 0, 0, '1991745845269688321');
+INSERT INTO nbatch_job_info (id, job_group, job_desc, add_time, update_time, author, alarm_email, schedule_type, schedule_conf, misfire_strategy, executor_route_strategy, executor_handler, executor_param, executor_block_strategy, executor_timeout, executor_fail_retry_count, glue_type, glue_source, glue_remark, glue_updatetime, child_jobid, trigger_status, trigger_last_time, trigger_next_time, work_id) VALUES ('1991745682576830467', '1', 'work测试任务2', '2025-11-21 13:49:10', '2025-12-04 15:30:42', 'admin', '', 'CRON', '* 0/2 * * * ?', 'DO_NOTHING', 'FIRST', '', '', 'SERIAL_EXECUTION', 0, 0, 'WORK', '', 'GLUE代码初始化', '2025-11-21 13:49:10', null, 1, 0, 1764833447000, '1991745845269688322');
+INSERT INTO nbatch_job_info (id, job_group, job_desc, add_time, update_time, author, alarm_email, schedule_type, schedule_conf, misfire_strategy, executor_route_strategy, executor_handler, executor_param, executor_block_strategy, executor_timeout, executor_fail_retry_count, glue_type, glue_source, glue_remark, glue_updatetime, child_jobid, trigger_status, trigger_last_time, trigger_next_time, work_id) VALUES ('1991752974135259136', '1', 'test任务', '2025-11-21 14:18:09', '2025-11-21 14:18:09', 'admin', '', 'CRON', '* 0/5 * * * ?', 'DO_NOTHING', 'FIRST', 'demoJobHandler', '123', 'SERIAL_EXECUTION', 0, 0, 'BEAN', '', 'GLUE代码初始化', '2025-11-21 14:18:09', null, 0, 0, 0, '');
+INSERT INTO nbatch_job_info (id, job_group, job_desc, add_time, update_time, author, alarm_email, schedule_type, schedule_conf, misfire_strategy, executor_route_strategy, executor_handler, executor_param, executor_block_strategy, executor_timeout, executor_fail_retry_count, glue_type, glue_source, glue_remark, glue_updatetime, child_jobid, trigger_status, trigger_last_time, trigger_next_time, work_id) VALUES ('1995740147851304960', '1', 'shell脚本', '2025-12-02 14:21:45', '2025-12-02 15:41:24', 'admin', '123', 'CRON', '* 0/5 * * * ?', 'DO_NOTHING', 'FIRST', '', '', 'SERIAL_EXECUTION', 0, 0, 'GLUE_SHELL', '#!/bin/bash
+
+# 输出鼓励语句
+echo "你好，今天一定要变得更好"', '测试sql', '2025-12-02 15:41:24', null, 0, 0, 0, '0');
+
+
+truncate table nbatch_job_group;
+INSERT INTO nbatch_job_group (id, app_name, title, address_type, address_list, update_time) VALUES ('1', 'xxl-job-executor-sample', '通用执行器Sample', 0, null, '2025-12-04 18:34:44');

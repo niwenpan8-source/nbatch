@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjUtil;
 import com.nbatch.job.core.biz.AdminBiz;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.RunNodeLogDetailParam;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.enums.RegistryConfig;
 import com.nbatch.job.core.executor.BatchJobExecutor;
 import com.nbatch.job.core.log.JobFileAppender;
@@ -169,7 +170,7 @@ public class RunNodeLogDetailCallbackThread {
         for (AdminBiz adminBiz : BatchJobExecutor.getAdminBizList()) {
             try {
                 ReturnT<String> callbackResult = adminBiz.callbackRunNodeLogDetail(callbackParamList);
-                if (callbackResult != null && ReturnT.SUCCESS_CODE == callbackResult.getCode()) {
+                if (callbackResult != null && HandleCodeConstant.HANDLE_CODE_SUCCESS == callbackResult.getCode()) {
                     log.debug(">>>>>>>>>>> job, run node log detail callback finish.");
                     callbackRet = true;
                     break;

@@ -40,7 +40,7 @@ public class AdminBizTest {
 
         ReturnT<String> returnT = adminBiz.callback(callbackParamList);
 
-        assertTrue(returnT.getCode() == ReturnT.SUCCESS_CODE);
+        assertTrue(returnT.getCode() == HandleCodeConstant.HANDLE_CODE_SUCCESS);
     }
 
     /**
@@ -54,7 +54,7 @@ public class AdminBizTest {
         RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), "job-executor-example", "127.0.0.1:9999");
         ReturnT<String> returnT = adminBiz.registry(registryParam);
 
-        assertTrue(returnT.getCode() == ReturnT.SUCCESS_CODE);
+        assertTrue(returnT.getCode() == HandleCodeConstant.HANDLE_CODE_SUCCESS);
     }
 
     /**
@@ -68,7 +68,7 @@ public class AdminBizTest {
         RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), "job-executor-example", "127.0.0.1:9999");
         ReturnT<String> returnT = adminBiz.registryRemove(registryParam);
 
-        assertTrue(returnT.getCode() == ReturnT.SUCCESS_CODE);
+        assertTrue(returnT.getCode() == HandleCodeConstant.HANDLE_CODE_SUCCESS);
 
     }
 

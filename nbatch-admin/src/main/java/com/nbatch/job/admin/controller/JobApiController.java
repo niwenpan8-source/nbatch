@@ -8,6 +8,7 @@ import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.RegistryParam;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.RunNodeLogDetailParam;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.util.GsonTool;
 import com.nbatch.job.core.util.JobRemotingUtil;
 import org.springframework.stereotype.Controller;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+
 
 /**
  * api
@@ -45,14 +47,14 @@ public class JobApiController {
 
         // valid
         if (!"POST".equalsIgnoreCase(request.getMethod())) {
-            return new ReturnT<>(ReturnT.FAIL_CODE, "invalid request, HttpMethod not support.");
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "invalid request, HttpMethod not support.");
         }
         if (StrUtil.isBlank(uri)) {
-            return new ReturnT<>(ReturnT.FAIL_CODE, "invalid request, uri-mapping empty.");
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "invalid request, uri-mapping empty.");
         }
         if (StrUtil.isNotBlank(JobAdminConfig.getAdminConfig().getAccessToken())
-                && !JobAdminConfig.getAdminConfig().getAccessToken().equals(request.getHeader(JobRemotingUtil.XXL_JOB_ACCESS_TOKEN))) {
-            return new ReturnT<>(ReturnT.FAIL_CODE, "The access token is wrong.");
+                && !JobAdminConfig.getAdminConfig().getAccessToken().equals(request.getHeader(JobRemotingUtil.BATCH_JOB_ACCESS_TOKEN))) {
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "The access token is wrong.");
         }
 
         // services mapping
@@ -69,7 +71,7 @@ public class JobApiController {
             List<RunNodeLogDetailParam> callbackParamList = GsonTool.fromJson(data, List.class, RunNodeLogDetailParam.class);
             return adminBiz.callbackRunNodeLogDetail(callbackParamList);
         } else {
-            return new ReturnT<>(ReturnT.FAIL_CODE, "invalid request, uri-mapping(" + uri + ") not found.");
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "invalid request, uri-mapping(" + uri + ") not found.");
         }
 
     }

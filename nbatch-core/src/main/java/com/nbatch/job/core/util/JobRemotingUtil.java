@@ -2,9 +2,8 @@ package com.nbatch.job.core.util;
 
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -14,6 +13,7 @@ import javax.net.ssl.X509TrustManager;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -25,7 +25,7 @@ import java.security.cert.X509Certificate;
 @Slf4j
 public class JobRemotingUtil {
 
-    public static final String XXL_JOB_ACCESS_TOKEN = "XXL-JOB-ACCESS-TOKEN";
+    public static final String BATCH_JOB_ACCESS_TOKEN = "BATCH-JOB-ACCESS-TOKEN";
 
 
     // trust-https start
@@ -92,7 +92,7 @@ public class JobRemotingUtil {
             connection.setRequestProperty("Accept-Charset", "application/json;charset=UTF-8");
 
             if(StrUtil.isNotBlank(accessToken)){
-                connection.setRequestProperty(XXL_JOB_ACCESS_TOKEN, accessToken);
+                connection.setRequestProperty(BATCH_JOB_ACCESS_TOKEN, accessToken);
             }
 
             // do connection
@@ -111,7 +111,7 @@ public class JobRemotingUtil {
             // valid StatusCode
             int statusCode = connection.getResponseCode();
             if (statusCode != 200) {
-                return new ReturnT<>(ReturnT.FAIL_CODE, "job remoting fail, StatusCode(" + statusCode + ") invalid. for url : " + url);
+                return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "job remoting fail, StatusCode(" + statusCode + ") invalid. for url : " + url);
             }
 
             // result
@@ -127,12 +127,15 @@ public class JobRemotingUtil {
                 return GsonTool.fromJson(resultJson, ReturnT.class, returnTargClassOfT);
             } catch (Exception e) {
                 log.error("job remoting (url={}) response content invalid({}).", url, resultJson, e);
-                return new ReturnT<>(ReturnT.FAIL_CODE, "job remoting (url="+url+") response content invalid("+ resultJson +").");
+                return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "job remoting (url="+url+") response content invalid("+ resultJson +").");
             }
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            return new ReturnT<>(ReturnT.FAIL_CODE, "job remoting error("+ e.getMessage() +"), for url : " + url);
+            if (e instanceof ConnectException) {
+                return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_TIMEOUT, "job remoting timeout("+ e.getMessage() +"), for url : " + url);
+            }
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "job remoting error("+ e.getMessage() +"), for url : " + url);
         } finally {
             try {
                 if (bufferedReader != null) {

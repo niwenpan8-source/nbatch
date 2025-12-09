@@ -7,6 +7,7 @@ import com.nbatch.job.admin.core.enums.NodeTypeEnum;
 import com.nbatch.job.admin.core.enums.WorkStatusEnum;
 import com.nbatch.job.admin.service.IJobWorkNodeService;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -83,7 +84,7 @@ public class JobWorkNodeController {
     @PostMapping("/update")
     public ReturnT<String> update(JobWorkNodeParam param) {
         if (param.getNodeId() == null) {
-            return new ReturnT<>(ReturnT.FAIL_CODE, "修改失败，作业id不可为空");
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "修改失败，作业id不可为空");
         }
         jobWorkNodeService.update(param);
         return new ReturnT<>("修改成功");

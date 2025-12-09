@@ -8,15 +8,16 @@ import com.nbatch.job.admin.core.domain.param.JobInfoParam;
 import com.nbatch.job.admin.core.domain.po.JobGroupPo;
 import com.nbatch.job.admin.core.domain.po.JobInfoPo;
 import com.nbatch.job.admin.core.domain.po.JobUserPo;
-import com.nbatch.job.admin.core.exception.JobException;
 import com.nbatch.job.admin.core.enums.ExecutorRouteStrategyEnum;
 import com.nbatch.job.admin.core.enums.MisfireStrategyEnum;
 import com.nbatch.job.admin.core.enums.ScheduleTypeEnum;
+import com.nbatch.job.admin.core.exception.JobException;
 import com.nbatch.job.admin.core.thread.JobScheduleHelper;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.admin.mapper.IJobGroupMapper;
 import com.nbatch.job.admin.service.IJobService;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.enums.ExecutorBlockStrategyEnum;
 import com.nbatch.job.core.glue.GlueTypeEnum;
 import lombok.extern.slf4j.Slf4j;
@@ -157,7 +158,7 @@ public class JobInfoController {
             }
         } catch (Exception e) {
             log.error("nextTriggerTime error. scheduleType = {}, scheduleConf= {}", scheduleType, scheduleConf, e);
-            return new ReturnT<>(ReturnT.FAIL_CODE, (I18nUtil.getString("schedule_type") + I18nUtil.getString("system_unvalid")) + e.getMessage());
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, (I18nUtil.getString("schedule_type") + I18nUtil.getString("system_unvalid")) + e.getMessage());
         }
         return new ReturnT<>(result);
 

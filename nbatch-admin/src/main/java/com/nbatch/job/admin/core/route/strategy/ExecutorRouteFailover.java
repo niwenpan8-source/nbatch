@@ -6,6 +6,7 @@ import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.ExecutorBiz;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.TriggerParam;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public class ExecutorRouteFailover extends ExecutorRouter {
                 beatResult = executorBiz.beat();
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
-                beatResult = new ReturnT<>(ReturnT.FAIL_CODE, "" + e);
+                beatResult = new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "" + e);
             }
             beatResultBuilder.append((beatResultBuilder.length() > 0) ? "<br><br>" : "")
                     .append(I18nUtil.getString("jobconf_beat"))
@@ -41,14 +42,14 @@ public class ExecutorRouteFailover extends ExecutorRouter {
                     .append("<br>msg：").append(beatResult.getMsg());
 
             // beat success
-            if (beatResult.getCode() == ReturnT.SUCCESS_CODE) {
+            if (beatResult.getCode() == HandleCodeConstant.HANDLE_CODE_SUCCESS) {
 
                 beatResult.setMsg(beatResultBuilder.toString());
                 beatResult.setContent(address);
                 return beatResult;
             }
         }
-        return new ReturnT<>(ReturnT.FAIL_CODE, beatResultBuilder.toString());
+        return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, beatResultBuilder.toString());
 
     }
 }

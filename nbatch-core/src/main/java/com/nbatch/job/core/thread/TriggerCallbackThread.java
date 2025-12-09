@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjUtil;
 import com.nbatch.job.core.biz.AdminBiz;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.context.BatchJobContext;
 import com.nbatch.job.core.context.BatchJobHelper;
 import com.nbatch.job.core.enums.RegistryConfig;
@@ -169,7 +170,7 @@ public class TriggerCallbackThread {
         for (AdminBiz adminBiz : BatchJobExecutor.getAdminBizList()) {
             try {
                 ReturnT<String> callbackResult = adminBiz.callback(callbackParamList);
-                if (callbackResult != null && ReturnT.SUCCESS_CODE == callbackResult.getCode()) {
+                if (callbackResult != null && HandleCodeConstant.HANDLE_CODE_SUCCESS == callbackResult.getCode()) {
                     callbackLog(callbackParamList, "<br>----------- job job callback finish.");
                     callbackRet = true;
                     break;

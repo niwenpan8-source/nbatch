@@ -101,7 +101,7 @@ public class JobCompleteHelper {
                             jobLog.setId(logId);
 
                             jobLog.setHandleTime(new Date());
-                            jobLog.setHandleCode(ReturnT.FAIL_CODE);
+                            jobLog.setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL);
                             jobLog.setHandleMsg(I18nUtil.getString("joblog_lost_fail"));
 
                             JobCompleter.updateHandleInfoAndFinish(jobLog);
@@ -156,7 +156,7 @@ public class JobCompleteHelper {
             for (HandleCallbackParam handleCallbackParam : callbackParamList) {
                 ReturnT<String> callbackResult = callback(handleCallbackParam);
                 log.debug(">>>>>>>>> JobApiController.callback {}, handleCallbackParam={}, callbackResult={}",
-                        (callbackResult.getCode() == ReturnT.SUCCESS_CODE ? "success" : "fail"), handleCallbackParam, callbackResult);
+                        (callbackResult.getCode() == HandleCodeConstant.HANDLE_CODE_SUCCESS ? "success" : "fail"), handleCallbackParam, callbackResult);
             }
         });
 
@@ -179,11 +179,11 @@ public class JobCompleteHelper {
         // valid log item
         JobLogPo logInfo = JobAdminConfig.getAdminConfig().getJobLogMapper().selectById(handleCallbackParam.getLogId());
         if (logInfo == null) {
-            return new ReturnT<>(ReturnT.FAIL_CODE, "log item not found.");
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "log item not found.");
         }
         if (logInfo.getHandleCode() > 0) {
             // avoid repeat callback, trigger child job etc
-            return new ReturnT<>(ReturnT.FAIL_CODE, "log repeat callback.");
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "log repeat callback.");
         }
         // handle msg
         StringBuilder handleMsg = new StringBuilder();

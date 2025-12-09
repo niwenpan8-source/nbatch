@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.core.biz.AdminBiz;
 import com.nbatch.job.core.biz.model.RegistryParam;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.enums.RegistryConfig;
 import com.nbatch.job.core.executor.BatchJobExecutor;
 import lombok.Getter;
@@ -48,7 +49,7 @@ public class ExecutorRegistryThread {
                     for (AdminBiz adminBiz: BatchJobExecutor.getAdminBizList()) {
                         try {
                             ReturnT<String> registryResult = adminBiz.registry(registryParam);
-                            if (registryResult!=null && ReturnT.SUCCESS_CODE == registryResult.getCode()) {
+                            if (registryResult!=null && HandleCodeConstant.HANDLE_CODE_SUCCESS == registryResult.getCode()) {
                                 registryResult = ReturnT.SUCCESS;
                                 log.debug(">>>>>>>>>>> job registry success, registryParam:{}, registryResult:{}", registryParam, registryResult);
                                 break;
@@ -84,7 +85,7 @@ public class ExecutorRegistryThread {
                 for (AdminBiz adminBiz: BatchJobExecutor.getAdminBizList()) {
                     try {
                         ReturnT<String> registryResult = adminBiz.registryRemove(registryParam);
-                        if (registryResult!=null && ReturnT.SUCCESS_CODE == registryResult.getCode()) {
+                        if (registryResult!=null && HandleCodeConstant.HANDLE_CODE_SUCCESS == registryResult.getCode()) {
                             registryResult = ReturnT.SUCCESS;
                             log.info(">>>>>>>>>>> job registry-remove success, registryParam:{}, registryResult:{}", registryParam, registryResult);
                             break;

@@ -6,6 +6,7 @@ import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.domain.po.JobWorkRunNodeLogDetailPo;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.RunNodeLogDetailParam;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -62,7 +63,7 @@ public class JobRunNodeLogDetailHelper {
             for (RunNodeLogDetailParam runNodeLogDetailParam : callbackParamList) {
                 ReturnT<String> callbackResult = callbackRunNodeLogDetail(runNodeLogDetailParam);
                 log.debug(">>>>>>>>> JobApiController.callback {}, handleCallbackParam={}, callbackResult={}",
-                        (callbackResult.getCode() == ReturnT.SUCCESS_CODE ? "success" : "fail"), runNodeLogDetailParam, callbackResult);
+                        (callbackResult.getCode() == HandleCodeConstant.HANDLE_CODE_SUCCESS ? "success" : "fail"), runNodeLogDetailParam, callbackResult);
             }
         });
 

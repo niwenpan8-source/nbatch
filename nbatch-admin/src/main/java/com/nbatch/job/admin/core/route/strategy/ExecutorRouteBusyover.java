@@ -7,6 +7,7 @@ import com.nbatch.job.core.biz.ExecutorBiz;
 import com.nbatch.job.core.biz.model.IdleBeatParam;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.TriggerParam;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -29,7 +30,7 @@ public class ExecutorRouteBusyover extends ExecutorRouter {
                 idleBeatResult = executorBiz.idleBeat(new IdleBeatParam(triggerParam.getJobId()));
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
-                idleBeatResult = new ReturnT<>(ReturnT.FAIL_CODE, "" + e);
+                idleBeatResult = new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "" + e);
             }
             idleBeatResultBuilder.append((idleBeatResultBuilder.length() > 0) ? "<br><br>" : "")
                     .append(I18nUtil.getString("jobconf_idleBeat"))
@@ -39,14 +40,14 @@ public class ExecutorRouteBusyover extends ExecutorRouter {
                     .append("<br>msg：").append(idleBeatResult.getMsg());
 
             // beat success
-            if (idleBeatResult.getCode() == ReturnT.SUCCESS_CODE) {
+            if (idleBeatResult.getCode() == HandleCodeConstant.HANDLE_CODE_SUCCESS) {
                 idleBeatResult.setMsg(idleBeatResultBuilder.toString());
                 idleBeatResult.setContent(address);
                 return idleBeatResult;
             }
         }
 
-        return new ReturnT<>(ReturnT.FAIL_CODE, idleBeatResultBuilder.toString());
+        return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, idleBeatResultBuilder.toString());
     }
 
 }

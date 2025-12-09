@@ -14,6 +14,7 @@ import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.admin.mapper.IJobGroupMapper;
 import com.nbatch.job.admin.mapper.IJobUserMapper;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.DigestUtils;
@@ -93,26 +94,26 @@ public class JobUserController {
 
         // valid username
         if (!StringUtils.hasText(param.getUsername())) {
-            return new ReturnT<>(ReturnT.FAIL_CODE, I18nUtil.getString("system_please_input") + I18nUtil.getString("user_username"));
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, I18nUtil.getString("system_please_input") + I18nUtil.getString("user_username"));
         }
         param.setUsername(param.getUsername().trim());
         if (!(param.getUsername().length() >= 4 && param.getUsername().length() <= 20)) {
-            return new ReturnT<>(ReturnT.FAIL_CODE, I18nUtil.getString("system_lengh_limit") + "[4-20]");
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, I18nUtil.getString("system_lengh_limit") + "[4-20]");
         }
         // valid password
         if (!StringUtils.hasText(param.getPassword())) {
-            return new ReturnT<>(ReturnT.FAIL_CODE, I18nUtil.getString("system_please_input") + I18nUtil.getString("user_password"));
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, I18nUtil.getString("system_please_input") + I18nUtil.getString("user_password"));
         }
         param.setPassword(param.getPassword().trim());
         if (!(param.getPassword().length() >= 4 && param.getPassword().length() <= 20)) {
-            return new ReturnT<>(ReturnT.FAIL_CODE, I18nUtil.getString("system_lengh_limit") + "[4-20]");
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, I18nUtil.getString("system_lengh_limit") + "[4-20]");
         }
         // md5 password
         param.setPassword(DigestUtils.md5DigestAsHex(param.getPassword().getBytes()));
         JobUserPo existUser = jobUserMapper.selectOne(Wrappers.lambdaQuery(JobUserPo.class)
                 .eq(JobUserPo::getUsername, param.getUsername()));
         if (existUser != null) {
-            return new ReturnT<>(ReturnT.FAIL_CODE, I18nUtil.getString("user_username_repeat"));
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, I18nUtil.getString("user_username_repeat"));
         }
 
         // write
@@ -135,7 +136,7 @@ public class JobUserController {
         if (StringUtils.hasText(param.getPassword())) {
             param.setPassword(param.getPassword().trim());
             if (!(param.getPassword().length() >= 4 && param.getPassword().length() <= 20)) {
-                return new ReturnT<>(ReturnT.FAIL_CODE, I18nUtil.getString("system_lengh_limit") + "[4-20]");
+                return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, I18nUtil.getString("system_lengh_limit") + "[4-20]");
             }
             // md5 password
             param.setPassword(DigestUtils.md5DigestAsHex(param.getPassword().getBytes()));
@@ -176,7 +177,7 @@ public class JobUserController {
         }
         password = password.trim();
         if (!(password.length() >= 4 && password.length() <= 20)) {
-            return new ReturnT<>(ReturnT.FAIL_CODE, I18nUtil.getString("system_lengh_limit") + "[4-20]");
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, I18nUtil.getString("system_lengh_limit") + "[4-20]");
         }
 
         // md5 password

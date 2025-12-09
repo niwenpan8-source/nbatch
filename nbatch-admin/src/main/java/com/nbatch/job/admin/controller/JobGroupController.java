@@ -19,6 +19,7 @@ import com.nbatch.job.admin.mapper.IJobGroupMapper;
 import com.nbatch.job.admin.mapper.IJobInfoMapper;
 import com.nbatch.job.admin.mapper.IJobRegistryMapper;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.enums.RegistryConfig;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -222,7 +223,7 @@ public class JobGroupController {
     @PermissionLimit(adminuser = true)
     public ReturnT<JobGroupPo> loadById(int id) {
         JobGroupPo jobGroup = jobGroupMapper.selectById(id);
-        return jobGroup != null ? new ReturnT<>(jobGroup) : new ReturnT<>(ReturnT.FAIL_CODE, null);
+        return jobGroup != null ? new ReturnT<>(jobGroup) : new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, null);
     }
 
 }

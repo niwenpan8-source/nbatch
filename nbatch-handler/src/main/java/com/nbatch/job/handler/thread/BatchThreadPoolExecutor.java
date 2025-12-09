@@ -121,7 +121,15 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
         log.info("shutdown threadPool:{}", threadPoolKey);
         List<HandleCallbackParam> currentNotRunningFinishTaskList = new ArrayList<>();
         if (CollUtil.isNotEmpty(currentRunningTaskList)) {
-            BlockingQueue<Runnable> queue = this.getQueue();
+            for (BatchRunnable batchRunnable : currentRunningTaskList) {
+                HandleCallbackParam handleCallbackParam = new HandleCallbackParam();
+                handleCallbackParam.setCallBackType(NODE_STATUS_CALLBACK.getValue());
+                handleCallbackParam.setLogId(batchRunnable.getCacheObj().getStr("logId"));
+                generateHandleCallbackParam(currentNotRunningFinishTaskList, batchRunnable, handleCallbackParam);
+            }
+        }
+        BlockingQueue<Runnable> queue = this.getQueue();
+        if (CollUtil.isNotEmpty(queue)) {
             for (Runnable runnable : queue) {
                 if (runnable instanceof BatchRunnable) {
                     BatchRunnable batchRunnable = (BatchRunnable) runnable;
@@ -130,39 +138,15 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
                     handleCallbackParam.setLogId(batchRunnable.getCacheObj().getStr("logId"));
                     handleCallbackParam.setLogId(batchRunnable.getCacheObj().getStr("logId"));
                     handleCallbackParam.setCallBackType(NODE_STATUS_CALLBACK.getValue());
-                    handleCallbackParam.getNodeStatusCallbackParam()
-                            .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
-                            .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
-                            .setRunWorkId(batchRunnable.getCacheObj().getStr("runWorkId"))
-                            .setRunNodeId(batchRunnable.getCacheObj().getStr("runNodeId"))
-                            .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
-                            .setWorkType(batchRunnable.getCacheObj().getInt("workType"))
-                            .setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
-                            .setHandleMsg("系统优雅关闭，任务停止");
-                    currentNotRunningFinishTaskList.add(handleCallbackParam);
+                    generateHandleCallbackParam(currentNotRunningFinishTaskList, batchRunnable, handleCallbackParam);
                 }
-            }
-            for (BatchRunnable batchRunnable : currentRunningTaskList) {
-                HandleCallbackParam handleCallbackParam = new HandleCallbackParam();
-                handleCallbackParam.setCallBackType(NODE_STATUS_CALLBACK.getValue());
-                handleCallbackParam.setLogId(batchRunnable.getCacheObj().getStr("logId"));
-                handleCallbackParam.getNodeStatusCallbackParam()
-                        .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
-                        .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
-                        .setRunWorkId(batchRunnable.getCacheObj().getStr("runWorkId"))
-                        .setRunNodeId(batchRunnable.getCacheObj().getStr("runNodeId"))
-                        .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
-                        .setWorkType(batchRunnable.getCacheObj().getInt("workType"))
-                        .setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
-                        .setHandleMsg("系统优雅关闭，任务停止");
-                currentNotRunningFinishTaskList.add(handleCallbackParam);
             }
         }
         log.info("currentNotRunningFinishTaskList:{}", currentNotRunningFinishTaskList);
         for (AdminBiz adminBiz : BatchJobExecutor.getAdminBizList()) {
             try {
                 ReturnT<String> callbackResult = adminBiz.callback(currentNotRunningFinishTaskList);
-                if (callbackResult != null && ReturnT.SUCCESS_CODE == callbackResult.getCode()) {
+                if (callbackResult != null && HandleCodeConstant.HANDLE_CODE_SUCCESS == callbackResult.getCode()) {
                     log.error("<br>----------- graceful shutdown finish.");
                 } else {
                     log.error("<br>----------- graceful shutdown fail, callbackResult:{}", callbackResult);
@@ -172,5 +156,18 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
             }
         }
         this.shutdownNow();
+    }
+
+    private void generateHandleCallbackParam(List<HandleCallbackParam> currentNotRunningFinishTaskList, BatchRunnable batchRunnable, HandleCallbackParam handleCallbackParam) {
+        handleCallbackParam.getNodeStatusCallbackParam()
+                .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
+                .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
+                .setRunWorkId(batchRunnable.getCacheObj().getStr("runWorkId"))
+                .setRunNodeId(batchRunnable.getCacheObj().getStr("runNodeId"))
+                .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
+                .setWorkType(batchRunnable.getCacheObj().getInt("workType"))
+                .setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
+                .setHandleMsg("系统优雅关闭，任务停止");
+        currentNotRunningFinishTaskList.add(handleCallbackParam);
     }
 }

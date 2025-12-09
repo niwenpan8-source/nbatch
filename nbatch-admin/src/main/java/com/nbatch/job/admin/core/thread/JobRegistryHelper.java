@@ -10,6 +10,7 @@ import com.nbatch.job.admin.core.domain.po.JobGroupPo;
 import com.nbatch.job.admin.core.domain.po.JobRegistryPo;
 import com.nbatch.job.core.biz.model.RegistryParam;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.enums.RegistryConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
@@ -164,7 +165,7 @@ public class JobRegistryHelper {
         if (!StringUtils.hasText(registryParam.getRegistryGroup())
                 || !StringUtils.hasText(registryParam.getRegistryKey())
                 || !StringUtils.hasText(registryParam.getRegistryValue())) {
-            return new ReturnT<>(ReturnT.FAIL_CODE, "Illegal Argument.");
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "Illegal Argument.");
         }
 
         // async execute
@@ -200,7 +201,7 @@ public class JobRegistryHelper {
         if (!StringUtils.hasText(registryParam.getRegistryGroup())
                 || !StringUtils.hasText(registryParam.getRegistryKey())
                 || !StringUtils.hasText(registryParam.getRegistryValue())) {
-            return new ReturnT<>(ReturnT.FAIL_CODE, "Illegal Argument.");
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "Illegal Argument.");
         }
 
         // async execute

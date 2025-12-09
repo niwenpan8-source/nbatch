@@ -8,6 +8,7 @@ import com.nbatch.job.core.biz.model.LogParam;
 import com.nbatch.job.core.biz.model.LogResult;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.TriggerParam;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.enums.ExecutorBlockStrategyEnum;
 import com.nbatch.job.core.executor.BatchJobExecutor;
 import com.nbatch.job.core.glue.GlueFactory;
@@ -46,7 +47,7 @@ public class ExecutorBizImpl implements ExecutorBiz {
         }
 
         if (isRunningOrHasQueue) {
-            return new ReturnT<>(ReturnT.FAIL_CODE, "job thread is running or has trigger queue.");
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "job thread is running or has trigger queue.");
         }
         return ReturnT.SUCCESS;
     }
@@ -78,7 +79,7 @@ public class ExecutorBizImpl implements ExecutorBiz {
             if (jobHandler == null) {
                 jobHandler = newJobHandler;
                 if (jobHandler == null) {
-                    return new ReturnT<>(ReturnT.FAIL_CODE, "job handler [" + triggerParam.getExecutorHandler() + "] not found.");
+                    return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "job handler [" + triggerParam.getExecutorHandler() + "] not found.");
                 }
             }
 
@@ -121,7 +122,7 @@ public class ExecutorBizImpl implements ExecutorBiz {
                     jobHandler = new GlueJobHandler(originJobHandler, triggerParam.getGlueUpdatetime());
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
-                    return new ReturnT<>(ReturnT.FAIL_CODE, e.getMessage());
+                    return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, e.getMessage());
                 }
             }
         } else if (glueTypeEnum!=null && glueTypeEnum.isScript()) {
@@ -142,7 +143,7 @@ public class ExecutorBizImpl implements ExecutorBiz {
                 jobHandler = new ScriptJobHandler(triggerParam.getJobId(), triggerParam.getGlueUpdatetime(), triggerParam.getGlueSource(), GlueTypeEnum.match(triggerParam.getGlueType()));
             }
         } else {
-            return new ReturnT<>(ReturnT.FAIL_CODE, "glueType[" + triggerParam.getGlueType() + "] is not valid.");
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "glueType[" + triggerParam.getGlueType() + "] is not valid.");
         }
 
         // executor block strategy
@@ -151,7 +152,7 @@ public class ExecutorBizImpl implements ExecutorBiz {
             if (ExecutorBlockStrategyEnum.DISCARD_LATER == blockStrategy) {
                 // discard when running
                 if (jobThread.isRunningOrHasQueue()) {
-                    return new ReturnT<>(ReturnT.FAIL_CODE, "block strategy effect：" + ExecutorBlockStrategyEnum.DISCARD_LATER.getTitle());
+                    return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "block strategy effect：" + ExecutorBlockStrategyEnum.DISCARD_LATER.getTitle());
                 }
             } else if (ExecutorBlockStrategyEnum.COVER_EARLY == blockStrategy) {
                 // kill running jobThread
@@ -183,7 +184,7 @@ public class ExecutorBizImpl implements ExecutorBiz {
             return ReturnT.SUCCESS;
         }
 
-        return new ReturnT<>(ReturnT.SUCCESS_CODE, "job thread already killed.");
+        return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_SUCCESS, "job thread already killed.");
     }
 
     @Override

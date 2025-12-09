@@ -1,5 +1,6 @@
 package com.nbatch.job.core.biz.model;
 
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -8,8 +9,7 @@ import java.io.Serializable;
 
 /**
  * common return
- * @author Mr.ni 2015-12-4 16:32:31
- * @param <T>
+ * @author Mr.ni
  */
 @Data
 @ToString
@@ -17,11 +17,8 @@ import java.io.Serializable;
 public class ReturnT<T> implements Serializable {
 	private static final long serialVersionUID = 42L;
 
-	public static final int SUCCESS_CODE = 200;
-	public static final int FAIL_CODE = 500;
-
 	public static final ReturnT<String> SUCCESS = new ReturnT<>(null);
-	public static final ReturnT<String> FAIL = new ReturnT<>(FAIL_CODE, null);
+	public static final ReturnT<String> FAIL = new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, null);
 
 	private int code;
 	private String msg;
@@ -32,7 +29,7 @@ public class ReturnT<T> implements Serializable {
 		this.msg = msg;
 	}
 	public ReturnT(T content) {
-		this.code = SUCCESS_CODE;
+		this.code = HandleCodeConstant.HANDLE_CODE_SUCCESS;
 		this.content = content;
 	}
 

@@ -28,7 +28,7 @@ import static com.nbatch.job.core.enums.CallbackTypeEnum.LOG_CALLBACK;
 
 /**
  * handler thread
- * @author Mr.ni 2016-1-16 19:52:47
+ * @author Mr.ni
  */
 @Slf4j
 public class JobThread extends Thread{
@@ -68,7 +68,7 @@ public class JobThread extends Thread{
 		// avoid repeat
 		if (triggerLogIdSet.contains(triggerParam.getLogId())) {
 			log.info(">>>>>>>>>>> repeate trigger job, logId:{}", triggerParam.getLogId());
-			return new ReturnT<>(ReturnT.FAIL_CODE, "repeate trigger job, logId:" + triggerParam.getLogId());
+			return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "repeate trigger job, logId:" + triggerParam.getLogId());
 		}
 
 		triggerLogIdSet.add(triggerParam.getLogId());
@@ -234,7 +234,7 @@ public class JobThread extends Thread{
 		// callback trigger request in queue
 		while(CollUtil.isNotEmpty(triggerQueue)){
 			TriggerParam triggerParam = triggerQueue.poll();
-			if (triggerParam!=null) {
+			if (triggerParam != null) {
 				HandleCallbackParam handleCallbackParam = new HandleCallbackParam();
 				handleCallbackParam.setCallBackType(LOG_CALLBACK.getValue());
 				handleCallbackParam.setLogId(triggerParam.getLogId());

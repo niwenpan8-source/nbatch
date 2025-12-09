@@ -21,6 +21,7 @@ import com.nbatch.job.core.biz.model.KillParam;
 import com.nbatch.job.core.biz.model.LogParam;
 import com.nbatch.job.core.biz.model.LogResult;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -161,7 +162,7 @@ public class JobLogController {
             // todo, need to improve performance
             JobLogPo jobLog = jobLogMapper.selectById(logId);
             if (jobLog == null) {
-                return new ReturnT<>(ReturnT.FAIL_CODE, I18nUtil.getString("joblog_logid_unvalid"));
+                return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, I18nUtil.getString("joblog_logid_unvalid"));
             }
 
             // log cat
@@ -186,7 +187,7 @@ public class JobLogController {
             return logResult;
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            return new ReturnT<>(ReturnT.FAIL_CODE, e.getMessage());
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, e.getMessage());
         }
     }
 
@@ -199,7 +200,7 @@ public class JobLogController {
         if (jobInfo == null) {
             return new ReturnT<>(500, I18nUtil.getString("jobinfo_glue_jobid_unvalid"));
         }
-        if (ReturnT.SUCCESS_CODE != logInfo.getTriggerCode()) {
+        if (HandleCodeConstant.HANDLE_CODE_SUCCESS != logInfo.getTriggerCode()) {
             return new ReturnT<>(500, I18nUtil.getString("joblog_kill_log_limit"));
         }
 
@@ -214,8 +215,8 @@ public class JobLogController {
             runResult = new ReturnT<>(500, e.getMessage());
         }
 
-        if (ReturnT.SUCCESS_CODE == runResult.getCode()) {
-            logInfo.setHandleCode(ReturnT.FAIL_CODE);
+        if (HandleCodeConstant.HANDLE_CODE_SUCCESS == runResult.getCode()) {
+            logInfo.setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL);
             logInfo.setHandleMsg(I18nUtil.getString("joblog_kill_log_byman") + ":" + (runResult.getMsg() != null ? runResult.getMsg() : ""));
             logInfo.setHandleTime(new Date());
             JobCompleter.updateHandleInfoAndFinish(logInfo);
@@ -246,7 +247,7 @@ public class JobLogController {
             // 清理一年之前日志数据
             clearBeforeTime = DateUtil.offsetYear(new Date(), -1);
         } else {
-            return new ReturnT<>(ReturnT.FAIL_CODE, I18nUtil.getString("joblog_clean_type_unvalid"));
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, I18nUtil.getString("joblog_clean_type_unvalid"));
         }
 
         List<String> logIds = null;

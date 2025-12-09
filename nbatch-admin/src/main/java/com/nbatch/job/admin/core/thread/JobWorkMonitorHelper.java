@@ -28,14 +28,6 @@ public class JobWorkMonitorHelper {
 
         // for monitor
         workThread = new Thread(() -> {
-            // wait for JobWorkMonitorHelper-init
-            try {
-                TimeUnit.MILLISECONDS.sleep(50);
-            } catch (Throwable e) {
-                if (!toStop) {
-                    log.error(e.getMessage(), e);
-                }
-            }
 
             // monitor
             while (!toStop) {
@@ -44,6 +36,8 @@ public class JobWorkMonitorHelper {
                     JobAdminConfig.getAdminConfig().getRunNodeHelper().updateWorkTurnDate();
                     // 只保留30天的运行数据
                     JobAdminConfig.getAdminConfig().getRunWorkHelper().deleteRunWork();
+                    // 修改超过固定时间，任务状态仍然为1的节点任务修改为0
+                    JobAdminConfig.getAdminConfig().getRunNodeHelper().updateTimeOutRunNodeStatus();
                 } catch (Throwable e) {
                     if (!toStop) {
                         log.error(">>>>>>>>>>> job, job fail work thread error:", e);
