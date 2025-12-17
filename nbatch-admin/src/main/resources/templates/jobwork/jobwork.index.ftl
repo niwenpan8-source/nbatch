@@ -50,8 +50,9 @@
 					            	<tr>
 					            		<th name="workId">${I18n.job_work_field_id}</th>
 					                	<th name="workName">${I18n.job_work_field_name}</th>
-					                  	<th name="workDesc">${I18n.job_work_field_desc}</th>
+<#--					                  	<th name="workDesc">${I18n.job_work_field_desc}</th>-->
                                         <th name="workStatus">${I18n.job_work_field_status}</th>
+                                        <th name="runWorkStatus">${I18n.job_work_field_run_status}</th>
                                         <th name="turnTime">${I18n.job_work_field_turn_time}</th>
 					                  	<th>${I18n.system_opt}</th>
 					                </tr>

@@ -431,7 +431,7 @@ public class JobServiceImpl implements IJobService {
     @Override
     public Map<String, Object> dashboardInfo() {
 
-        Integer jobInfoCount = jobInfoMapper.selectCount(Wrappers.lambdaQuery(JobInfoPo.class));
+        Long jobInfoCount = jobInfoMapper.selectCount(Wrappers.lambdaQuery(JobInfoPo.class));
         int jobLogCount = 0;
         int jobLogSuccessCount = 0;
         LambdaQueryWrapper<JobLogReportPo> lambdaQueryWrapper = Wrappers.lambdaQuery(JobLogReportPo.class);

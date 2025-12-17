@@ -2,10 +2,10 @@ package com.nbatch.job.handler.helper;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.dynamic.datasource.DynamicRoutingDataSource;
+import com.baomidou.mybatisplus.annotation.DbType;
 import com.nbatch.job.handler.dialect.BaseDialect;
 import com.nbatch.job.handler.dialect.GBaseDialect;
 import com.nbatch.job.handler.dialect.GaussDialect;
-import com.nbatch.job.handler.enums.DbTypeEnum;
 import com.nbatch.job.handler.exception.HandlerException;
 import lombok.RequiredArgsConstructor;
 
@@ -49,9 +49,9 @@ public class DialectHelper {
      * @return 数据库方言
      */
     public BaseDialect getDialect(String dbType) {
-        if (StrUtil.equals(dbType, DbTypeEnum.GBASE.getDb())) {
+        if (StrUtil.equals(dbType, DbType.GBASE.getDb())) {
             return new GBaseDialect();
-        } else if (StrUtil.equals(dbType, DbTypeEnum.GAUSS.getDb())) {
+        } else if (StrUtil.equals(dbType, DbType.OPENGAUSS.getDb())) {
             return new GaussDialect();
         }
         return null;

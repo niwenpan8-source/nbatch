@@ -1,19 +1,26 @@
 package com.nbatch.job.admin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nbatch.job.admin.core.domain.param.JobWorkPageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkParam;
+import com.nbatch.job.admin.core.domain.po.JobRunWorkPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkVo;
+import com.nbatch.job.admin.mapper.IJobRunWorkMapper;
 import com.nbatch.job.admin.mapper.IJobWorkMapper;
 import com.nbatch.job.admin.service.IJobWorkService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import static cn.hutool.core.date.DatePattern.NORM_DATE_FORMATTER;
 
 /**
  * @description: 作业执行服务实现类
@@ -26,6 +33,9 @@ public class JobWorkServiceImpl implements IJobWorkService {
     @Resource
     private IJobWorkMapper jobWorkMapper;
 
+    @Resource
+    private IJobRunWorkMapper jobRunWorkMapper;
+
     /**
      * 分页列表
      */
@@ -33,6 +43,26 @@ public class JobWorkServiceImpl implements IJobWorkService {
     public Map<String, Object> pageList(JobWorkPageParam param) {
         Page<JobWorkPo> page = jobWorkMapper.selectPage(new Page<>(param.getStart(), param.getLength()),
                 Wrappers.lambdaQuery(JobWorkPo.class));
+        List<JobWorkPo> records = page.getRecords();
+        List<String> workIdList = records.stream().map(JobWorkPo::getWorkId).collect(Collectors.toList());
+        List<JobRunWorkPo> jobRunWorkPoList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobRunWorkPo.class)
+                .in(JobRunWorkPo::getWorkId, workIdList)
+                .orderByDesc(JobRunWorkPo::getCreateTime));
+
+        Map<String, JobRunWorkPo> jobRunWorkPoMap = jobRunWorkPoList.stream()
+                .collect(Collectors.toMap(JobRunWorkPo::getWorkId, jobRunWorkPo -> jobRunWorkPo, (old, v) -> old));
+
+        List<JobWorkVo> jobWorkVoList = records.stream().map(x -> {
+            JobRunWorkPo jobRunWorkPo = jobRunWorkPoMap.get(x.getWorkId());
+            JobWorkVo jobWorkVo = BeanUtil.toBean(x, JobWorkVo.class);
+            if (jobRunWorkPo != null) {
+                if (jobRunWorkPo.getTurnDate() != null) {
+                    jobWorkVo.setTurnDate(DateUtil.format(jobRunWorkPo.getTurnDate(), NORM_DATE_FORMATTER));
+                }
+                jobWorkVo.setRunWorkStatus(jobRunWorkPo.getRunWorkStatus());
+            }
+            return jobWorkVo;
+        }).collect(Collectors.toList());
         // package result
         Map<String, Object> maps = new HashMap<>();
         // 总记录数
@@ -40,7 +70,7 @@ public class JobWorkServiceImpl implements IJobWorkService {
         // 过滤后的总记录数
         maps.put("recordsFiltered", page.getTotal());
         // 分页列表
-        maps.put("data", page.getRecords());
+        maps.put("data", jobWorkVoList);
         return maps;
     }
 

@@ -179,7 +179,7 @@ public class JobRegistryHelper {
                     .eq(JobRegistryPo::getRegistryKey, registryParam.getRegistryKey())
                     .eq(JobRegistryPo::getRegistryValue, registryParam.getRegistryValue())
                     .eq(JobRegistryPo::getRegistryGroup, registryParam.getRegistryGroup());
-            Integer registryNum = JobAdminConfig.getAdminConfig().getJobRegistryMapper().selectCount(jobRegistryWrapper);
+            Long registryNum = JobAdminConfig.getAdminConfig().getJobRegistryMapper().selectCount(jobRegistryWrapper);
             int ret;
             if (registryNum > 0) {
                 ret = JobAdminConfig.getAdminConfig().getJobRegistryMapper().update(jobRegistryPo, jobRegistryWrapper);

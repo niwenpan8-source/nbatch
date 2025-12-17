@@ -62,7 +62,7 @@ public class JobWorkNodeParam {
     private String executeContentParam;
 
     /**
-     * 执行器
+     * 执行器,用于执行bean模式绑定的bean方法
      */
     private String executeHandler;
 

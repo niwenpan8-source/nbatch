@@ -6,11 +6,11 @@ import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.annotation.DbType;
 import com.nbatch.job.core.biz.model.ExecuteFileToDbParam;
 import com.nbatch.job.core.biz.model.ExecuteNodeParam;
 import com.nbatch.job.handler.constant.JobHandlerPropertiesConstant;
 import com.nbatch.job.handler.dialect.BaseDialect;
-import com.nbatch.job.handler.enums.DbTypeEnum;
 import com.nbatch.job.handler.exception.HandlerException;
 import com.nbatch.job.handler.handler.JobNodeHandlerAdapter;
 import com.nbatch.job.handler.helper.DialectHelper;
@@ -85,7 +85,7 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
      */
     private void setFilePath(ExecuteFileToDbParam param, String finishGenerateFileName, String dbType) {
         String tempPath = handlerPropertiesConstant.getTempPath();
-        if (StrUtil.equals(dbType, DbTypeEnum.GBASE.getDb())) {
+        if (StrUtil.equals(dbType, DbType.GBASE.getDb())) {
             tempPath = handlerPropertiesConstant.getRemoteTempPath();
         }
         String dbExportFilePath = tempPath + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_CSV;

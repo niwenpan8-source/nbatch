@@ -41,4 +41,14 @@ public class JobWorkVo {
      */
     private Integer workStatus;
 
+    /**
+     * 作业状态：0=停用、1=启用
+     */
+    private Integer runWorkStatus;
+
+    /**
+     * 翻牌时间
+     */
+    private String turnDate;
+
 }

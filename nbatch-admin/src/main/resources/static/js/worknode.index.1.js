@@ -10,6 +10,7 @@ $(function () {
             data: function (d) {
                 var obj = {};
                 obj.nodeType = $('#nodeType').val();
+                obj.workId = $('#workId').val();
                 obj.start = d.start;
                 obj.length = d.length;
                 return obj;
@@ -107,7 +108,6 @@ $(function () {
 
     // search btn
     $('#searchBtn').on('click', function () {
-        console.log(123)
         workNodeTable.fnDraw();
     });
 
@@ -198,15 +198,15 @@ $(function () {
         });
     });
 
-    // add
+    // update
     $("#work_node_list").on('click', '.update',function() {
         var id = $(this).parents('ul').attr("_id");
         console.log(id)
         var url = base_url + "/node/updateModel?workNodeId=" + id;
         layer.open({
             type: 2,
-            area: ['500px', '400px'],
-            title: '添加',
+            area: ['800px', '500px'],
+            title: '修改',
             shade: 0.6,
             shadeClose: false,
             maxmin: true,

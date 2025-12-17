@@ -18,7 +18,7 @@ public enum WorkStatusEnum {
     /**
      * 状态码
      */
-    private final int code;
+    private final Integer code;
 
     /**
      * 状态描述

@@ -30,7 +30,6 @@
 					<br><br>
                     <a target="_blank" href="https://www.nbatch.com/xxl-job/">${I18n.job_help_document}</a>
                     <br><br>
-
 				</p>
 				<p></p>
             </div>

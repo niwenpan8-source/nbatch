@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nbatch.job.admin.core.domain.po.JobRunWorkPo;
@@ -15,8 +16,9 @@ import com.nbatch.job.admin.core.domain.po.JobWorkNodeRelationPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkRunNodeLogPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkRunNodePo;
-import com.nbatch.job.admin.core.domain.vo.JobWorkNodeVo;
+import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeVo;
 import com.nbatch.job.admin.core.enums.RunWorkStatusEnum;
+import com.nbatch.job.admin.core.enums.WorkStatusEnum;
 import com.nbatch.job.admin.core.enums.WorkTypeEnum;
 import com.nbatch.job.admin.core.thread.JobWorkRunNodeHelper;
 import com.nbatch.job.admin.mapper.IJobRunWorkMapper;
@@ -83,7 +85,13 @@ public class RunNodeHelper {
         JobWorkPo jobWorkPo = jobWorkMapper.selectById(jobRunWorkPo.getWorkId());
 
         if (jobWorkPo == null) {
-            return executeWorkParam;
+            log.warn("workId:{},目前没有生成运行任务！", jobRunWorkPo.getWorkId());
+            return null;
+        }
+        // 如果任务没有启用, 该任务不执行
+        if (NumberUtil.equals(jobWorkPo.getWorkStatus(), WorkStatusEnum.STOP.getCode())) {
+            log.warn("workId:{},目前任务没有启用！", jobRunWorkPo.getWorkId());
+            return null;
         }
         executeWorkParam.setWorkId(jobRunWorkPo.getWorkId())
                 .setWorkType(jobWorkPo.getWorkType()).setRunWorkId(jobRunWorkPo.getRunWorkId());
@@ -107,8 +115,8 @@ public class RunNodeHelper {
         List<JobWorkNodePo> workAllNodeList = jobWorkNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkNodePo.class)
                 .in(JobWorkNodePo::getNodeId, nodeIdList));
 
-        Map<String, JobWorkNodeVo> jobWorkNodeMap = workAllNodeList.stream().collect(Collectors
-                .toMap(JobWorkNodePo::getNodeId, x -> BeanUtil.toBean(x, JobWorkNodeVo.class)));
+        Map<String, JobWorkRunNodeVo> jobWorkNodeMap = workAllNodeList.stream().collect(Collectors
+                .toMap(JobWorkNodePo::getNodeId, x -> BeanUtil.toBean(x, JobWorkRunNodeVo.class)));
 
         List<JobWorkImportFilePo> jobWorkImportFilePos = jobWorkImportFileMapper.selectList(Wrappers.lambdaQuery(JobWorkImportFilePo.class)
                 .in(JobWorkImportFilePo::getNodeId, nodeIdList));
@@ -135,7 +143,7 @@ public class RunNodeHelper {
                         && DateUtil.compare(x.getTurnDate(), turnDate) == 0
                         && jobWorkNodeMap.containsKey(x.getNodeId()))
                 .map(x -> {
-                    JobWorkNodeVo jobWorkNodeVo = jobWorkNodeMap.get(x.getNodeId());
+                    JobWorkRunNodeVo jobWorkNodeVo = jobWorkNodeMap.get(x.getNodeId());
                     ExecuteNodeParam executeNodeParam = BeanUtil.toBean(x, ExecuteNodeParam.class);
                     executeNodeParam.setWorkId(jobRunWorkPo.getWorkId());
                     executeNodeParam.setNodeType(jobWorkNodeVo.getNodeType());

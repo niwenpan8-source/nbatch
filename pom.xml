@@ -45,10 +45,11 @@
 		<hutool.version>5.8.41</hutool.version>
 		<junit.version>4.13.2</junit.version>
 		<lombok.version>1.18.12</lombok.version>
-		<mybatisplus.version>3.4.3.1</mybatisplus.version>
+		<mybatisplus.version>3.5.15</mybatisplus.version>
 		<dynamic-mybatisplus.version>3.4.1</dynamic-mybatisplus.version>
 		<gbase.version>9.5.0.7</gbase.version>
 		<opengauss.version>6.0.0-og</opengauss.version>
+		<clickhouse.version>0.9.4</clickhouse.version>
 	</properties>
 
 	<dependencyManagement>
@@ -167,6 +168,12 @@
 				<version>${mybatisplus.version}</version>
 			</dependency>
 
+			<dependency>
+				<groupId>com.baomidou</groupId>
+				<artifactId>mybatis-plus-jsqlparser-4.9</artifactId>
+				<version>${mybatisplus.version}</version>
+			</dependency>
+
 			<!-- mysql -->
 			<dependency>
 				<groupId>com.mysql</groupId>
@@ -233,6 +240,12 @@
 				<groupId>org.opengauss</groupId>
 				<artifactId>opengauss-jdbc</artifactId>
 				<version>${opengauss.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.clickhouse</groupId>
+				<artifactId>clickhouse-jdbc</artifactId>
+				<version>${clickhouse.version}</version>
 			</dependency>
 
 		</dependencies>

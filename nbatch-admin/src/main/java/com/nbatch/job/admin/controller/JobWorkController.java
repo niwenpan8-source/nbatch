@@ -4,8 +4,10 @@ import cn.hutool.core.codec.Base64Encoder;
 import cn.hutool.json.JSONUtil;
 import com.nbatch.job.admin.core.domain.param.JobWorkPageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkParam;
+import com.nbatch.job.admin.core.domain.po.JobWorkNodePo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeTypeVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkVo;
+import com.nbatch.job.admin.core.enums.RunWorkStatusEnum;
 import com.nbatch.job.admin.core.enums.WorkStatusEnum;
 import com.nbatch.job.admin.service.IJobWorkNodeService;
 import com.nbatch.job.admin.service.IJobWorkService;
@@ -42,6 +44,7 @@ public class JobWorkController {
     public String index(Model model) {
         // 枚举-字典路由策略-列表
         model.addAttribute("workStatusEnum", WorkStatusEnum.values());
+        model.addAttribute("runWorkStatusEnum", RunWorkStatusEnum.values());
         return "jobwork/jobwork.index";
     }
 
@@ -93,11 +96,10 @@ public class JobWorkController {
 
     @RequestMapping("/editModel")
     public String editModel(Model model, String workId) {
-        List<JobWorkNodeTypeVo> list = jobWorkNodeService.getAllPublishNode();
+        List<JobWorkNodePo> list = jobWorkNodeService.getWorkNode(workId);
         // 枚举-字典路由策略-列表
         model.addAttribute("workId", workId);
         model.addAttribute("list", list);
-        model.addAttribute("jobWorkNodeTypeJsonStr", Base64Encoder.encode(JSONUtil.toJsonStr(list)));
         return "jobwork/jobwork.edit";
     }
 

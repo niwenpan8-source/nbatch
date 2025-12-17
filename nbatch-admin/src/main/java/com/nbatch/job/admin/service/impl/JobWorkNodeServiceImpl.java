@@ -7,9 +7,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodePageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodeParam;
 import com.nbatch.job.admin.core.domain.po.JobWorkNodePo;
+import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeTypeVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeVo;
+import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeVo;
 import com.nbatch.job.admin.core.enums.NodeTypeEnum;
+import com.nbatch.job.admin.mapper.IJobWorkMapper;
 import com.nbatch.job.admin.mapper.IJobWorkNodeMapper;
 import com.nbatch.job.admin.service.IJobWorkNodeService;
 import org.springframework.stereotype.Service;
@@ -32,16 +35,21 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
     @Resource
     private IJobWorkNodeMapper jobWorkNodeMapper;
 
+    @Resource
+    private IJobWorkMapper jobWorkMapper;
+
     /**
      * 分页列表
      */
     @Override
     public Map<String, Object> pageList(JobWorkNodePageParam param) {
         Page<JobWorkNodePo> page = jobWorkNodeMapper.selectPage(new Page<>((param.getStart() / param.getLength()) + 1, param.getLength()),
-                Wrappers.lambdaQuery(JobWorkNodePo.class));
+                Wrappers.lambdaQuery(JobWorkNodePo.class)
+                        .eq(StrUtil.isNotBlank(param.getWorkId()), JobWorkNodePo::getWorkId, param.getWorkId())
+                        .eq(StrUtil.isNotBlank(param.getNodeType()), JobWorkNodePo::getNodeType, param.getNodeType()));
         // package result
         page.convert(jobWorkNodePo -> {
-            JobWorkNodeVo jobWorkNodeVo = BeanUtil.toBean(jobWorkNodePo, JobWorkNodeVo.class);
+            JobWorkRunNodeVo jobWorkNodeVo = BeanUtil.toBean(jobWorkNodePo, JobWorkRunNodeVo.class);
             jobWorkNodeVo.setNodeTypeName(NodeTypeEnum.getValue(jobWorkNodePo.getNodeType()));
             return jobWorkNodeVo;
         });
@@ -99,28 +107,19 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
      * 得到所有的发布的
      */
     @Override
-    public List<JobWorkNodeTypeVo> getAllPublishNode() {
-        List<JobWorkNodePo> list = jobWorkNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkNodePo.class)
-                .eq(JobWorkNodePo::getNodeStatus, 1));
-        List<JobWorkNodeVo> jobWorkNodeVoList = list.stream()
-                .filter(x -> StrUtil.isNotEmpty(x.getNodeType()))
-                .map(x -> {
-                    JobWorkNodeVo jobWorkNodeVo = BeanUtil.toBean(x, JobWorkNodeVo.class);
-                    jobWorkNodeVo.setNodeTypeName(NodeTypeEnum.getValue(x.getNodeType()));
-                    return jobWorkNodeVo;
-                }).collect(Collectors.toList());
-        Map<String, List<JobWorkNodeVo>> jobWorkNodeVoMap
-                = jobWorkNodeVoList.stream().collect(Collectors.groupingBy(JobWorkNodeVo::getNodeType));
-        List<JobWorkNodeTypeVo> jobWorkNodeTypeList = new ArrayList<>();
-        jobWorkNodeVoMap.forEach((k, v) -> {
-            JobWorkNodeTypeVo jobWorkNodeTypeVo = new JobWorkNodeTypeVo();
-            jobWorkNodeTypeVo
-                    .setNodeType(k)
-                    .setNodeTypeName(NodeTypeEnum.getValue(k))
-                    .setJobWorkNodeList(v);
-            jobWorkNodeTypeList.add(jobWorkNodeTypeVo);
-        });
-        return jobWorkNodeTypeList;
+    public List<JobWorkNodePo> getWorkNode(String workId) {
+        return jobWorkNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkNodePo.class)
+                .eq(JobWorkNodePo::getNodeStatus, 1).eq(JobWorkNodePo::getWorkId, workId));
+    }
+
+    /**
+     * 获取所有启用的作业
+     */
+    @Override
+    public List<JobWorkPo> getAllEnableWorkList() {
+        return jobWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkPo.class)
+                .eq(JobWorkPo::getWorkStatus, 1));
+
     }
 
 

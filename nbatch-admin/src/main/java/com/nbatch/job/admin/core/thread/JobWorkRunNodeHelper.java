@@ -86,6 +86,9 @@ public class JobWorkRunNodeHelper {
         for (JobRunWorkPo jobRunWorkPo : aLlNeedRunWorkList) {
             ExecuteWorkParam executeWorkParam
                     = JobAdminConfig.getAdminConfig().getRunNodeHelper().getEnableExecuteWork(jobRunWorkPo);
+            if (executeWorkParam == null) {
+                continue;
+            }
             // 如果断电重连咋办，如何恢复这个缓存？ 这里采用被动的，只有当任务执行到的时候才会进行断电重连
             JSONObject jsonObject = RUN_WORK_ID_CACHE.get(executeWorkParam.getRunWorkId());
             if (jsonObject == null) {

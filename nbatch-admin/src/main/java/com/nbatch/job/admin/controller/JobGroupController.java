@@ -202,14 +202,14 @@ public class JobGroupController {
     @PermissionLimit(adminuser = true)
     public ReturnT<String> remove(int id) {
         // valid
-        int count = jobInfoMapper.selectCount(Wrappers.lambdaQuery(JobInfoPo.class)
+        Long count = jobInfoMapper.selectCount(Wrappers.lambdaQuery(JobInfoPo.class)
                 .eq(JobInfoPo::getJobGroup, id)
                 .eq(JobInfoPo::getTriggerStatus, -1));
         if (count > 0) {
             return new ReturnT<>(500, I18nUtil.getString("jobgroup_del_limit_0"));
         }
 
-        int jobGroupCount = jobGroupMapper.selectCount(Wrappers.lambdaQuery(JobGroupPo.class));
+        Long jobGroupCount = jobGroupMapper.selectCount(Wrappers.lambdaQuery(JobGroupPo.class));
         if (jobGroupCount == 1) {
             return new ReturnT<>(500, I18nUtil.getString("jobgroup_del_limit_1"));
         }

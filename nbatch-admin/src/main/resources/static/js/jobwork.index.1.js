@@ -22,22 +22,17 @@ $(function () {
                 "data": 'workId',
                 "bSortable": false,
                 "visible": true,
-                "width": '20%'
+                "width": '15%'
             },
             {
                 "data": 'workName',
                 "visible": true,
-                "width": '20%'
-            },
-            {
-                "data": 'workDesc',
-                "visible": true,
-                "width": '20%'
+                "width": '15%'
             },
             {
                 "data": 'workStatus',
                 "visible": true,
-                "width": '13%',
+                "width": '10%',
                 "render": function (data, type, row) {
                     // status
                     if (1 === data) {
@@ -48,8 +43,24 @@ $(function () {
                 }
             },
             {
-                "data": 'turnTime',
+                "data": 'runWorkStatus',
                 "visible": true,
+                "width": '10%',
+                "render": function (data, type, row) {
+                    // status
+                    if (2 === data) {
+                        return '<div style="text-align: left;"><small class="label label-info">执行完毕</small></div>';
+                    } else if (1 === data) {
+                        return '<div style="text-align: left;"><small class="label label-info">进行中</small></div>';
+                    } else {
+                        return '<div style="text-align: left;"><small class="label label-default">待执行</small></div>';
+                    }
+                }
+            },
+            {
+                "data": 'turnDate',
+                "visible": true,
+                "width": '15%',
                 "render": function (data, type, row) {
                     return data ? moment(new Date(data)).format("YYYY-MM-DD") : "";
                 }
@@ -209,7 +220,7 @@ $(function () {
         layer.open({
             type: 2,
             area: ['500px', '400px'],
-            title: '添加',
+            title: '编辑',
             shade: 0.6,
             shadeClose: false,
             maxmin: true,

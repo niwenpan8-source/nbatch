@@ -28,12 +28,24 @@
 	              	<div class="input-group">
 	                	<span class="input-group-addon">${I18n.job_work_node_field_type}</span>
                 		<select class="form-control" id="nodeType" >
+							<option value="" >--请选择--</option>
                 			<#list nodeTypeEnum as type>
                 				<option value="${type.code}">${type.value}</option>
                 			</#list>
 	                  	</select>
 	              	</div>
 	            </div>
+				<div class="col-xs-3">
+					<div class="input-group">
+						<span class="input-group-addon">${I18n.job_work_node_field_work}</span>
+						<select class="form-control" id="workId" >
+							<option value="" >--请选择--</option>
+							<#list allEnableWorkList as type>
+								<option value="${type.workId}">${type.workName}</option>
+							</#list>
+						</select>
+					</div>
+				</div>
                 <div class="col-xs-1">
                     <button class="btn btn-block btn-info" id="searchBtn">${I18n.system_search}</button>
                 </div>
