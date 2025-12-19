@@ -576,6 +576,7 @@ $(function() {
 		$('#updateModal .form select[name=executorBlockStrategy] option[value='+ row.executorBlockStrategy +']').prop('selected', true);
 		$("#updateModal .form input[name='executorTimeout']").val( row.executorTimeout );
         $("#updateModal .form input[name='executorFailRetryCount']").val( row.executorFailRetryCount );
+		$('#updateModal .form select[name=workId] option[value='+ row.workId +']').prop('selected', true);
 
 		// show
 		$('#updateModal').modal({backdrop: false, keyboard: false}).modal('show');

@@ -42,4 +42,8 @@ public class SpringUtil implements ApplicationContextAware {
     public static <T> Map<String, T> getBeansOfType(Class<T> clazz) throws BeansException {
         return applicationContext.getBeansOfType(clazz);
     }
+
+    public static <T> T getBean(Class<T> clazz) throws BeansException {
+        return applicationContext.getBean(clazz);
+    }
 }

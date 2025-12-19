@@ -2,8 +2,10 @@ package com.nbatch.job.admin.service;
 
 import com.nbatch.job.admin.core.domain.param.JobWorkPageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkParam;
+import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkVo;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -17,6 +19,11 @@ public interface IJobWorkService {
      * 分页列表
      */
     Map<String, Object> pageList(JobWorkPageParam param);
+
+    /**
+     * 获取作业列表
+     */
+    List<JobWorkPo> getWorkList();
 
     /**
      * 插入

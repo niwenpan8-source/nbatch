@@ -3,6 +3,7 @@ package com.nbatch.job.handler.handler.impl;
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.core.biz.model.ExecuteNodeParam;
 import com.nbatch.job.core.executor.BatchJobExecutor;
+import com.nbatch.job.handler.handler.BeanHandlerContext;
 import com.nbatch.job.handler.handler.JobNodeHandlerAdapter;
 import lombok.RequiredArgsConstructor;
 
@@ -23,9 +24,13 @@ public class BeanHandler implements JobNodeHandlerAdapter {
 
     @Override
     public void execute(ExecuteNodeParam nodeParam) throws Exception {
-        System.out.println("执行sql：" + nodeParam.getExecuteContent());
-        // 暂时用不到，不做考虑
-        BatchJobExecutor.loadJobHandler(nodeParam.getExecuteHandler()).execute();
+        try {
+            BeanHandlerContext.setBeanThreadLocal(nodeParam);
+            BatchJobExecutor.loadJobHandler(nodeParam.getExecuteHandler()).execute();
+        } finally {
+            BeanHandlerContext.removeBeanThreadLocal();
+        }
+
 
     }
 }

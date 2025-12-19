@@ -151,7 +151,7 @@ $(function () {
         var url = base_url + "/node/addModel";
         layer.open({
             type: 2,
-            area: ['500px', '400px'],
+            area: ['800px', '500px'],
             title: '添加',
             shade: 0.6,
             shadeClose: false,

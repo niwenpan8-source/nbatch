@@ -36,6 +36,9 @@ public enum ExceptionCodeEnum {
      * db导出文件异常
      */
     SCRIPT_FAIL(10005),
+
+
+    LUA_SCRIPT_FAIL(10006),
     ;
 
     private final Integer code;

@@ -135,11 +135,25 @@
                 </tr>
                 </thead>
                 <tbody id="dependencyList">
-                <tr>
-                    <td colspan="3">
-                        <div class="empty-tip">暂无配置的依赖关系</div>
-                    </td>
-                </tr>
+                <#if relationList?? && relationList?size gt 0>
+                    <#list relationList as relation>
+                        <tr>
+                            <td data-node-id="${relation.nodeId1}">${relation.nodeName1}</td>
+                            <td data-node-id="${relation.nodeId2}">${relation.nodeName2}</td>
+                            <td>
+                                <button class="layui-btn layui-btn-sm" onclick="deleteDependency(this)">
+                                    <i class="layui-icon layui-icon-delete"></i>删除
+                                </button>
+                            </td>
+                        </tr>
+                    </#list>
+                <#else>
+                    <tr>
+                        <td colspan="3">
+                            <div class="empty-tip">暂无配置的依赖关系</div>
+                        </td>
+                    </tr>
+                </#if>
                 </tbody>
             </table>
         </div>
@@ -172,9 +186,10 @@
             });
         </#list>
 
+        var workId = '${workId}';
+
         // 更新依赖节点选项
         window.updateDependencyOptions = function (selectedNodeId) {
-            console.log(selectedNodeId)
             let dependencySelect = $('select[name="dependencyIds"]');
             dependencySelect.empty(); // 清空现有选项
 
@@ -207,15 +222,10 @@
                 return;
             }
 
-            let nodeMap = {};
-            <#list list as node>
-            nodeMap['${node.nodeId}'] = '${node.nodeName}';
-            </#list>
-
-            updateDependencyTable(currentNodeId, currentNodeName, dependencyNodeId, dependencyNodeName, nodeMap);
+            updateDependencyTable(currentNodeId, currentNodeName, dependencyNodeId, dependencyNodeName);
         };
 
-        window.updateDependencyTable = function (currentNodeId, currentNodeName, dependencyNodeId, dependencyNodeName, nodeMap) {
+        window.updateDependencyTable = function (currentNodeId, currentNodeName, dependencyNodeId, dependencyNodeName) {
             // 移除空状态提示行（如果存在）
             if ($('#dependencyList .empty-tip').length > 0) {
                 $('#dependencyList').empty();
@@ -223,13 +233,14 @@
 
             let newRow = `
             <tr>
-                <td>` + currentNodeName+ `</td>
-                <td>` + dependencyNodeName+ `</td>
+                <td  data-node-id="` + currentNodeId + `">` + currentNodeName + `</td>
+                <td  data-node-id="` + dependencyNodeId + `">` + dependencyNodeName + `</td>
                 <td>
-                    <button class="layui-btn layui-btn-danger layui-btn-sm" onclick="deleteDependency(this)">删除</button>
+                    <button class="layui-btn layui-btn-sm" onclick="deleteDependency(this)">
+                        <i class="layui-icon layui-icon-delete"></i>删除
+                    </button>
                 </td>
-            </tr>
-        `;
+            </tr>`;
 
             let exists = false;
             $('#dependencyList tr').each(function () {
@@ -248,6 +259,7 @@
             layer.msg('依赖关系已添加到表格');
         };
 
+        // 删除依赖关系
         window.deleteDependency = function (button) {
             $(button).closest('tr').remove();
             layer.msg('依赖关系已删除');
@@ -267,6 +279,41 @@
 
             // 显示提示信息
             layer.msg('依赖关系列表已重置');
+        };
+
+        // 提交依赖关系
+        window.submitDependencies = function() {
+            // 或者在遍历表格行时获取
+            var nodeRelationList = []; // 存储节点列表
+            $('#dependencyList tr').each(function() {
+                let nodeId1 = $(this).find('td:first').data('node-id');
+                let nodeId2 = $(this).find('td:nth-child(2)').data('node-id');
+                if (!nodeId1 || !nodeId2) {
+                    return;
+                }
+                nodeRelationList.push({
+                    nodeId1: nodeId1,
+                    nodeId2: nodeId2,
+                })
+            });
+            var workNodeRelationParam = {
+                workId: workId,
+                nodeRelationList: nodeRelationList
+            };
+            $.ajax({
+                url: '${request.contextPath}/work/edit',
+                type: 'POST',
+                data: JSON.stringify(workNodeRelationParam),
+                contentType: 'application/json',
+                success: function(response) {
+                    if (response.code === 200) {
+                        layer.msg('依赖关系提交成功');
+                    } else {
+                        layer.msg('依赖关系提交失败：' + response.message);
+                    }
+                },
+                error: function(xhr, status, error) {}
+            })
         };
     });
 

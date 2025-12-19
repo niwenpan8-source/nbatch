@@ -87,7 +87,7 @@ public class SpecialSqlUtil {
     /**
      * 执行查询sql
      */
-    public static List<Map<String, Object>> queryList(Connection conn, String sqlCmd, long rowsLimt) throws SQLException {
+    public static List<Map<String, Object>> queryList(Connection conn, String sqlCmd, long rowsLimit) throws SQLException {
         List<Map<String, Object>> result = new ArrayList<>();
         AtomicLong total = new AtomicLong(0L);
         ResultSet resultSet = null;
@@ -111,7 +111,7 @@ public class SpecialSqlUtil {
                 }
 
                 result.add(lineResult);
-                if (total.addAndGet(1L) >= rowsLimt) {
+                if (total.addAndGet(1L) >= rowsLimit) {
                     throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "查询记录数超过上限");
                 }
             }

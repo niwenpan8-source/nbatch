@@ -1,19 +1,25 @@
 package com.nbatch.job.admin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodePageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodeParam;
+import com.nbatch.job.admin.core.domain.param.JobWorkNodeRelationParam;
 import com.nbatch.job.admin.core.domain.po.JobWorkNodePo;
+import com.nbatch.job.admin.core.domain.po.JobWorkNodeRelationPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkPo;
+import com.nbatch.job.admin.core.domain.vo.JobWorkNodeRelationVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeTypeVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeVo;
 import com.nbatch.job.admin.core.enums.NodeTypeEnum;
 import com.nbatch.job.admin.mapper.IJobWorkMapper;
 import com.nbatch.job.admin.mapper.IJobWorkNodeMapper;
+import com.nbatch.job.admin.mapper.IJobWorkNodeRelationMapper;
 import com.nbatch.job.admin.service.IJobWorkNodeService;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +43,9 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
 
     @Resource
     private IJobWorkMapper jobWorkMapper;
+
+    @Resource
+    private IJobWorkNodeRelationMapper jobWorkNodeRelationMapper;
 
     /**
      * 分页列表
@@ -68,6 +77,7 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
      */
     @Override
     public int insert(JobWorkNodeParam param) {
+        param.setUpdateTime(DateUtil.date());
         return jobWorkNodeMapper.insert(BeanUtil.toBean(param, JobWorkNodePo.class));
     }
 
@@ -76,6 +86,7 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
      */
     @Override
     public int update(JobWorkNodeParam param) {
+        param.setUpdateTime(DateUtil.date());
         return jobWorkNodeMapper.updateById(BeanUtil.toBean(param, JobWorkNodePo.class));
     }
 
@@ -116,10 +127,49 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
      * 获取所有启用的作业
      */
     @Override
-    public List<JobWorkPo> getAllEnableWorkList() {
-        return jobWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkPo.class)
-                .eq(JobWorkPo::getWorkStatus, 1));
+    public List<JobWorkPo> getAllWorkList() {
+        return jobWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkPo.class));
 
+    }
+
+    /**
+     * 获得所有作业节点关系
+     */
+    @Override
+    public List<JobWorkNodeRelationVo> getWorkNodeRelationByWorkId(String workId) {
+        List<JobWorkNodeRelationPo> relationList = jobWorkNodeRelationMapper.selectList(Wrappers.lambdaQuery(JobWorkNodeRelationPo.class)
+                .eq(JobWorkNodeRelationPo::getWorkId, workId)
+                .orderByDesc(JobWorkNodeRelationPo::getNodeId1));
+        List<JobWorkNodePo> jobWorkNodePos = jobWorkNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkNodePo.class)
+                .eq(JobWorkNodePo::getWorkId, workId));
+        Map<String, String> nodeMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(jobWorkNodePos)) {
+            nodeMap = jobWorkNodePos.stream()
+                    .collect(Collectors.toMap(JobWorkNodePo::getNodeId, JobWorkNodePo::getNodeName));
+        }
+        Map<String, String> finalNodeMap = nodeMap;
+        return relationList.stream().map(x -> {
+            JobWorkNodeRelationVo bean = BeanUtil.toBean(x, JobWorkNodeRelationVo.class);
+            bean.setNodeName1(finalNodeMap.get(x.getNodeId1()));
+            bean.setNodeName2(finalNodeMap.get(x.getNodeId2()));
+            return bean;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * 批量插入作业节点关系
+     */
+    @Override
+    public int updateWorkNodeRelation(JobWorkNodeRelationParam param) {
+        int insertCount = 0;
+        jobWorkNodeRelationMapper.delete(Wrappers.lambdaQuery(JobWorkNodeRelationPo.class)
+                .eq(JobWorkNodeRelationPo::getWorkId, param.getWorkId()));
+        for (JobWorkNodeRelationParam.NodeRelation relation : param.getNodeRelationList()) {
+            JobWorkNodeRelationPo bean = BeanUtil.toBean(relation, JobWorkNodeRelationPo.class);
+            bean.setWorkId(param.getWorkId());
+            insertCount += jobWorkNodeRelationMapper.insert(bean);
+        }
+        return insertCount;
     }
 
 

@@ -2,8 +2,11 @@ package com.nbatch.job.admin.service;
 
 import com.nbatch.job.admin.core.domain.param.JobWorkNodePageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodeParam;
+import com.nbatch.job.admin.core.domain.param.JobWorkNodeRelationParam;
 import com.nbatch.job.admin.core.domain.po.JobWorkNodePo;
+import com.nbatch.job.admin.core.domain.po.JobWorkNodeRelationPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkPo;
+import com.nbatch.job.admin.core.domain.vo.JobWorkNodeRelationVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeTypeVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeVo;
@@ -51,5 +54,16 @@ public interface IJobWorkNodeService {
     /**
      * 获取所有启用的作业
      */
-    List<JobWorkPo> getAllEnableWorkList();
+    List<JobWorkPo> getAllWorkList();
+
+    /**
+     * 获得所有作业节点关系
+     */
+    List<JobWorkNodeRelationVo> getWorkNodeRelationByWorkId(String workId);
+
+    /**
+     * 批量插入作业节点关系
+     */
+    int updateWorkNodeRelation(JobWorkNodeRelationParam param);
+
 }

@@ -68,7 +68,7 @@
                     <option value="" >--请选择--</option>
                     <#list dbTypeEnum as item>
                         <option value="${item.code}"
-                                <#if model?? && model.nodeType?? && model.nodeType == item.code>selected</#if>>
+                                <#if model?? && model.dbType?? && model.dbType == item.code>selected</#if>>
                             ${item.value}
                         </option>
                     </#list>

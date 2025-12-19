@@ -17,6 +17,7 @@ public enum NodeTypeEnum {
     NODE_TYPE_EXECUTE_SQL("execute_sql", "执行sql"),
     NODE_TYPE_FILE_TO_DB("file_to_db", "文件导入到数据库"),
     NODE_TYPE_DB_TO_FILE("db_to_file", "数据库导出到文件"),
+    NODE_TYPE_BEAN("bean", "bean模式"),
     ;
 
     private final String code;

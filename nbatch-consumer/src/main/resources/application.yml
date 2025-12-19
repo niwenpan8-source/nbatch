@@ -15,11 +15,12 @@ spring:
       primary: gauss
       #严格匹配数据源,默认false. true未匹配到指定数据源时抛异常,false使用默认数据源
       strict: false
+      lazy:  true
       datasource:
         gauss:
-          url: jdbc:opengauss://192.168.10.196:4432/dmap_zgyh_guangdong?currentSchema=dmap_schema_dev&serverTimezone=Asia/Shanghai
-          username: dmapuser
-          password: dmap@123
+          url: jdbc:opengauss://192.168.10.196:4432/imds_nyyh_guangdong?currentSchema=public&serverTimezone=Asia/Shanghai
+          username: fmdsuser
+          password: Bankfund@123@
           driver-class-name: org.opengauss.Driver
           hikari:
             min-idle: 1
@@ -31,10 +32,10 @@ spring:
             connection-test-query: SELECT 1
             validation-timeout: 1000
         gbase:
-          url: jdbc:gbase://192.168.10.160:5258/dmap_zgyh_guangdong_prd
-          username: dmapuser
+          url: jdbc:mysql://192.168.10.196:9004/nyyh_guangdong
+          username: default
           password: bankfund
-          driver-class-name: com.gbase.jdbc.Driver
+          driver-class-name: com.mysql.cj.jdbc.Driver
           hikari:
             min-idle: 1
             max-pool-size: 1
@@ -54,7 +55,7 @@ nbatch:
       accessToken: default_token
       timeout: 3
     executor:
-      appName: xxl-job-executor-sample
+      appName: nbatch-consumer
       address:
       ip:
       port: 9999

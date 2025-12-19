@@ -75,6 +75,14 @@ public class JobWorkServiceImpl implements IJobWorkService {
     }
 
     /**
+     * 获取作业列表
+     */
+    @Override
+    public List<JobWorkPo> getWorkList() {
+        return jobWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkPo.class));
+    }
+
+    /**
      * 插入
      */
     @Override

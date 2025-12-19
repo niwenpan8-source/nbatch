@@ -48,7 +48,12 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
     public void execute(ExecuteNodeParam nodeParam) throws Exception {
         ExecuteFileToDbParam param = nodeParam.getExecuteFileToDbParam();
         String tempPath = handlerPropertiesConstant.getTempPath();
-        JSONObject replaceObj = JSONUtil.parseObj(param.getFileNameParam());
+        JSONObject replaceObj;
+        if (StrUtil.isBlank(param.getFileName())) {
+            replaceObj = JSONUtil.parseObj(param.getFileNameParam());
+        } else {
+            replaceObj = new JSONObject();
+        }
         replaceObj.putOpt("date", nodeParam.getTurnDate());
         String finishGenerateFileName = NbatchFileUtil.generateFileName(param.getFileName(), replaceObj);
         // 文件导入到数据库压缩文件名称

@@ -39,7 +39,7 @@ public class JobWorkNodeController {
     @RequestMapping
     public String index(Model model) {
         // 枚举-字典路由策略-列表
-        List<JobWorkPo> allEnableWorkList = jobWorkNodeService.getAllEnableWorkList();
+        List<JobWorkPo> allEnableWorkList = jobWorkNodeService.getAllWorkList();
         model.addAttribute("allEnableWorkList", allEnableWorkList);
         model.addAttribute("nodeTypeEnum", NodeTypeEnum.values());
         return "worknode/worknode.index";
@@ -61,10 +61,12 @@ public class JobWorkNodeController {
     @RequestMapping("/addModel")
     public String addModel(Model model) {
         // 枚举-字典路由策略-列表
-        List<JobWorkPo> allEnableWorkList = jobWorkNodeService.getAllEnableWorkList();
+        List<JobWorkPo> allEnableWorkList = jobWorkNodeService.getAllWorkList();
         model.addAttribute("allEnableWorkList", allEnableWorkList);
         model.addAttribute("nodeTypeEnum", NodeTypeEnum.values());
         model.addAttribute("workStatusEnum", WorkStatusEnum.values());
+        model.addAttribute("scriptTypeEnum", ScriptTypeEnum.values());
+        model.addAttribute("dbTypeEnum", DbTypeEnum.values());
         return "worknode/worknode.add";
     }
 
@@ -78,7 +80,7 @@ public class JobWorkNodeController {
     public String updateModel(Model model, String workNodeId) {
         JobWorkNodeVo workVo = jobWorkNodeService.getModel(workNodeId);
         // 枚举-字典路由策略-列表
-        List<JobWorkPo> allEnableWorkList = jobWorkNodeService.getAllEnableWorkList();
+        List<JobWorkPo> allEnableWorkList = jobWorkNodeService.getAllWorkList();
         model.addAttribute("allEnableWorkList", allEnableWorkList);
         model.addAttribute("nodeTypeEnum", NodeTypeEnum.values());
         model.addAttribute("workStatusEnum", WorkStatusEnum.values());

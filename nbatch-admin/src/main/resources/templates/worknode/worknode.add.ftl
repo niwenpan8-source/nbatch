@@ -9,12 +9,11 @@
 <!-- job新增.模态框 -->
 <div class="modal-body">
     <form class="form-horizontal form" role="form" id="addModel" action="/node/insert">
-        <input type="hidden" name="nodeId" value="${model.nodeId}">
 
         <div class="form-group">
             <label for="workId" class="col-sm-2 control-label">作业名称<font color="red">*</font></label>
             <div class="col-sm-4">
-                <select class="form-control" id="workId" >
+                <select class="form-control" id="workId" name="workId">
                     <option value="" >--请选择--</option>
                     <#list allEnableWorkList as item>
                         <option value="${item.workId}">
@@ -94,7 +93,7 @@
             <label for="executeContent" class="col-sm-2 control-label">执行内容<font color="red">*</font></label>
             <div class="col-sm-10">
                 <textarea class="textarea form-control" name="executeContent" placeholder="${I18n.system_please_input}"
-                          maxlength="512" style="height: 63px; line-height: 1.2;">${(model.executeContent)!}</textarea>
+                          maxlength="512" style="height: 63px; line-height: 1.2;"></textarea>
             </div>
         </div>
 
@@ -102,7 +101,7 @@
             <label for="executeContentParam" class="col-sm-2 control-label">执行内容参数<font color="red">*</font></label>
             <div class="col-sm-10">
                 <textarea class="textarea form-control" name="executeContentParam" placeholder="${I18n.system_please_input}"
-                          maxlength="512" style="height: 63px; line-height: 1.2;">${(model.executeContentParam)!}</textarea>
+                          maxlength="512" style="height: 63px; line-height: 1.2;"></textarea>
             </div>
         </div>
 

@@ -19,7 +19,6 @@ public class JobWorkNodeRelationVo {
     /**
      * 作业节点关系id
      */
-    @TableId(type = IdType.ASSIGN_ID)
     private String nodeRelationId;
 
     /**
@@ -31,11 +30,13 @@ public class JobWorkNodeRelationVo {
      * 节点1
      */
     private String nodeId1;
+    private String nodeName1;
 
     /**
      * 节点2
      */
     private String nodeId2;
+    private String nodeName2;
 
     /**
      * 节点顺序

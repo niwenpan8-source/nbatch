@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @Component
-public class SampleXxlJob {
+public class NbatchSampleJob {
 
 
     /**
@@ -244,12 +244,26 @@ public class SampleXxlJob {
     public void demoJobHandler2() throws Exception {
         BatchJobHelper.log("XXL-JOB, Hello World.");
     }
+
+    /**
+     * 5、生命周期任务示例：任务初始化与销毁时，支持自定义相关逻辑；
+     */
+    @BatchJob(value = "executeHandle")
+    public void handleComputation() throws Exception {
+        log.warn("execute handleComputation.");
+        BatchJobHelper.log("execute handleComputation.");
+    }
+
+
+
     public void init(){
         log.info("init");
     }
+
     public void destroy(){
         log.info("destroy");
     }
+
 
 
 }

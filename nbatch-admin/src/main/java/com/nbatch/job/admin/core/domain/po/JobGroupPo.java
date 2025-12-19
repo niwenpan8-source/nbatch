@@ -52,7 +52,7 @@ public class JobGroupPo extends Model<JobGroupPo> {
     /**
      * 执行器地址列表，多地址逗号分隔
      */
-    @TableField(updateStrategy = FieldStrategy.NEVER)
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private String addressList;
 
     /**

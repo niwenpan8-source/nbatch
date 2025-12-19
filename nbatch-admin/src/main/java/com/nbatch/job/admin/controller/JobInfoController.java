@@ -8,6 +8,7 @@ import com.nbatch.job.admin.core.domain.param.JobInfoParam;
 import com.nbatch.job.admin.core.domain.po.JobGroupPo;
 import com.nbatch.job.admin.core.domain.po.JobInfoPo;
 import com.nbatch.job.admin.core.domain.po.JobUserPo;
+import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.enums.ExecutorRouteStrategyEnum;
 import com.nbatch.job.admin.core.enums.MisfireStrategyEnum;
 import com.nbatch.job.admin.core.enums.ScheduleTypeEnum;
@@ -16,6 +17,7 @@ import com.nbatch.job.admin.core.thread.JobScheduleHelper;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.admin.mapper.IJobGroupMapper;
 import com.nbatch.job.admin.service.IJobService;
+import com.nbatch.job.admin.service.IJobWorkService;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.enums.ExecutorBlockStrategyEnum;
@@ -47,7 +49,9 @@ public class JobInfoController {
     @Resource
     private IJobGroupMapper jobGroupMapper;
     @Resource
-    private IJobService xxlJobService;
+    private IJobService jobService;
+    @Resource
+    private IJobWorkService jobWorkService;
 
     @RequestMapping
     public String index(HttpServletRequest request, Model model, @RequestParam(required = false, defaultValue = "-1") String jobGroup) {
@@ -73,8 +77,11 @@ public class JobInfoController {
             throw new JobException(I18nUtil.getString("jobgroup_empty"));
         }
 
+        List<JobWorkPo> workList = jobWorkService.getWorkList();
+
         model.addAttribute("JobGroupList", jobGroupList);
         model.addAttribute("jobGroup", jobGroup);
+        model.addAttribute("workList", workList);
 
         return "jobinfo/jobinfo.index";
     }
@@ -85,7 +92,7 @@ public class JobInfoController {
                                         @RequestParam(required = false, defaultValue = "10") int length,
                                         String jobGroup, int triggerStatus, String jobDesc, String executorHandler, String author) {
 
-        return xxlJobService.pageList(start, length, jobGroup, triggerStatus, jobDesc, executorHandler, author);
+        return jobService.pageList(start, length, jobGroup, triggerStatus, jobDesc, executorHandler, author);
     }
 
     @RequestMapping("/add")
@@ -96,7 +103,7 @@ public class JobInfoController {
 
         // opt
         JobUserPo loginUser = PermissionInterceptor.getLoginUser(request);
-        return xxlJobService.add(jobInfoParam, loginUser);
+        return jobService.add(jobInfoParam, loginUser);
     }
 
     @RequestMapping("/update")
@@ -107,25 +114,25 @@ public class JobInfoController {
 
         // opt
         JobUserPo loginUser = PermissionInterceptor.getLoginUser(request);
-        return xxlJobService.update(jobInfo, loginUser);
+        return jobService.update(jobInfo, loginUser);
     }
 
     @RequestMapping("/remove")
     @ResponseBody
     public ReturnT<String> remove(String id) {
-        return xxlJobService.remove(id);
+        return jobService.remove(id);
     }
 
     @RequestMapping("/stop")
     @ResponseBody
     public ReturnT<String> pause(String id) {
-        return xxlJobService.stop(id);
+        return jobService.stop(id);
     }
 
     @RequestMapping("/start")
     @ResponseBody
     public ReturnT<String> start(String id) {
-        return xxlJobService.start(id);
+        return jobService.start(id);
     }
 
     @RequestMapping("/trigger")
@@ -134,7 +141,7 @@ public class JobInfoController {
         // login user
         JobUserPo loginUser = PermissionInterceptor.getLoginUser(request);
         // trigger
-        return xxlJobService.trigger(loginUser, id, executorParam, addressList);
+        return jobService.trigger(loginUser, id, executorParam, addressList);
     }
 
     @RequestMapping("/nextTriggerTime")

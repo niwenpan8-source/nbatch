@@ -42,8 +42,13 @@ public class DbToFileHandler implements JobNodeHandlerAdapter {
     public void execute(ExecuteNodeParam nodeParam) throws Exception {
         ExecuteDbToFileParam param = nodeParam.getExecuteDbToFileParam();
         String tempPath = handlerPropertiesConstant.getTempPath();
+        JSONObject replaceObj;
+        if (StrUtil.isBlank(param.getFileName())) {
+            replaceObj = JSONUtil.parseObj(param.getFileNameParam());
+        } else {
+            replaceObj = new JSONObject();
+        }
 
-        JSONObject replaceObj = JSONUtil.parseObj(param.getFileNameParam());
         replaceObj.putOpt("date", nodeParam.getTurnDate());
         String finishGenerateFileName = NbatchFileUtil.generateFileName(param.getFileName(), replaceObj);
         // 数据库导出文件名称

@@ -3,7 +3,6 @@ package com.nbatch.job.admin.core.thread;
 import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.enums.TriggerTypeEnum;
 import com.nbatch.job.admin.core.trigger.JobTrigger;
-import com.nbatch.job.core.biz.model.ExecuteWorkParam;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,7 +11,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 
 /**
  * job trigger thread pool helper
@@ -29,7 +27,7 @@ public class JobTriggerPoolHelper {
     private ThreadPoolExecutor fastTriggerPool = null;
     private ThreadPoolExecutor slowTriggerPool = null;
 
-    public void start(){
+    public void start() {
         fastTriggerPool = new ThreadPoolExecutor(
                 10,
                 JobAdminConfig.getAdminConfig().getTriggerPoolFastMax(),
@@ -78,7 +76,7 @@ public class JobTriggerPoolHelper {
         ThreadPoolExecutor triggerPool = fastTriggerPool;
         AtomicInteger jobTimeoutCount = jobTimeoutCountMap.get(jobId);
         // job-timeout 10 times in 1 min
-        if (jobTimeoutCount!=null && jobTimeoutCount.get() > 10) {
+        if (jobTimeoutCount != null && jobTimeoutCount.get() > 10) {
             triggerPool = slowTriggerPool;
         }
 
@@ -97,14 +95,14 @@ public class JobTriggerPoolHelper {
                 } finally {
 
                     // check timeout-count-map
-                    long minTiNow = System.currentTimeMillis()/60000;
+                    long minTiNow = System.currentTimeMillis() / 60000;
                     if (minTim != minTiNow) {
                         minTim = minTiNow;
                         jobTimeoutCountMap.clear();
                     }
 
                     // incr timeout-count-map
-                    long cost = System.currentTimeMillis()-start;
+                    long cost = System.currentTimeMillis() - start;
                     if (cost > 500) {       // ob-timeout threshold 500ms
                         AtomicInteger timeoutCount = jobTimeoutCountMap.putIfAbsent(jobId, new AtomicInteger(1));
                         if (timeoutCount != null) {
@@ -115,13 +113,13 @@ public class JobTriggerPoolHelper {
                 }
 
             }
+
             @Override
             public String toString() {
-                return "Job Runnable, jobId:"+jobId;
+                return "Job Runnable, jobId:" + jobId;
             }
         });
     }
-
 
 
     // ---------------------- helper ----------------------
@@ -131,6 +129,7 @@ public class JobTriggerPoolHelper {
     public static void toStart() {
         HELPER.start();
     }
+
     public static void toStop() {
         HELPER.stop();
     }
