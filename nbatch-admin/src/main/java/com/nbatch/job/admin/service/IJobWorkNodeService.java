@@ -1,5 +1,7 @@
 package com.nbatch.job.admin.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.nbatch.job.admin.core.domain.param.JobWorkNodeLogPageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodePageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodeParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodeRelationParam;
@@ -9,6 +11,7 @@ import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeRelationVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeTypeVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeVo;
+import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeLogVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeVo;
 
 import java.util.List;
@@ -49,7 +52,7 @@ public interface IJobWorkNodeService {
     /**
      * 得到所有的发布的
      */
-    List<JobWorkNodePo> getWorkNode(String workId);
+    List<JobWorkNodePo> getWorkNodeList(String workId);
 
     /**
      * 获取所有启用的作业
@@ -65,5 +68,15 @@ public interface IJobWorkNodeService {
      * 批量插入作业节点关系
      */
     int updateWorkNodeRelation(JobWorkNodeRelationParam param);
+
+    /**
+     * 获取作业节点关系
+     */
+    IPage<JobWorkRunNodeLogVo> logPageList(JobWorkNodeLogPageParam param);
+
+    /**
+     * 获取作业节点
+     */
+    JobWorkNodePo getWorkNode(String workNodeId);
 
 }

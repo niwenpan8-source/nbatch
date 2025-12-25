@@ -63,7 +63,6 @@ public class BatchThreadPoolUtil {
      * 中断所有指定线程池
      */
     public static void shutdownAllThreadPool() {
-        System.out.println(THREAD_POOL_EXECUTOR.toString());
         for (Map.Entry<String, BatchThreadPoolExecutor> entry : THREAD_POOL_EXECUTOR.entrySet()) {
             ThreadPoolExecutor executor = entry.getValue();
             if (!executor.isShutdown()) {

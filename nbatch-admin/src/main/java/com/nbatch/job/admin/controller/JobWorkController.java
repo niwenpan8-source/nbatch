@@ -95,7 +95,7 @@ public class JobWorkController {
 
     @RequestMapping("/editModel")
     public String editModel(Model model, String workId) {
-        List<JobWorkNodePo> list = jobWorkNodeService.getWorkNode(workId);
+        List<JobWorkNodePo> list = jobWorkNodeService.getWorkNodeList(workId);
         List<JobWorkNodeRelationVo> relationList = jobWorkNodeService.getWorkNodeRelationByWorkId(workId);
         // 枚举-字典路由策略-列表
         model.addAttribute("workId", workId);

@@ -1,5 +1,5 @@
 -- 如果返回为0则成功，1则为失败
-local function exec_update_sql(sql)
+local function execUpdateSql(sql)
     local success, result = pcall(function()
         return ExecuteGaussSqlHelper:executeUpdateSql(sql)
     end)
@@ -16,7 +16,7 @@ end
 -- 主逻辑
 local function main()
     -- 2. 创建并清空临时表
-    exec_update_sql("update nyyh_src_g_pf_idv_cust_info_bdci set fncl_ent_no = '0' where idv_cust_cod = '1'")
+    execUpdateSql("update nyyh_src_g_pf_idv_cust_info_bdci set fncl_ent_no = '0' where idv_cust_cod = '1'")
 
     -- 存储执行结果
     executionResult = {

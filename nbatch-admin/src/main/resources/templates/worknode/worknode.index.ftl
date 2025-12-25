@@ -62,6 +62,8 @@
 					            	<tr>
 					            		<th name="nodeId">${I18n.job_work_node_field_id}</th>
 					                	<th name="nodeName">${I18n.job_work_node_field_name}</th>
+										<th name="workId">${I18n.job_work_node_work_id}</th>
+										<th name="workName">${I18n.job_work_node_work_name}</th>
 					                  	<th name="nodeDesc">${I18n.job_work_node_field_desc}</th>
                                         <th name="nodeStatus">${I18n.job_work_node_field_status}</th>
                                         <th name="nodeType">${I18n.job_work_node_field_type}</th>

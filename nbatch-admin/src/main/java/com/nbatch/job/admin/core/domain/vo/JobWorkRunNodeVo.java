@@ -28,6 +28,11 @@ public class JobWorkRunNodeVo {
      * 作业id
      */
     private String workId;
+    private String workName;
+
+    /**
+     * 执行作业id
+     */
     private String runWorkId;
 
     /**

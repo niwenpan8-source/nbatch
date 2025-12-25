@@ -23,22 +23,32 @@ $(function () {
                 "data": 'nodeId',
                 "bSortable": false,
                 "visible": true,
-                "width": '15%'
+                "width": '12%'
             },
             {
                 "data": 'nodeName',
                 "visible": true,
-                "width": '15%'
+                "width": '12%'
+            },
+            {
+                "data": 'workId',
+                "visible": true,
+                "width": '12%'
+            },
+            {
+                "data": 'workName',
+                "visible": true,
+                "width": '12%'
             },
             {
                 "data": 'nodeDesc',
                 "visible": true,
-                "width": '20%'
+                "width": '15%'
             },
             {
                 "data": 'nodeStatus',
                 "visible": true,
-                "width": '15%',
+                "width": '12%',
                 "render": function (data, type, row) {
                     // status
                     if (1 === data) {
@@ -71,6 +81,7 @@ $(function () {
                             '     <ul class="dropdown-menu" role="menu" _id="' + row.nodeId + '" >\n' +
                             '       <li><a href="javascript:void(0);" class="update">' + I18n.system_opt_edit + '</a></li>\n' +
                             '       <li><a href="javascript:void(0);" class="delete">' + I18n.system_opt_del + '</a></li>\n' +
+                            '       <li><a href="javascript:void(0);" class="viewLog">' + I18n.system_opt_view_log + '</a></li>\n' +
                             '     </ul>\n' +
                             '   </div>';
                     };
@@ -249,6 +260,23 @@ $(function () {
             btn2: function(index) {
                 layer.close(index);
             }
+        });
+    });
+
+    // 查看日志
+    $("#work_node_list").on('click', '.viewLog',function() {
+        var id = $(this).parents('ul').attr("_id");
+        var url = base_url + "/node/viewLogModel?workNodeId=" + id;
+        layer.open({
+            type: 2,
+            area: ['1000px', '650px'],
+            title: '查看日志',
+            shade: 0.6,
+            shadeClose: false,
+            maxmin: true,
+            anim: 0,
+            content: url,
+            btn: ['确认', '取消']
         });
     });
 

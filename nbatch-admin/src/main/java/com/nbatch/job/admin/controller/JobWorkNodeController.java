@@ -1,9 +1,13 @@
 package com.nbatch.job.admin.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.nbatch.job.admin.core.domain.param.JobWorkNodeLogPageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodePageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodeParam;
+import com.nbatch.job.admin.core.domain.po.JobWorkNodePo;
 import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeVo;
+import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeLogVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeVo;
 import com.nbatch.job.admin.core.enums.DbTypeEnum;
 import com.nbatch.job.admin.core.enums.NodeTypeEnum;
@@ -103,6 +107,20 @@ public class JobWorkNodeController {
         }
         jobWorkNodeService.update(param);
         return new ReturnT<>("修改成功");
+    }
+
+    @RequestMapping("/viewLogModel")
+    public String viewLogModel(Model model, String workNodeId) {
+        JobWorkNodePo workNode = jobWorkNodeService.getWorkNode(workNodeId);
+        model.addAttribute("workNode", workNode);
+        return "worknode/worknode.view.log";
+    }
+
+    @ResponseBody
+    @PostMapping("/logPageList")
+    public ReturnT<IPage<JobWorkRunNodeLogVo>> logPageList(JobWorkNodeLogPageParam param) {
+
+        return new ReturnT<>(jobWorkNodeService.logPageList(param));
     }
 
 }
