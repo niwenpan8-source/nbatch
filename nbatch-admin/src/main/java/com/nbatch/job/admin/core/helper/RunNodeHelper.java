@@ -3,7 +3,6 @@ package com.nbatch.job.admin.core.helper;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateField;
-import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
@@ -77,7 +76,7 @@ public class RunNodeHelper {
      *
      * @param jobRunWorkPo 需要运行的作业
      */
-    public ExecuteWorkParam getEnableExecuteWork(JobRunWorkPo jobRunWorkPo) {
+    public synchronized ExecuteWorkParam getEnableExecuteWork(JobRunWorkPo jobRunWorkPo) {
         if (jobRunWorkPo == null) {
             return null;
         }
@@ -269,10 +268,6 @@ public class RunNodeHelper {
         JobRunWorkPo jobRunWorkPo = jobRunWorkMapper.selectById(runWorkId);
         if (DateUtil.compare(jobWorkRunNodePo.getTurnDate(), jobRunWorkPo.getTurnDate()) == 0) {
             jobWorkRunNodePo.setRunWorkId(runWorkId);
-            // 只有翻牌节点类型才会设置翻牌时间
-            if (workType == WorkTypeEnum.TYPE_TURN.getCode()) {
-                jobWorkRunNodePo.setTurnDate(DateUtil.offset(jobWorkRunNodePo.getTurnDate(), DateField.DAY_OF_MONTH, 1));
-            }
             jobWorkRunNodePo.setNodeRunStatus(RunWorkStatusEnum.COMPLETE.getCode());
             jobWorkRunNodeMapper.updateById(jobWorkRunNodePo);
         }
@@ -289,19 +284,11 @@ public class RunNodeHelper {
                     .eq(JobWorkRunNodePo::getRunWorkId, jobRunWorkPo.getRunWorkId()));
 
             if (CollUtil.isNotEmpty(jobWorkRunNodePos)) {
-                DateTime offsetTurnDate = DateUtil.offset(jobRunWorkPo.getTurnDate(), DateField.DAY_OF_MONTH, 1);
                 long count = jobWorkRunNodePos.stream()
-                        .filter(x -> {
-                            boolean flag = x.getNodeRunStatus() == RunWorkStatusEnum.COMPLETE.getCode();
-                            // 这里由于当作业类型为顺序类型时翻牌时间为空，不判断翻牌时间
-                            if (flag && x.getTurnDate() != null) {
-                                flag = DateUtil.compare(x.getTurnDate(), offsetTurnDate) == 0;
-                            }
-                            return flag;
-                        })
+                        .filter(x -> x.getNodeRunStatus() == RunWorkStatusEnum.COMPLETE.getCode())
                         .count();
                 if (count == jobWorkRunNodePos.size()) {
-                    JobRunWorkPo updateJobWork = new JobRunWorkPo().setTurnDate(offsetTurnDate)
+                    JobRunWorkPo updateJobWork = new JobRunWorkPo()
                             .setRunWorkStatus(RunWorkStatusEnum.COMPLETE.getCode())
                             .setWorkId(jobRunWorkPo.getWorkId())
                             .setRunWorkId(jobRunWorkPo.getRunWorkId());
