@@ -76,7 +76,7 @@ public class RunNodeHelper {
      *
      * @param jobRunWorkPo 需要运行的作业
      */
-    public synchronized ExecuteWorkParam getEnableExecuteWork(JobRunWorkPo jobRunWorkPo) {
+    public ExecuteWorkParam getEnableExecuteWork(JobRunWorkPo jobRunWorkPo) {
         if (jobRunWorkPo == null) {
             return null;
         }
@@ -165,7 +165,7 @@ public class RunNodeHelper {
                     return executeNodeParam;
                 }).collect(Collectors.toList());
 
-        List<String> allRunNodeIdByTypeList = getAllRunNodeIdByTypeList(jobWorkRunNodePos, turnDate, jobWorkPo.getWorkType());
+        List<String> allRunNodeIdByTypeList = getAllRunNodeIdByTypeList(jobWorkRunNodePos, jobWorkPo.getWorkType());
 
 
         List<JobWorkNodeRelationPo> jobWorkNodeRelationPos = jobWorkNodeRelationMapper.selectList(Wrappers.lambdaQuery(JobWorkNodeRelationPo.class)
@@ -200,18 +200,10 @@ public class RunNodeHelper {
      * @param jobWorkRunNodePos 作业运行节点
      * @param workType         作业类型
      */
-    public List<String> getAllRunNodeIdByTypeList(List<JobWorkRunNodePo> jobWorkRunNodePos,
-                                                  Date turnDate, Integer workType) {
+    public List<String> getAllRunNodeIdByTypeList(List<JobWorkRunNodePo> jobWorkRunNodePos, Integer workType) {
         if (workType == WorkTypeEnum.TYPE_TURN.getCode()) {
             return jobWorkRunNodePos.stream()
-                    .filter(x -> {
-                        boolean flag = x.getNodeRunStatus() == RunWorkStatusEnum.COMPLETE.getCode();
-                        // 这里由于当作业类型为顺序类型时翻牌时间为空，不判断翻牌时间
-                        if (flag && x.getTurnDate() != null) {
-                            flag = DateUtil.compare(x.getTurnDate(), DateUtil.offset(turnDate, DateField.DAY_OF_MONTH, 1)) == 0;
-                        }
-                        return flag;
-                    })
+                    .filter(x -> x.getNodeRunStatus() == RunWorkStatusEnum.COMPLETE.getCode())
                     .map(JobWorkRunNodePo::getNodeId)
                     .collect(Collectors.toList());
         } else if (workType == WorkTypeEnum.TYPE_SEQUENCE.getCode()) {

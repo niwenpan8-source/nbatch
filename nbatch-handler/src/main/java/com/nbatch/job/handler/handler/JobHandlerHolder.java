@@ -11,7 +11,10 @@ import com.nbatch.job.handler.thread.BatchRunnable;
 import com.nbatch.job.handler.thread.BatchThreadPoolExecutor;
 import com.nbatch.job.handler.utils.BatchThreadPoolUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -21,6 +24,7 @@ import java.util.concurrent.TimeUnit;
  * @author: Mr.ni
  * @date: 2025/11/19
  */
+@Slf4j
 @RequiredArgsConstructor
 public class JobHandlerHolder implements IJobHandlerHolder {
 
@@ -57,7 +61,11 @@ public class JobHandlerHolder implements IJobHandlerHolder {
                 @Override
                 public void run() {
                     try {
+                        Instant start = Instant.now();
                         jobHandlerAdapter.execute(nodeParam);
+                        Instant end = Instant.now();
+                        Duration duration = Duration.between(start, end);
+                        log.warn("节点执行完成：{}, 执行时间: {} 毫秒", nodeParam.getNodeId(), duration.toMillis());
                     } catch (Exception e) {
                         BatchJobHelper.log("jobId:{},workId：{},节点执行异常：{}", workNodeParam.getJobId(),
                                 workNodeParam.getWorkId(), e.getMessage());

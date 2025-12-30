@@ -10,9 +10,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.opengauss.copy.CopyManager;
 import org.opengauss.core.BaseConnection;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
+import java.sql.SQLException;
 
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_UPDATE_SQL_FAIL;
 
@@ -26,22 +34,81 @@ public class GaussDialect implements BaseDialect {
 
     @Override
     public long fileToDb(Connection connection, ExecuteFileToDbParam param) throws Exception {
+        // 这里使用连接代理关闭，重置线程池属性
+        if (connection == null || connection.isClosed()) {
+            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "连接已关闭");
+        }
+        boolean originalAutoCommit = connection.getAutoCommit();
         try (
-                FileInputStream fileInputStream = new FileInputStream(param.getFilePath())
+                FileInputStream fileInputStream = new FileInputStream(param.getFilePath());
+                BufferedReader reader = new BufferedReader(new InputStreamReader(fileInputStream, StandardCharsets.UTF_8));
+                ByteArrayOutputStream batchBuffer = new ByteArrayOutputStream()
         ) {
+            // 开启自动提交
+            connection.setAutoCommit(false);
             BaseConnection baseConnection = connection.unwrap(BaseConnection.class);
             CopyManager copyManager = new CopyManager(baseConnection);
+            String line;
+            int currentBatchLineCount = 0;
+            long totalCopied = 0L;
+
+            // 每10万提交一次
+            final int batchSize = 100_000;
             String importSql = generateFileToDbExecuteSql(param);
+            while ((line = reader.readLine()) != null) {
+                batchBuffer.write(line.getBytes(StandardCharsets.UTF_8));
+                // CSV 行结束符
+                batchBuffer.write('\n');
+                currentBatchLineCount++;
+
+                // 达到批次大小，执行 copyIn
+                if (currentBatchLineCount >= batchSize) {
+                    totalCopied += flushBatch(baseConnection, importSql, batchBuffer);
+                    batchBuffer.reset(); // 清空缓冲区
+                    currentBatchLineCount = 0;
+
+                    // 提交当前批次事务
+                    connection.commit();
+                    log.info("已提交批次，累计导入 {} 行", totalCopied);
+                }
+            }
+
+            // 处理剩余的数据
+            if (currentBatchLineCount > 0) {
+                totalCopied += flushBatch(baseConnection, importSql, batchBuffer);
+                connection.commit();
+                log.info("已提交最后批次，累计导入 {} 行", totalCopied);
+            }
+
             log.info("高斯数据库导入sql：{}", importSql);
-            return copyManager.copyIn(importSql, fileInputStream);
+            return totalCopied;
         } catch (Exception e) {
-            log.error("高斯数据库导入数据异常");
+            log.error("高斯数据库导入数据异常", e);
+            try {
+                connection.rollback(); // 回滚事务
+            } catch (SQLException rollbackEx) {
+                log.error("回滚事务失败", rollbackEx);
+            }
             throw e;
         } finally {
             // 这里使用连接代理关闭，重置线程池属性
-            if (connection != null && !connection.isClosed()) {
-                connection.close();
+            try {
+                connection.setAutoCommit(originalAutoCommit);
+            } catch (SQLException e) {
+                log.error("恢复自动提交状态失败", e);
             }
+        }
+    }
+
+    /**
+     * 执行单个批次的 copyIn
+     */
+    private long flushBatch(BaseConnection baseConnection, String copySql, ByteArrayOutputStream buffer) throws Exception {
+        try (InputStream batchStream = new ByteArrayInputStream(buffer.toByteArray())) {
+            CopyManager copyManager = new CopyManager(baseConnection);
+            return copyManager.copyIn(copySql, batchStream);
+        } catch (IOException e) {
+            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
         }
     }
 
@@ -92,7 +159,8 @@ public class GaussDialect implements BaseDialect {
         if (StrUtil.isBlank(param.getFileCode())) {
             throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "gbase文件导入db,文件编码不能为空");
         }
-        String importSql = "COPY " + param.getImportTableName() + " FROM STDIN ignore_extra_data fill_missing_fields 'multi' delimiter ' | ' encoding '"
+        String importSql = "COPY " + param.getImportTableName() +
+                " FROM STDIN ignore_extra_data fill_missing_fields 'multi' delimiter ' | ' encoding '"
                 + param.getFileCode() +
                 "' csv;";
         if (StrUtil.isNotEmpty(param.getImportTableFiled())) {

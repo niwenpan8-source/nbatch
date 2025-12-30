@@ -248,7 +248,7 @@ public class NbatchSampleJob {
     /**
      * 5、生命周期任务示例：任务初始化与销毁时，支持自定义相关逻辑；
      */
-    @BatchJob(value = "executeHandle")
+    @BatchJob(value = "handleComputation")
     public void handleComputation() throws Exception {
         log.warn("execute handleComputation.");
         BatchJobHelper.log("execute handleComputation.");

@@ -50,7 +50,7 @@ public class IndexController {
     }
 	
 	@RequestMapping("/toLogin")
-	@ PermissionLimit(limit=false)
+	@PermissionLimit(limit=false)
 	public ModelAndView toLogin(HttpServletRequest request, HttpServletResponse response,ModelAndView modelAndView) {
 		if (loginService.ifLogin(request, response) != null) {
 			modelAndView.setView(new RedirectView("/", true, false));

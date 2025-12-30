@@ -1,6 +1,5 @@
 package com.nbatch.job.admin.core.conf;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,7 +36,6 @@ import static cn.hutool.core.date.DatePattern.NORM_TIME_PATTERN;
 public class JacksonConfig {
 
     private final static String TIME_ZONE = "GMT+8";
-
 
 
     @Bean
@@ -85,7 +83,7 @@ public class JacksonConfig {
 
 
         // 设置JSON序列化时只包含非null值的属性
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        //mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
         return mapper;
     }

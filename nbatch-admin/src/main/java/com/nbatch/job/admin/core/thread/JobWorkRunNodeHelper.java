@@ -13,6 +13,8 @@ import com.nbatch.job.core.biz.model.TriggerParam;
 import com.nbatch.job.core.constant.HandleCodeConstant;
 import lombok.extern.slf4j.Slf4j;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -82,49 +84,97 @@ public class JobWorkRunNodeHelper {
      * 执行任务
      */
     private void executeRunWork() {
-        List<JobRunWorkPo> aLlNeedRunWorkList = JobAdminConfig.getAdminConfig().getRunWorkHelper().getALlNeedRunWorkList();
-        for (JobRunWorkPo jobRunWorkPo : aLlNeedRunWorkList) {
-            ExecuteWorkParam executeWorkParam
-                    = JobAdminConfig.getAdminConfig().getRunNodeHelper().getEnableExecuteWork(jobRunWorkPo);
-            if (executeWorkParam == null) {
-                continue;
-            }
-            // 如果断电重连咋办，如何恢复这个缓存？ 这里采用被动的，只有当任务执行到的时候才会进行断电重连
-            JSONObject jsonObject = RUN_WORK_ID_CACHE.get(executeWorkParam.getRunWorkId());
-            if (jsonObject == null) {
-                continue;
-            }
-            String address = jsonObject.getStr("address");
-            TriggerParam triggerParam = jsonObject.get("triggerParam", TriggerParam.class);
-            triggerParam.setExecuteWorkParam(executeWorkParam);
+        // 得到所有需要执行的work
+        // Scan Job
 
-            ExecutorBiz executorBiz = JobScheduler.getExecutorBiz(address);
-            if (executorBiz == null) {
-                continue;
-            }
+        Connection conn = null;
+        Boolean connAutoCommit = null;
+        PreparedStatement preparedStatement = null;
 
-            JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                    .updateNodeRunStatus(triggerParam.getExecuteWorkParam(), WorkStatusEnum.START.getCode());
+        try {
+
+            conn = JobAdminConfig.getAdminConfig().getDataSource().getConnection();
+            connAutoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false);
+
+            preparedStatement = conn.prepareStatement("select * from nbatch_job_lock where lock_name = 'schedule_lock' for update");
+            preparedStatement.execute();
 
 
-            ReturnT<String> runResult = executorBiz.run(triggerParam);
+            List<JobRunWorkPo> aLlNeedRunWorkList = JobAdminConfig.getAdminConfig().getRunWorkHelper().getALlNeedRunWorkList();
+            for (JobRunWorkPo jobRunWorkPo : aLlNeedRunWorkList) {
 
-            // 如果请求失败需要将作业节点置为停止,当遇到的异常为者执行超时,应该如何处理，如果不出，他会一直超时
-            if (runResult.getCode() >= HandleCodeConstant.HANDLE_CODE_FAIL) {
-                for (ExecuteNodeParam executeNodeParam : executeWorkParam.getExecuteNodeParamList()) {
-                    JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                            .updateNodeStatusById(executeNodeParam.getRunNodeId(),
-                                    WorkStatusEnum.STOP.getCode());
-                    JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                            .updateCallBackRunNodeLog(executeNodeParam.getNodeLogId()
-                                    , HandleCodeConstant.HANDLE_CODE_FAIL
-                                    , runResult.getMsg());
+
+                ExecuteWorkParam executeWorkParam
+                        = JobAdminConfig.getAdminConfig().getRunNodeHelper().getEnableExecuteWork(jobRunWorkPo);
+                if (executeWorkParam == null) {
+                    continue;
                 }
-                if (runResult.getCode() >= HandleCodeConstant.HANDLE_CODE_TIMEOUT) {
-                    RUN_WORK_ID_CACHE.remove(jobRunWorkPo.getRunWorkId());
+                // 如果断电重连咋办，如何恢复这个缓存？ 这里采用被动的，只有当任务执行到的时候才会进行断电重连
+                JSONObject jsonObject = RUN_WORK_ID_CACHE.get(executeWorkParam.getRunWorkId());
+                if (jsonObject == null) {
+                    continue;
+                }
+                String address = jsonObject.getStr("address");
+                TriggerParam triggerParam = jsonObject.get("triggerParam", TriggerParam.class);
+                triggerParam.setExecuteWorkParam(executeWorkParam);
+
+                ExecutorBiz executorBiz = JobScheduler.getExecutorBiz(address);
+                if (executorBiz == null) {
+                    continue;
+                }
+                JobAdminConfig.getAdminConfig().getRunNodeHelper()
+                        .updateNodeRunStatus(triggerParam.getExecuteWorkParam(), WorkStatusEnum.START.getCode());
+                ReturnT<String> runResult = executorBiz.run(triggerParam);
+
+                // 如果请求失败需要将作业节点置为停止,当遇到的异常为者执行超时,应该如何处理，如果不出，他会一直超时
+                if (runResult.getCode() >= HandleCodeConstant.HANDLE_CODE_FAIL) {
+                    for (ExecuteNodeParam executeNodeParam : executeWorkParam.getExecuteNodeParamList()) {
+                        JobAdminConfig.getAdminConfig().getRunNodeHelper()
+                                .updateNodeStatusById(executeNodeParam.getRunNodeId(),
+                                        WorkStatusEnum.STOP.getCode());
+                        JobAdminConfig.getAdminConfig().getRunNodeHelper()
+                                .updateCallBackRunNodeLog(executeNodeParam.getNodeLogId()
+                                        , HandleCodeConstant.HANDLE_CODE_FAIL
+                                        , runResult.getMsg());
+                    }
+                    if (runResult.getCode() >= HandleCodeConstant.HANDLE_CODE_TIMEOUT) {
+                        RUN_WORK_ID_CACHE.remove(jobRunWorkPo.getRunWorkId());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        } finally {
+
+            // commit
+            if (conn != null) {
+                try {
+                    conn.commit();
+                } catch (Throwable e) {
+                    log.error(e.getMessage(), e);
+                }
+                try {
+                    conn.setAutoCommit(Boolean.TRUE.equals(connAutoCommit));
+                } catch (Throwable e) {
+                    log.error(e.getMessage(), e);
+                }
+                try {
+                    conn.close();
+                } catch (Throwable e) {
+                    log.error(e.getMessage(), e);
+                }
+            }
+            // close PreparedStatement
+            if (null != preparedStatement) {
+                try {
+                    preparedStatement.close();
+                } catch (Throwable e) {
+                    log.error(e.getMessage(), e);
                 }
             }
         }
+
     }
 
     /**
