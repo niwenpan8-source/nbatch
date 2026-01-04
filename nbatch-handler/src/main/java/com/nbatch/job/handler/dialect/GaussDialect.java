@@ -21,6 +21,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_UPDATE_SQL_FAIL;
 
@@ -47,7 +49,6 @@ public class GaussDialect implements BaseDialect {
             // 开启自动提交
             connection.setAutoCommit(false);
             BaseConnection baseConnection = connection.unwrap(BaseConnection.class);
-            CopyManager copyManager = new CopyManager(baseConnection);
             String line;
             int currentBatchLineCount = 0;
             long totalCopied = 0L;
@@ -94,6 +95,7 @@ public class GaussDialect implements BaseDialect {
             // 这里使用连接代理关闭，重置线程池属性
             try {
                 connection.setAutoCommit(originalAutoCommit);
+                connection.close();
             } catch (SQLException e) {
                 log.error("恢复自动提交状态失败", e);
             }
@@ -159,13 +161,24 @@ public class GaussDialect implements BaseDialect {
         if (StrUtil.isBlank(param.getFileCode())) {
             throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "gbase文件导入db,文件编码不能为空");
         }
-        String importSql = "COPY " + param.getImportTableName() +
-                " FROM STDIN ignore_extra_data fill_missing_fields 'multi' delimiter ' | ' encoding '"
-                + param.getFileCode() +
-                "' csv;";
-        if (StrUtil.isNotEmpty(param.getImportTableFiled())) {
-            importSql = "COPY " + param.getImportTableName() + "(" + param.getImportTableFiled() + ") FROM STDIN ignore_extra_data fill_missing_fields 'multi' delimiter ' | ' encoding 'utf-8' csv;";
+        if (StrUtil.isBlank(param.getImportTableFiled())) {
+            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "gbase文件导入db,表列属性不能为空");
         }
+        String importSql = "COPY {tableName} ({tableField}) FROM STDIN ignore_extra_data " +
+                "fill_missing_fields 'multi' delimiter '{sep}' encoding" +
+                " '{fileCode}' csv;";
+
+        Map<String, String> paramMap = new HashMap<>();
+        paramMap.put("tableName", param.getImportTableName());
+        paramMap.put("fileCode", param.getFileCode());
+        paramMap.put("tableField", param.getImportTableFiled());
+        if (StrUtil.isNotEmpty(param.getSep())) {
+            paramMap.put("sep", param.getSep());
+        } else {
+            paramMap.put("sep", " | ");
+        }
+        importSql = StrUtil.format(importSql, paramMap);
+
         return importSql;
     }
 
