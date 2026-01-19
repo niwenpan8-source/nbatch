@@ -20,12 +20,12 @@ import java.util.List;
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_UPDATE_SQL_FAIL;
 
 /**
- * @description: GBase数据库方言
+ * @description: Mysql数据库方言
  * @author: Mr.ni
  * @date: 2025/11/19
  */
 @Slf4j
-public class GBaseDialect implements BaseDialect {
+public class MysqlDialect implements BaseDialect {
 
     @Override
     public long fileToDb(Connection connection, ExecuteFileToDbParam param) throws Exception {
@@ -37,9 +37,6 @@ public class GBaseDialect implements BaseDialect {
 
     @Override
     public boolean dbToFile(Connection connection, ExecuteDbToFileParam param) throws Exception {
-        String setExportDirSql = "SET gbase_export_directory = 0";
-        log.info("执行 set export sql：{}", setExportDirSql);
-        SpecialSqlUtil.executeNotCloseConnect(connection, setExportDirSql);
         String executeSql = generateDbToFileExecuteSql(param);
         log.info("执行 db to file sql：{}", executeSql);
         SpecialSqlUtil.execute(connection, executeSql);
@@ -105,20 +102,20 @@ public class GBaseDialect implements BaseDialect {
     }
 
     /**
-     * 生成gbase文件导入db的sql
+     * 生成Mysql文件导入db的sql
      */
     private String generateFileToDbExecuteSql(ExecuteFileToDbParam param) {
         if (param == null) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "gbase文件导入db,参数不能为空");
+            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "Mysql文件导入db,参数不能为空");
         }
         if (StrUtil.isBlank(param.getRemoteFilePath())) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "gbase文件导入db,文件路径不能为空");
+            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "Mysql文件导入db,文件路径不能为空");
         }
         if (StrUtil.isBlank(param.getImportTableName())) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "gbase文件导入db,表名不能为空");
+            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "Mysql文件导入db,表名不能为空");
         }
         if (StrUtil.isBlank(param.getFileCode())) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "gbase文件导入db,文件编码不能为空");
+            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "Mysql文件导入db,文件编码不能为空");
         }
         String exportSql = "LOAD DATA INFILE " + "'" + param.getRemoteFilePath() + "'" +
                 " INTO TABLE " + param.getImportTableName() +
@@ -136,20 +133,20 @@ public class GBaseDialect implements BaseDialect {
     }
 
     /**
-     * 生成gbase db导入文件的sql
+     * 生成Mysql db导入文件的sql
      */
     private String generateDbToFileExecuteSql(ExecuteDbToFileParam param) {
         if (param == null) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "gbasedb导入文件,参数不能为空");
+            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "Mysqldb导入文件,参数不能为空");
         }
         if (StrUtil.isBlank(param.getRemoteFilePath())) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "gbasedb导入文件,文件路径不能为空");
+            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "Mysqldb导入文件,文件路径不能为空");
         }
         if (StrUtil.isBlank(param.getExportTableName())) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "gbasedb导入文件,表名不能为空");
+            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "Mysqldb导入文件,表名不能为空");
         }
         if (StrUtil.isBlank(param.getFileCode())) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "gbasedb导入文件,文件编码不能为空");
+            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "Mysqldb导入文件,文件编码不能为空");
         }
         StringBuilder executeSql = new StringBuilder();
         executeSql.append("select ");

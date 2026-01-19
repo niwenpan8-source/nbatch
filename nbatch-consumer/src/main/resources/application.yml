@@ -31,11 +31,11 @@ spring:
             connection-timeout: 10000
             connection-test-query: SELECT 1
             validation-timeout: 1000
-        gbase:
-          url: jdbc:mysql://192.168.10.196:9004/nyyh_guangdong
+        clickhouse:
+          url: jdbc:clickhouse://192.168.10.196:8123/nyyh_guangdong?compress=0
           username: default
           password: bankfund
-          driver-class-name: com.mysql.cj.jdbc.Driver
+          driver-class-name: com.clickhouse.jdbc.ClickHouseDriver
           hikari:
             min-idle: 1
             max-pool-size: 1

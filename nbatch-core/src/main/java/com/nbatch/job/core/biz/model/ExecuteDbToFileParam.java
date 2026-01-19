@@ -19,6 +19,7 @@ public class ExecuteDbToFileParam {
      * 导出文件路径
      */
     private String filePath;
+    private String remoteFilePath;
 
     /**
      * 导出的表名

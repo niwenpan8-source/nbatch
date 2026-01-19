@@ -48,7 +48,6 @@ public class DbToFileHandler implements JobNodeHandlerAdapter {
         } else {
             replaceObj = new JSONObject();
         }
-
         replaceObj.putOpt("date", nodeParam.getTurnDate());
         String finishGenerateFileName = NbatchFileUtil.generateFileName(param.getFileName(), replaceObj);
         // 数据库导出文件名称
@@ -80,12 +79,11 @@ public class DbToFileHandler implements JobNodeHandlerAdapter {
 
 
     private void setFilePath(ExecuteDbToFileParam param, String finishGenerateFileName, String dbType) {
-        String tempPath = handlerPropertiesConstant.getTempPath();
-        if (StrUtil.equals(dbType, DbType.GBASE.getDb())) {
-            tempPath = handlerPropertiesConstant.getRemoteTempPath();
-        }
-        String dbExportFilePath = tempPath + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_CSV;
+        String dbExportFilePath = handlerPropertiesConstant.getTempPath()
+                + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_CSV;
+        String remoteDbExportFilePath = handlerPropertiesConstant.getRemoteTempPath() + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_CSV;
         param.setFilePath(dbExportFilePath);
+        param.setRemoteFilePath(remoteDbExportFilePath);
     }
 
 }

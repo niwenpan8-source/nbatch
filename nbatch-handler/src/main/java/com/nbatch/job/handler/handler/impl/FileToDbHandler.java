@@ -89,12 +89,12 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
      * 设置文件路径
      */
     private void setFilePath(ExecuteFileToDbParam param, String finishGenerateFileName, String dbType) {
-        String tempPath = handlerPropertiesConstant.getTempPath();
-        if (StrUtil.equals(dbType, DbType.GBASE.getDb())) {
-            tempPath = handlerPropertiesConstant.getRemoteTempPath();
-        }
-        String dbExportFilePath = tempPath + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_CSV;
+        String dbExportFilePath = handlerPropertiesConstant.getTempPath()
+                + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_CSV;
+        String remoteDbExportFilePath = handlerPropertiesConstant.getRemoteTempPath()
+                + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_CSV;
         param.setFilePath(dbExportFilePath);
+        param.setRemoteFilePath(remoteDbExportFilePath);
     }
 
 
@@ -102,8 +102,11 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
         return "truncate table " + tableName;
     }
 
-    private String getDeleteByConditionSql(String tableName, String condition) {
-        return "delete from " + tableName + " t where " + condition;
+    private String getDeleteByConditionSql(String tableName) {
+        String templateSql = "delete from {}\n" +
+                "where fundcode in (select fundcode from\n" +
+                "    {}_today)";
+        return StrUtil.format(templateSql, tableName, tableName);
     }
 
     /**
@@ -136,9 +139,8 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
         if (StrUtil.isEmpty(importTableCondition)) {
             throw new HandlerException(FILE_TO_DB_FAIL.getCode(), "导入文件表条件列不可为空！");
         }
-        String deleteCondition = generateUpdateCondition(importTableCondition, importTodayTableName);
         dialect.executeUpdate(dialectHelper.getConnection(dbType),
-                getDeleteByConditionSql(importTableName, deleteCondition));
+                getDeleteByConditionSql(importTableName));
         String tableFiled = param.getImportTableFiled();
         if (StrUtil.isEmpty(tableFiled)) {
             log.info("===================导入增量文件导入文件表列不可为空！==================");
@@ -150,31 +152,6 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
                 insertFormalTable);
         return importDbCount;
 
-    }
-
-    private String generateUpdateCondition(String importTableCondition,
-                                           String importTodayTableName) {
-        List<String> conditionColumnList = StrUtil.split(importTableCondition, StrPool.COMMA);
-        StringBuilder conditionSql = new StringBuilder();
-        conditionSql.append(" exists(" +
-                        "select 1 from ")
-                .append(importTodayTableName)
-                .append(" today ");
-        for (int i = 0; i < conditionColumnList.size(); i++) {
-            if (i == 0) {
-                conditionSql.append("where t.")
-                        .append(conditionColumnList.get(i))
-                        .append(" = today.")
-                        .append(conditionColumnList.get(i));
-            } else {
-                conditionSql.append(" and t.")
-                        .append(conditionColumnList.get(i))
-                        .append(" = today.")
-                        .append(conditionColumnList.get(i));
-            }
-        }
-        conditionSql.append(")");
-        return conditionSql.toString();
     }
 
 

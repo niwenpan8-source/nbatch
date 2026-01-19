@@ -17,6 +17,7 @@ import com.nbatch.job.admin.mapper.IJobWorkMapper;
 import com.nbatch.job.admin.mapper.IJobWorkNodeMapper;
 import com.nbatch.job.admin.mapper.IJobWorkRunNodeMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import java.util.List;
  * @author: Mr.ni
  * @date: 2025/11/20
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class RunWorkHelper {
@@ -43,6 +45,14 @@ public class RunWorkHelper {
     public JobRunWorkPo initRunWork(String workId) {
 
         JobWorkPo jobWorkPo = jobWorkMapper.selectById(workId);
+        if (jobWorkPo == null) {
+            log.error("作业不存在");
+            return null;
+        }
+        if (jobWorkPo.getWorkStatus() != 1) {
+            log.error("作业状态异常未启用");
+            return null;
+        }
         List<JobRunWorkPo> jobRunWorkList = jobRunWorkMapper
                 .selectList(Wrappers.lambdaQuery(JobRunWorkPo.class)
                         .eq(JobRunWorkPo::getWorkId, jobWorkPo.getWorkId())
@@ -67,7 +77,8 @@ public class RunWorkHelper {
         }
         List<JobWorkRunNodePo> insertRunNodeList = new ArrayList<>();
         List<JobWorkNodePo> jobWorkNodePos = jobWorkNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkNodePo.class)
-                .eq(JobWorkNodePo::getWorkId, jobRunWorkPo.getWorkId()));
+                .eq(JobWorkNodePo::getWorkId, jobRunWorkPo.getWorkId())
+                .eq(JobWorkNodePo::getNodeStatus, 1));
         if (CollUtil.isEmpty(jobWorkNodePos)) {
             return null;
         }

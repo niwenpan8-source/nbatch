@@ -19,6 +19,7 @@ public class ExecuteFileToDbParam {
      * 导入的文件名-需要再程序里面生成
      */
     private String filePath;
+    private String remoteFilePath;
 
     /**
      * 导入的表名
@@ -48,12 +49,12 @@ public class ExecuteFileToDbParam {
     /**
      * 是否全量文件：1全量 0增量
      */
-    private Integer allUpdate;
+    private int allUpdate;
 
     /**
      * 是否压缩：1压缩 0不压缩
      */
-    private Integer isGzip;
+    private int isGzip;
 
     /**
      * 生成文件名，特殊替换字符

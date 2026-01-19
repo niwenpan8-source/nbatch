@@ -4,8 +4,10 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.dynamic.datasource.DynamicRoutingDataSource;
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.nbatch.job.handler.dialect.BaseDialect;
+import com.nbatch.job.handler.dialect.ClickhouseDialect;
 import com.nbatch.job.handler.dialect.GBaseDialect;
 import com.nbatch.job.handler.dialect.GaussDialect;
+import com.nbatch.job.handler.dialect.MysqlDialect;
 import com.nbatch.job.handler.exception.HandlerException;
 import lombok.RequiredArgsConstructor;
 
@@ -53,6 +55,10 @@ public class DialectHelper {
             return new GBaseDialect();
         } else if (StrUtil.equals(dbType, DbType.OPENGAUSS.getDb())) {
             return new GaussDialect();
+        } else if (StrUtil.equals(dbType, DbType.MYSQL.getDb())) {
+            return new MysqlDialect();
+        } else if (StrUtil.equals(dbType, DbType.CLICK_HOUSE.getDb())) {
+            return new ClickhouseDialect();
         }
         return null;
     }

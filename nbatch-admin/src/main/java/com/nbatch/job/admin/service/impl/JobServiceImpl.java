@@ -327,6 +327,7 @@ public class JobServiceImpl implements IJobService {
         existsJobInfo.setExecutorFailRetryCount(jobInfo.getExecutorFailRetryCount());
         existsJobInfo.setChildJobid(jobInfo.getChildJobid());
         existsJobInfo.setTriggerNextTime(nextTriggerTime);
+        existsJobInfo.setWorkId(jobInfo.getWorkId());
 
         existsJobInfo.setUpdateTime(new Date());
         jobInfoMapper.updateById(existsJobInfo);

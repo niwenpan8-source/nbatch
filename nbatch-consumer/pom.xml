@@ -13,10 +13,6 @@
 
     <name>${project.artifactId}</name>
 
-    <properties>
-        <luaj.version>3.0.1</luaj.version>
-    </properties>
-
 
     <dependencies>
         <!-- spring-boot-starter-web (spring-webmvc + tomcat) -->
@@ -39,7 +35,6 @@
         <dependency>
             <groupId>org.luaj</groupId>
             <artifactId>luaj-jse</artifactId>
-            <version>${luaj.version}</version>
         </dependency>
 
 

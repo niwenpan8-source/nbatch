@@ -198,7 +198,16 @@ public class GaussDialect implements BaseDialect {
         StringBuilder executeSql = new StringBuilder();
         executeSql.append("select ");
         if (StrUtil.isNotBlank(param.getExportTableFiled())) {
-            executeSql.append(param.getExportTableFiled());
+            // 使用字符串替换函数去除字段中的换行符和分隔符 |
+            String[] fields = param.getExportTableFiled().split(",");
+            for (int i = 0; i < fields.length; i++) {
+                String field = fields[i].trim();
+                // 使用REPLACE函数去除换行符和分隔符 |
+                executeSql.append("REPLACE(REPLACE(REPLACE(").append(field).append(", E'\\n', ''), E'\\r', ''), '|', '') AS ").append(field);
+                if (i < fields.length - 1) {
+                    executeSql.append(", ");
+                }
+            }
         } else {
             executeSql.append("*");
         }
