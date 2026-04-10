@@ -54,11 +54,12 @@ public class SpecialSqlUtil {
     /**
      * 执行更新sql
      */
-    public static boolean executeNotCloseConnect(Connection conn, String boundSql) {
+    public static boolean executeNotCloseConnect(Connection conn, String boundSql) throws SQLException {
         boolean executeFlag;
         try (PreparedStatement preparedStatement = conn.prepareStatement(boundSql)) {
             executeFlag = preparedStatement.execute();
         } catch (SQLException e) {
+            conn.close();
             throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
         }
         return executeFlag;

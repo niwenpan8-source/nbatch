@@ -57,27 +57,30 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
 
 
     public void executeBatch(BatchRunnable runnable) {
-        this.execute(runnable);
-    }
-
-    @Override
-    public void execute(Runnable command) {
         try {
-            super.execute(command);
+            this.execute(runnable);
         } catch (Exception e) {
             log.error("execute error.", e);
         }
         log.debug("execute runnable, hashCode:{}, threadPoolKey:{}, poolSize:{}, largestPoolSize:{}, activeCount:{}, " +
                         "taskCount:{}, completedTaskCount:{}, queueSize:{}",
-                command.hashCode(), threadPoolKey, this.getPoolSize(), this.getLargestPoolSize(),
+                runnable.hashCode(), threadPoolKey, this.getPoolSize(), this.getLargestPoolSize(),
                 this.getActiveCount(), this.getTaskCount(), this.getCompletedTaskCount(), this.getQueue().size());
+
+    }
+
+    @Override
+    public void execute(Runnable command) {
+        super.execute(command);
     }
 
     @Override
     protected void afterExecute(Runnable r, Throwable t) {
         HandleCallbackParam handleCallbackParam = new HandleCallbackParam();
         handleCallbackParam.setCallBackType(NODE_STATUS_CALLBACK.getValue());
+
         if (t != null) {
+            // 如果说发生异常需要针对异常进行处理
             log.error("execute Runnable error, hashCode:{}", r.hashCode(), t);
             if (r instanceof BatchRunnable) {
                 BatchRunnable batchRunnable = (BatchRunnable) r;

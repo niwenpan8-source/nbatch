@@ -57,18 +57,21 @@ public class JobHandlerHolder implements IJobHandlerHolder {
             }
             JobNodeHandlerAdapter jobHandlerAdapter = jobHandlerAdapterMap.get(nodeParam.getNodeType());
             JSONObject cacheObj = getEntries(workNodeParam, nodeParam);
+            // 假如说节点发生异常该条流程是否需要停止
             batchThreadPoolExecutor.executeBatch(new BatchRunnable(cacheObj) {
                 @Override
                 public void run() {
+                    Instant start = Instant.now();
                     try {
-                        Instant start = Instant.now();
                         jobHandlerAdapter.execute(nodeParam);
                         Instant end = Instant.now();
                         Duration duration = Duration.between(start, end);
                         log.warn("节点执行完成：{}, 执行时间: {} 毫秒", nodeParam.getNodeId(), duration.toMillis());
                     } catch (Exception e) {
-                        BatchJobHelper.log("jobId:{},workId：{},节点执行异常：{}", workNodeParam.getJobId(),
-                                workNodeParam.getWorkId(), e.getMessage());
+                        Instant end = Instant.now();
+                        Duration duration = Duration.between(start, end);
+                        BatchJobHelper.log("jobId:{},workId：{},节点执行异常：{},执行时间: {} 毫秒", workNodeParam.getJobId(),
+                                workNodeParam.getWorkId(), e.getMessage(), duration.toMillis());
                         throw new RuntimeException(e);
                     }
                 }
