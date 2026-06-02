@@ -8,11 +8,11 @@ import com.nbatch.job.admin.core.complete.JobCompleter;
 import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
 import com.nbatch.job.admin.core.domain.po.JobRegistryPo;
-import com.nbatch.job.admin.core.enums.WorkStatusEnum;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.constant.HandleCodeConstant;
+import com.nbatch.job.core.enums.RunWorkStatusEnum;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Date;
@@ -218,7 +218,7 @@ public class JobCompleteHelper {
         } else {
             JobAdminConfig.getAdminConfig().getRunNodeHelper()
                     .updateNodeStatusById(nodeStatusCallbackParam.getRunNodeId(),
-                            WorkStatusEnum.STOP.getCode());
+                            RunWorkStatusEnum.FAIL.getCode());
         }
         JobAdminConfig.getAdminConfig().getRunNodeHelper()
                 .updateCallBackRunNodeLog(nodeStatusCallbackParam.getNodeLogId()

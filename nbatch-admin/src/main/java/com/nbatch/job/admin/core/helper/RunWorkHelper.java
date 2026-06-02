@@ -18,6 +18,7 @@ import com.nbatch.job.admin.mapper.IJobWorkNodeMapper;
 import com.nbatch.job.admin.mapper.IJobWorkRunNodeMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -44,6 +45,7 @@ public class RunWorkHelper {
      * 初始化运行作业
      * @param workId 作业id
      */
+    @Transactional(rollbackFor = Exception.class)
     public void initRunWork(String workId) {
 
         JobWorkPo jobWorkPo = jobWorkMapper.selectById(workId);
@@ -87,10 +89,10 @@ public class RunWorkHelper {
             jobWorkRunNodePo.setCreateTime(DateUtil.date());
             insertRunNodeList.add(jobWorkRunNodePo);
         }
+        jobRunWorkMapper.insert(jobRunWorkPo);
         for (JobWorkRunNodePo jobWorkRunNodePo : insertRunNodeList) {
             jobWorkRunNodeMapper.insert(jobWorkRunNodePo);
         }
-        jobRunWorkMapper.insert(jobRunWorkPo);
     }
 
     /**
@@ -116,7 +118,7 @@ public class RunWorkHelper {
      */
     public void deleteRunWork() {
         List<JobRunWorkPo> jobRunWorkPoList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobRunWorkPo.class)
-                .eq(JobRunWorkPo::getRunWorkStatus, RunWorkStatusEnum.COMPLETE.getCode())
+                .in(JobRunWorkPo::getRunWorkStatus, RunWorkStatusEnum.COMPLETE.getCode(), RunWorkStatusEnum.FAIL.getCode())
                 .lt(JobRunWorkPo::getCreateTime, DateUtil.offsetDay(new Date(), -30)));
         for (JobRunWorkPo jobRunWorkPo : jobRunWorkPoList) {
             jobWorkRunNodeMapper.delete(Wrappers.lambdaQuery(JobWorkRunNodePo.class)

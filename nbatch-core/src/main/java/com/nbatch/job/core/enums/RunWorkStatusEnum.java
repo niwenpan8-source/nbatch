@@ -14,6 +14,7 @@ public enum RunWorkStatusEnum {
     WAIT(0, "待执行"),
     RUNNING(1, "进行中"),
     COMPLETE(2, "执行完毕"),
+    FAIL(3, "执行失败"),
     ;
 
     /**

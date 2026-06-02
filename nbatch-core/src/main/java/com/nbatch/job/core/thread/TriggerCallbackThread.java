@@ -190,6 +190,9 @@ public class TriggerCallbackThread {
      */
     private void callbackLog(List<HandleCallbackParam> callbackParamList, String logContent) {
         for (HandleCallbackParam callbackParam : callbackParamList) {
+            if (callbackParam.getLogCallBackParam().getLogDateTim() <= 0) {
+                continue;
+            }
             String logFileName = JobFileAppender.makeLogFileName(new Date(callbackParam.getLogCallBackParam().getLogDateTim()), callbackParam.getLogId());
             BatchJobContext.setBatchJobContext(new BatchJobContext(
                     null,

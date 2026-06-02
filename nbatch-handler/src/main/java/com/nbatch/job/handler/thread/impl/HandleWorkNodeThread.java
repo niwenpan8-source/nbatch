@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
- * @description: 处理作业节点线程
+ * 处理作业节点线程
  * @author: Mr.ni
  * @date: 2025/12/5
  */
@@ -51,12 +51,12 @@ public class HandleWorkNodeThread implements SmartInitializingSingleton, Disposa
 
     @Override
     public void destroy() {
-        this.start();
+        this.toStop();
     }
 
     @Override
     public void afterSingletonsInstantiated() {
-        this.toStop();
+        this.start();
     }
     
     public void pushCallBack(ExecuteWorkParam param) {
@@ -166,8 +166,8 @@ public class HandleWorkNodeThread implements SmartInitializingSingleton, Disposa
                     public void runBefore() {
                         ExecuteWorkParam cacheExecuteWorkParam = workNodeExecuteMap.get(nodeParam.getRunWorkId());
                         for (ExecuteNodeParam executeNodeParam : cacheExecuteWorkParam.getExecuteNodeParamList()) {
-                            if (StrUtil.equals(executeNodeParam.getRunNodeId(), nodeParam.getNodeId())) {
-                                nodeParam.setNodeRunStatus(RunWorkStatusEnum.RUNNING.getCode());
+                            if (StrUtil.equals(executeNodeParam.getRunNodeId(), nodeParam.getRunNodeId())) {
+                                executeNodeParam.setNodeRunStatus(RunWorkStatusEnum.RUNNING.getCode());
                             }
                         }
                     }
@@ -177,6 +177,7 @@ public class HandleWorkNodeThread implements SmartInitializingSingleton, Disposa
                         try {
                             jobHandlerAdapter.execute(nodeParam);
                         } catch (Exception e) {
+                            nodeParam.setNodeRunStatus(RunWorkStatusEnum.FAIL.getCode());
                             BatchJobHelper.log("jobId:{},workId：{},节点执行异常：{}", needExecuteRunNode.getJobId(),
                                     needExecuteRunNode.getWorkId(), e.getMessage());
                             throw new RuntimeException(e);
@@ -187,8 +188,12 @@ public class HandleWorkNodeThread implements SmartInitializingSingleton, Disposa
                     public void  runAfter() {
                         ExecuteWorkParam cacheExecuteWorkParam = workNodeExecuteMap.get(nodeParam.getRunWorkId());
                         for (ExecuteNodeParam executeNodeParam : cacheExecuteWorkParam.getExecuteNodeParamList()) {
-                            if (StrUtil.equals(executeNodeParam.getRunNodeId(), nodeParam.getNodeId())) {
-                                nodeParam.setNodeRunStatus(RunWorkStatusEnum.RUNNING.getCode());
+                            if (StrUtil.equals(executeNodeParam.getRunNodeId(), nodeParam.getRunNodeId())) {
+                                if (nodeParam.getNodeRunStatus() == RunWorkStatusEnum.FAIL.getCode()) {
+                                    executeNodeParam.setNodeRunStatus(RunWorkStatusEnum.FAIL.getCode());
+                                } else {
+                                    executeNodeParam.setNodeRunStatus(RunWorkStatusEnum.COMPLETE.getCode());
+                                }
                             }
                         }
                     }

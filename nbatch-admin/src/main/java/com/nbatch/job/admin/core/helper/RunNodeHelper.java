@@ -77,7 +77,7 @@ public class RunNodeHelper {
         ExecuteWorkParam executeWorkParam = new ExecuteWorkParam();
         List<JobRunWorkPo> jobRunWorkPoList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobRunWorkPo.class)
                 .eq(JobRunWorkPo::getWorkId, workId)
-                .in(JobRunWorkPo::getRunWorkStatus, RunWorkStatusEnum.RUNNING, RunWorkStatusEnum.WAIT)
+                .in(JobRunWorkPo::getRunWorkStatus, RunWorkStatusEnum.RUNNING.getCode(), RunWorkStatusEnum.WAIT.getCode())
                 .orderByDesc(JobRunWorkPo::getCreateTime));
         if (CollUtil.isEmpty(jobRunWorkPoList)) {
             log.info("workId:{},不存在运行作业！", workId);
@@ -206,6 +206,14 @@ public class RunNodeHelper {
         }
         jobWorkRunNodeMapper.update(jobWorkRunNodePo, Wrappers.lambdaQuery(JobWorkRunNodePo.class)
                 .in(JobWorkRunNodePo::getRunNodeId, runNodeIdList));
+        if (nodeStatus == RunWorkStatusEnum.RUNNING.getCode()
+                || nodeStatus == RunWorkStatusEnum.WAIT.getCode()
+                || nodeStatus == RunWorkStatusEnum.FAIL.getCode()) {
+            JobRunWorkPo jobRunWorkPo = new JobRunWorkPo();
+            jobRunWorkPo.setRunWorkId(executeWorkParam.getRunWorkId());
+            jobRunWorkPo.setRunWorkStatus(nodeStatus);
+            jobRunWorkMapper.updateById(jobRunWorkPo);
+        }
     }
 
     /**
@@ -216,7 +224,13 @@ public class RunNodeHelper {
     public void updateNodeTurnDate(String runNodeId, String runWorkId, Integer workType) {
         JobWorkRunNodePo jobWorkRunNodePo = jobWorkRunNodeMapper.selectById(runNodeId);
         JobRunWorkPo jobRunWorkPo = jobRunWorkMapper.selectById(runWorkId);
-        if (DateUtil.compare(jobWorkRunNodePo.getTurnDate(), jobRunWorkPo.getTurnDate()) == 0) {
+        if (jobWorkRunNodePo == null || jobRunWorkPo == null) {
+            return;
+        }
+        boolean canComplete = workType == WorkTypeEnum.TYPE_SEQUENCE.getCode()
+                || (jobWorkRunNodePo.getTurnDate() != null && jobRunWorkPo.getTurnDate() != null
+                && DateUtil.compare(jobWorkRunNodePo.getTurnDate(), jobRunWorkPo.getTurnDate()) == 0);
+        if (canComplete) {
             jobWorkRunNodePo.setRunWorkId(runWorkId);
             // 只有翻牌节点类型才会设置翻牌时间
             if (workType == WorkTypeEnum.TYPE_TURN.getCode()) {
@@ -232,13 +246,13 @@ public class RunNodeHelper {
      */
     public void updateWorkTurnDate() {
         List<JobRunWorkPo> jobRunWorkList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobRunWorkPo.class)
-                .in(JobRunWorkPo::getRunWorkStatus, RunWorkStatusEnum.RUNNING, RunWorkStatusEnum.WAIT));
+                .in(JobRunWorkPo::getRunWorkStatus, RunWorkStatusEnum.RUNNING.getCode(), RunWorkStatusEnum.WAIT.getCode()));
         for (JobRunWorkPo jobRunWorkPo : jobRunWorkList) {
             List<JobWorkRunNodePo> jobWorkRunNodePos = jobWorkRunNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
                     .eq(JobWorkRunNodePo::getRunWorkId, jobRunWorkPo.getRunWorkId()));
 
             if (CollUtil.isNotEmpty(jobWorkRunNodePos)) {
-                DateTime offsetTurnDate = DateUtil.offset(jobRunWorkPo.getTurnDate(), DateField.DAY_OF_MONTH, 1);
+                DateTime offsetTurnDate = jobRunWorkPo.getTurnDate() == null ? null : DateUtil.offset(jobRunWorkPo.getTurnDate(), DateField.DAY_OF_MONTH, 1);
                 long count = jobWorkRunNodePos.stream()
                         .filter(x -> {
                             boolean flag = x.getNodeRunStatus() == RunWorkStatusEnum.COMPLETE.getCode();
@@ -250,10 +264,13 @@ public class RunNodeHelper {
                         })
                         .count();
                 if (count == jobWorkRunNodePos.size()) {
-                    JobRunWorkPo updateJobWork = new JobRunWorkPo().setTurnDate(offsetTurnDate)
+                    JobRunWorkPo updateJobWork = new JobRunWorkPo()
                             .setRunWorkStatus(RunWorkStatusEnum.COMPLETE.getCode())
                             .setWorkId(jobRunWorkPo.getWorkId())
                             .setRunWorkId(jobRunWorkPo.getRunWorkId());
+                    if (offsetTurnDate != null) {
+                        updateJobWork.setTurnDate(offsetTurnDate);
+                    }
                     jobRunWorkMapper.updateById(updateJobWork);
                 }
             }
@@ -267,10 +284,17 @@ public class RunNodeHelper {
      * @param nodeStatus 节点状态
      */
     public void updateNodeStatusById(String nodeRunId, Integer nodeStatus) {
+        JobWorkRunNodePo oldRunNodePo = jobWorkRunNodeMapper.selectById(nodeRunId);
         JobWorkRunNodePo jobWorkRunNodePo = new JobWorkRunNodePo();
         jobWorkRunNodePo.setRunNodeId(nodeRunId);
         jobWorkRunNodePo.setNodeRunStatus(nodeStatus);
         jobWorkRunNodeMapper.updateById(jobWorkRunNodePo);
+        if (oldRunNodePo != null && nodeStatus == RunWorkStatusEnum.FAIL.getCode()) {
+            JobRunWorkPo jobRunWorkPo = new JobRunWorkPo();
+            jobRunWorkPo.setRunWorkId(oldRunNodePo.getRunWorkId());
+            jobRunWorkPo.setRunWorkStatus(RunWorkStatusEnum.FAIL.getCode());
+            jobRunWorkMapper.updateById(jobRunWorkPo);
+        }
     }
 
     /**
