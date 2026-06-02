@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 /**
  * @description: 作业节点导入节点表
  * @author: Mr.ni
@@ -68,5 +70,9 @@ public class JobWorkImportFileParam {
      * 生成文件名，特殊替换字符
      */
     private String fileNameParam;
+
+    private Date createTime;
+
+    private Date updateTime;
 
 }

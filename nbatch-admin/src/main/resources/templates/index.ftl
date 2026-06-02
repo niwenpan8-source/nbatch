@@ -58,9 +58,6 @@
                             </div>
                             <span class="progress-description">
                                 ${I18n.job_dashboard_trigger_num_tip}
-                                <#--<#if jobLogCount gt 0>
-                                    调度成功率：${(jobLogSuccessCount*100/jobLogCount)?string("0.00")}<small>%</small>
-                                </#if>-->
                             </span>
                         </div>
                     </div>
@@ -85,33 +82,22 @@
 
             </div>
 
-            <#-- 调度报表：时间区间筛选，左侧折线图 + 右侧饼图 -->
             <div class="row">
                 <div class="col-md-12">
                     <div class="box">
                         <div class="box-header with-border">
                             <h3 class="box-title">${I18n.job_dashboard_report}</h3>
-                            <#--<input type="text" class="form-control" id="filterTime" readonly >-->
-
-                            <!-- tools box -->
                             <div class="pull-right box-tools">
                                 <button type="button" class="btn btn-primary btn-sm daterange pull-right" data-toggle="tooltip" id="filterTime" >
                                     <i class="fa fa-calendar"></i>
                                 </button>
-                                <#--<button type="button" class="btn btn-primary btn-sm pull-right" data-widget="collapse" data-toggle="tooltip" title="" style="margin-right: 5px;" data-original-title="Collapse">
-                                    <i class="fa fa-minus"></i>
-                                </button>-->
                             </div>
-                            <!-- /. tools -->
-
                         </div>
                         <div class="box-body">
                             <div class="row">
-                                <#-- 左侧折线图 -->
                                 <div class="col-md-8">
                                     <div id="lineChart" style="height: 350px;"></div>
                                 </div>
-                                <#-- 右侧饼图 -->
                                 <div class="col-md-4">
                                     <div id="pieChart" style="height: 350px;"></div>
                                 </div>

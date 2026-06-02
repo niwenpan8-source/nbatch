@@ -1,3 +1,29 @@
+// DataTables shared i18n config
+var dataTableI18n = {
+	"sProcessing": I18n.dataTable_sProcessing,
+	"sLengthMenu": I18n.dataTable_sLengthMenu,
+	"sZeroRecords": I18n.dataTable_sZeroRecords,
+	"sInfo": I18n.dataTable_sInfo,
+	"sInfoEmpty": I18n.dataTable_sInfoEmpty,
+	"sInfoFiltered": I18n.dataTable_sInfoFiltered,
+	"sInfoPostFix": "",
+	"sSearch": I18n.dataTable_sSearch,
+	"sUrl": "",
+	"sEmptyTable": I18n.dataTable_sEmptyTable,
+	"sLoadingRecords": I18n.dataTable_sLoadingRecords,
+	"sInfoThousands": ",",
+	"oPaginate": {
+		"sFirst": I18n.dataTable_sFirst,
+		"sPrevious": I18n.dataTable_sPrevious,
+		"sNext": I18n.dataTable_sNext,
+		"sLast": I18n.dataTable_sLast
+	},
+	"oAria": {
+		"sSortAscending": I18n.dataTable_sSortAscending,
+		"sSortDescending": I18n.dataTable_sSortDescending
+	}
+};
+
 $(function(){
 
 	// logout
@@ -111,11 +137,11 @@ $(function(){
         messages : {
             oldPassword : {
                 required : I18n.system_please_input +I18n.change_pwd_field_oldpwd,
-                rangelength : "密码长度限制为4~20"
+                rangelength : I18n.system_lengh_limit + "[4-20]"
             },
             password : {
                 required : I18n.system_please_input +I18n.change_pwd_field_newpwd,
-                rangelength : "密码长度限制为4~20"
+                rangelength : I18n.system_lengh_limit + "[4-20]"
             }
         },
         highlight : function(element) {

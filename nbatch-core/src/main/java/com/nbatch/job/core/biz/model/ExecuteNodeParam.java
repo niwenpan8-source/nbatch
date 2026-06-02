@@ -84,6 +84,26 @@ public class ExecuteNodeParam {
     private Date updateTime;
 
     /**
+     * 节点超时时间，单位秒，0不限
+     */
+    private Integer timeout;
+
+    /**
+     * 失败重试次数
+     */
+    private Integer retryCount;
+
+    /**
+     * 重试间隔，单位秒
+     */
+    private Integer retryInterval;
+
+    /**
+     * 失败策略：stop-停止整个流程, skip-跳过继续, retry-重试
+     */
+    private String errorStrategy;
+
+    /**
      * 运行节点状态
      */
     private Integer nodeRunStatus;

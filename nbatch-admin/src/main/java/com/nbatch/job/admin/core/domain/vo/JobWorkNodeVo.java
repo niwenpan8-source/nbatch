@@ -91,5 +91,16 @@ public class JobWorkNodeVo {
      */
     private Date updateTime;
 
+    private Date createTime;
+
+    private Integer timeout;
+
+    private Integer retryCount;
+
+    private Integer retryInterval;
+
+    private String errorStrategy;
+
+    private String notifyEmail;
 
 }

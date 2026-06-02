@@ -53,6 +53,41 @@ public class JobRunWorkPo extends Model<JobRunWorkPo> {
 	private Date createTime;
 
 	/**
+	 * 结束时间
+	 */
+	private Date endTime;
+
+	/**
+	 * 执行失败时的错误信息
+	 */
+	private String errorMsg;
+
+	/**
+	 * 触发类型：manual-手动, cron-定时, api-接口
+	 */
+	private String triggerType;
+
+	/**
+	 * 节点总数
+	 */
+	private Integer totalNodeCount;
+
+	/**
+	 * 已完成节点数
+	 */
+	private Integer completedNodeCount;
+
+	/**
+	 * 失败节点数
+	 */
+	private Integer failedNodeCount;
+
+	/**
+	 * 流程上下文变量（JSON格式），用于节点间传参
+	 */
+	private String contextJson;
+
+	/**
 	 * 作业类型：0=普通作业、1=定时作业
 	 */
 	@TableField(exist = false)

@@ -46,6 +46,11 @@ public class ExecuteWorkParam {
     private Date turnDate;
 
     /**
+     * 流程上下文变量（JSON格式）
+     */
+    private String contextJson;
+
+    /**
      * 执行节点参数列表
      */
     List<ExecuteNodeParam> executeNodeParamList;

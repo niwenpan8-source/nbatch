@@ -51,4 +51,34 @@ public class JobWorkPo extends Model<JobWorkPo> {
 	 */
 	private Integer workStatus;
 
+	/**
+	 * 调度cron表达式，为空则手动触发
+	 */
+	private String cronExpression;
+
+	/**
+	 * 流程超时时间，单位秒，0不限
+	 */
+	private Integer timeout;
+
+	/**
+	 * 告警通知邮箱
+	 */
+	private String notifyEmail;
+
+	/**
+	 * 流程版本号
+	 */
+	private Integer version;
+
+	/**
+	 * 创建时间
+	 */
+	private Date createTime;
+
+	/**
+	 * 修改时间
+	 */
+	private Date updateTime;
+
 }

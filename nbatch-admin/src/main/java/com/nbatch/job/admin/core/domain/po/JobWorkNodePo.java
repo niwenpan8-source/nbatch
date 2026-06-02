@@ -83,5 +83,34 @@ public class JobWorkNodePo extends Model<JobWorkNodePo> {
 	 */
 	private Date updateTime;
 
+	/**
+	 * 创建时间
+	 */
+	private Date createTime;
+
+	/**
+	 * 节点超时时间，单位秒，0不限
+	 */
+	private Integer timeout;
+
+	/**
+	 * 失败重试次数
+	 */
+	private Integer retryCount;
+
+	/**
+	 * 重试间隔，单位秒
+	 */
+	private Integer retryInterval;
+
+	/**
+	 * 失败策略：stop-停止整个流程, skip-跳过继续, retry-重试
+	 */
+	private String errorStrategy;
+
+	/**
+	 * 节点告警邮箱
+	 */
+	private String notifyEmail;
 
 }

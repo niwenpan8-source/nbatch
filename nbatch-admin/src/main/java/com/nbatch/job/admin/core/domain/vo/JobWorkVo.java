@@ -41,4 +41,16 @@ public class JobWorkVo {
      */
     private Integer workStatus;
 
+    private String cronExpression;
+
+    private Integer timeout;
+
+    private String notifyEmail;
+
+    private Integer version;
+
+    private Date createTime;
+
+    private Date updateTime;
+
 }

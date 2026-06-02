@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 /**
  * @description: 作业节点导出文件表
  * @author: Mr.ni
@@ -69,5 +71,9 @@ public class JobWorkExportFileVo {
      * 生成文件名，特殊替换字符
      */
     private String fileNameParam;
+
+    private Date createTime;
+
+    private Date updateTime;
 
 }
