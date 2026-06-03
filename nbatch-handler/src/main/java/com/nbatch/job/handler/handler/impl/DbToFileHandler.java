@@ -61,7 +61,7 @@ public class DbToFileHandler implements JobNodeHandlerAdapter {
         }
         // 创建文件
         //FileUtil.touch(dbExportFilePath);
-        setFilePath(param, finishGenerateFileName, nodeParam.getDbType());
+        setFilePath(param, finishGenerateFileName);
         // 导出相关文件
         boolean flag = dialectHelper.getDialect(nodeParam.getDbType())
                 .dbToFile(dialectHelper.getConnection(nodeParam.getDbType()), param);
@@ -78,7 +78,7 @@ public class DbToFileHandler implements JobNodeHandlerAdapter {
     }
 
 
-    private void setFilePath(ExecuteDbToFileParam param, String finishGenerateFileName, String dbType) {
+    private void setFilePath(ExecuteDbToFileParam param, String finishGenerateFileName) {
         String dbExportFilePath = handlerPropertiesConstant.getTempPath()
                 + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_CSV;
         String remoteDbExportFilePath = handlerPropertiesConstant.getRemoteTempPath() + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_CSV;

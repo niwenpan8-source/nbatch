@@ -45,6 +45,20 @@ spring:
             connection-timeout: 10000
             connection-test-query: SELECT 1
             validation-timeout: 1000
+        gbase:
+          url: jdbc:gbase://192.168.10.160:5258/ppms_zgyh_guangdong_dev
+          username: dmapuser
+          password: bankfund
+          driver-class-name: com.gbase.jdbc.Driver
+          hikari:
+            min-idle: 1
+            max-pool-size: 1
+            is-auto-commit: true
+            idle-timeout: 30000
+            max-lifetime: 900000
+            connection-timeout: 10000
+            connection-test-query: SELECT 1
+            validation-timeout: 1000
   jackson:
     time-zone: GMT+8
 # xxl-job configuration

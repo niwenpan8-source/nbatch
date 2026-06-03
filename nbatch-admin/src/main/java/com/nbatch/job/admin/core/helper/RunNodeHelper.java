@@ -2,32 +2,17 @@ package com.nbatch.job.admin.core.helper;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.nbatch.job.admin.core.domain.po.JobRunWorkPo;
-import com.nbatch.job.admin.core.domain.po.JobWorkExportFilePo;
-import com.nbatch.job.admin.core.domain.po.JobWorkImportFilePo;
-import com.nbatch.job.admin.core.domain.po.JobWorkNodePo;
-import com.nbatch.job.admin.core.domain.po.JobWorkNodeRelationPo;
-import com.nbatch.job.admin.core.domain.po.JobWorkPo;
-import com.nbatch.job.admin.core.domain.po.JobWorkRunNodeLogPo;
-import com.nbatch.job.admin.core.domain.po.JobWorkRunNodePo;
+import com.nbatch.job.admin.core.domain.po.*;
 import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeVo;
 import com.nbatch.job.admin.core.enums.RunWorkStatusEnum;
 import com.nbatch.job.admin.core.enums.WorkStatusEnum;
 import com.nbatch.job.admin.core.enums.WorkTypeEnum;
 import com.nbatch.job.admin.core.thread.JobWorkRunNodeHelper;
-import com.nbatch.job.admin.mapper.IJobRunWorkMapper;
-import com.nbatch.job.admin.mapper.IJobWorkExportFileMapper;
-import com.nbatch.job.admin.mapper.IJobWorkImportFileMapper;
-import com.nbatch.job.admin.mapper.IJobWorkMapper;
-import com.nbatch.job.admin.mapper.IJobWorkNodeMapper;
-import com.nbatch.job.admin.mapper.IJobWorkNodeRelationMapper;
-import com.nbatch.job.admin.mapper.IJobWorkRunNodeLogMapper;
-import com.nbatch.job.admin.mapper.IJobWorkRunNodeMapper;
+import com.nbatch.job.admin.mapper.*;
 import com.nbatch.job.core.biz.model.ExecuteDbToFileParam;
 import com.nbatch.job.core.biz.model.ExecuteFileToDbParam;
 import com.nbatch.job.core.biz.model.ExecuteNodeParam;
@@ -198,7 +183,7 @@ public class RunNodeHelper {
      * 获取所有运行节点
      *
      * @param jobWorkRunNodePos 作业运行节点
-     * @param workType         作业类型
+     * @param workType          作业类型
      */
     public List<String> getAllRunNodeIdByTypeList(List<JobWorkRunNodePo> jobWorkRunNodePos, Integer workType) {
         if (workType == WorkTypeEnum.TYPE_TURN.getCode()) {
@@ -324,7 +309,7 @@ public class RunNodeHelper {
 
         List<JobWorkRunNodePo> jobWorkRunNodePos = jobWorkRunNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
                 .eq(JobWorkRunNodePo::getNodeRunStatus, RunWorkStatusEnum.RUNNING.getCode())
-                .eq(JobWorkRunNodePo::getTurnDate, DateUtil.offsetHour(DateUtil.date(), -6)));
+                .le(JobWorkRunNodePo::getCreateTime, DateUtil.offsetHour(DateUtil.date(), -6)));
         for (JobWorkRunNodePo jobWorkRunNodePo : jobWorkRunNodePos) {
             jobWorkRunNodePo.setNodeRunStatus(RunWorkStatusEnum.WAIT.getCode());
             jobWorkRunNodeMapper.updateById(jobWorkRunNodePo);

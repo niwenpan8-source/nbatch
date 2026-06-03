@@ -30,7 +30,6 @@ import static com.nbatch.job.handler.enums.ExceptionCodeEnum.DB_TO_FILE_FAIL;
 @Slf4j
 public class NbatchFileUtil {
 
-
     /**
      * 文件解压(gz)
      */

@@ -23,11 +23,12 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_UPDATE_SQL_FAIL;
 
 /**
- * @description: GBase数据库方言
+ * @description: Gauss数据库方言
  * @author: Mr.ni
  * @date: 2025/11/19
  */
@@ -49,6 +50,8 @@ public class GaussDialect implements BaseDialect {
             // 开启自动提交
             connection.setAutoCommit(false);
             BaseConnection baseConnection = connection.unwrap(BaseConnection.class);
+            baseConnection.getNetworkTimeout();
+            baseConnection.getQueryExecutor().setNetworkTimeout(1);
             String line;
             int currentBatchLineCount = 0;
             long totalCopied = 0L;

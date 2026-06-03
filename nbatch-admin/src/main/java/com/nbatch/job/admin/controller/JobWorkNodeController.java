@@ -119,7 +119,6 @@ public class JobWorkNodeController {
     @ResponseBody
     @PostMapping("/logPageList")
     public ReturnT<IPage<JobWorkRunNodeLogVo>> logPageList(JobWorkNodeLogPageParam param) {
-
         return new ReturnT<>(jobWorkNodeService.logPageList(param));
     }
 

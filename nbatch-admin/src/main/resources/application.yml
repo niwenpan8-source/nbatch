@@ -39,15 +39,24 @@ spring:
     password: ni141516
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
+      # 连接池名称
       pool-name: HikariCP
+      # 最小空闲连接数，保持10个连接以应对突发请求
       minimum-idle: 10
+      # 最大连接池大小，同时最多30个数据库连接
       maximum-pool-size: 30
+      # 自动提交从池中返回的连接
       auto-commit: true
+      # 空闲连接超时时间（毫秒），30秒后关闭多余的空闲连接
       idle-timeout: 30000
+      # 连接最大生命周期（毫秒），15分钟后强制关闭连接
       max-lifetime: 900000
+      # 连接超时时间（毫秒），等待连接的最大时间为10秒
       connection-timeout: 10000
+      # 连接测试查询，用于验证连接的有效性
       connection-test-query: SELECT 1
-      validation-timeout: 1000
+      # 连接验证超时时间（毫秒），1秒内完成连接有效性检查
+      validation-timeout: 5000
   mail:
     host: smtp.qq.com
     port: 25
