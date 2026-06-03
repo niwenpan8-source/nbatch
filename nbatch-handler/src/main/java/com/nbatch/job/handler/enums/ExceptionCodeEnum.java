@@ -39,6 +39,31 @@ public enum ExceptionCodeEnum {
 
 
     LUA_SCRIPT_FAIL(10006),
+
+    /**
+     * 参数校验失败
+     */
+    PARAM_VALID_ERROR(20001),
+
+    /**
+     * 数据不存在
+     */
+    DATA_NOT_FOUND(20002),
+
+    /**
+     * 未授权
+     */
+    UNAUTHORIZED(20003),
+
+    /**
+     * 系统内部错误
+     */
+    SYSTEM_ERROR(20004),
+
+    /**
+     * 操作不允许
+     */
+    OPERATION_NOT_ALLOWED(20005),
     ;
 
     private final Integer code;

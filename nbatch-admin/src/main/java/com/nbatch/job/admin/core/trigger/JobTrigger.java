@@ -11,6 +11,7 @@ import com.nbatch.job.admin.core.enums.ExecutorRouteStrategyEnum;
 import com.nbatch.job.admin.core.enums.TriggerTypeEnum;
 import com.nbatch.job.admin.core.exception.JobException;
 import com.nbatch.job.admin.core.scheduler.JobScheduler;
+import com.nbatch.job.admin.core.thread.JobWorkRunNodeHelper;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.ExecutorBiz;
 import com.nbatch.job.core.biz.model.ExecuteWorkParam;
@@ -164,12 +165,12 @@ public class JobTrigger {
                 }
             } else {
                 routeAddressResult = executorRouteStrategyEnum.getRouter().route(triggerParam, group.getRegistryList());
-                if (routeAddressResult.getCode() == ReturnT.SUCCESS_CODE) {
+                if (routeAddressResult.getCode() == ReturnT.SUCCESS.getCode()) {
                     address = routeAddressResult.getContent();
                 }
             }
         } else {
-            routeAddressResult = new ReturnT<>(ReturnT.FAIL_CODE, I18nUtil.getString("jobconf_trigger_address_empty"));
+            routeAddressResult = new ReturnT<>(ReturnT.FAIL.getCode(), I18nUtil.getString("jobconf_trigger_address_empty"));
         }
 
         // 4、trigger remote executor
@@ -177,7 +178,7 @@ public class JobTrigger {
         if (address != null) {
             triggerResult = runExecutor(triggerParam, address);
         } else {
-            triggerResult = new ReturnT<>(ReturnT.FAIL_CODE, null);
+            triggerResult = new ReturnT<>(ReturnT.FAIL.getCode(), null);
         }
 
         // 5、collection trigger info
@@ -228,12 +229,15 @@ public class JobTrigger {
                     throw new JobException("如果为作业任务，job需要绑定作业id");
                 }
                 handleWorkTypeTaskParam(triggerParam);
+                if (triggerParam.getExecuteWorkParam() != null) {
+                    JobWorkRunNodeHelper.putRunWorkCache(triggerParam.getExecuteWorkParam().getRunWorkId(), address, triggerParam);
+                }
             }
 
             runResult = executorBiz.run(triggerParam);
 
             // 如果请求失败需要将作业节点置为停止
-            if (runResult.getCode() == ReturnT.FAIL_CODE) {
+            if (runResult.getCode() == ReturnT.FAIL.getCode()) {
                 if (StrUtil.equals(triggerParam.getGlueType(), GlueTypeEnum.WORK.name())) {
                     JobAdminConfig.getAdminConfig().getRunNodeHelper()
                             .updateNodeRunStatus(triggerParam.getExecuteWorkParam(), RunWorkStatusEnum.WAIT.getCode());
@@ -246,7 +250,7 @@ public class JobTrigger {
                         .updateNodeRunStatus(triggerParam.getExecuteWorkParam(), RunWorkStatusEnum.WAIT.getCode());
             }
             log.error(">>>>>>>>>>> job trigger error, please check if the executor[{}] is running.", address, e);
-            runResult = new ReturnT<>(ReturnT.FAIL_CODE, ThrowableUtil.toString(e));
+            runResult = new ReturnT<>(ReturnT.FAIL.getCode(), ThrowableUtil.toString(e));
         }
 
         String runResultStr = I18nUtil.getString("jobconf_trigger_run") + "：" + "<br>address：" + address +

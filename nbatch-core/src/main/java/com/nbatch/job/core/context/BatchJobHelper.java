@@ -179,6 +179,15 @@ public class BatchJobHelper {
     }
 
     /**
+     * handle fail with throwable
+     *
+     * @param e throwable
+     */
+    public static boolean handleFail(Throwable e) {
+        return handleResult(HandleCodeConstant.HANDLE_CODE_FAIL, ThrowableUtil.toString(e));
+    }
+
+    /**
      * handle timeout
      */
     public static boolean handleTimeout() {

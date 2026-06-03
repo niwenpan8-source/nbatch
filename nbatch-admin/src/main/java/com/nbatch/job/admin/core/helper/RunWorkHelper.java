@@ -127,4 +127,13 @@ public class RunWorkHelper {
         }
     }
 
+    /**
+     * 获取需要继续调度执行的运行作业
+     */
+    public List<JobRunWorkPo> getAllNeedRunWorkList() {
+        return jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobRunWorkPo.class)
+                .in(JobRunWorkPo::getRunWorkStatus, RunWorkStatusEnum.WAIT.getCode(), RunWorkStatusEnum.RUNNING.getCode())
+                .orderByAsc(JobRunWorkPo::getCreateTime));
+    }
+
 }
