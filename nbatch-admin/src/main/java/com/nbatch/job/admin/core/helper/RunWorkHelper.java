@@ -137,4 +137,40 @@ public class RunWorkHelper {
                 .orderByAsc(JobWorkRunPo::getCreateTime));
     }
 
+    /**
+     * 修改作业翻牌时间
+     */
+    public void updateWorkTurnDate() {
+        List<JobWorkRunPo> jobRunWorkList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkRunPo.class)
+                .in(JobWorkRunPo::getRunWorkStatus, RunWorkStatusEnum.RUNNING.getCode(), RunWorkStatusEnum.WAIT.getCode()));
+        for (JobWorkRunPo jobRunWorkPo : jobRunWorkList) {
+            List<JobWorkRunNodePo> jobWorkRunNodePos = jobWorkRunNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
+                    .eq(JobWorkRunNodePo::getRunWorkId, jobRunWorkPo.getRunWorkId()));
+
+            if (CollUtil.isNotEmpty(jobWorkRunNodePos)) {
+                DateTime offsetTurnDate = jobRunWorkPo.getTurnDate() == null ? null : DateUtil.offset(jobRunWorkPo.getTurnDate(), DateField.DAY_OF_MONTH, 1);
+                long count = jobWorkRunNodePos.stream()
+                        .filter(x -> {
+                            boolean flag = x.getNodeRunStatus() == RunWorkStatusEnum.COMPLETE.getCode();
+                            // 这里由于当作业类型为顺序类型时翻牌时间为空，不判断翻牌时间
+                            if (flag && x.getTurnDate() != null) {
+                                flag = DateUtil.compare(x.getTurnDate(), offsetTurnDate) == 0;
+                            }
+                            return flag;
+                        })
+                        .count();
+                if (count == jobWorkRunNodePos.size()) {
+                    JobWorkRunPo updateJobWork = new JobWorkRunPo()
+                            .setRunWorkStatus(RunWorkStatusEnum.COMPLETE.getCode())
+                            .setWorkId(jobRunWorkPo.getWorkId())
+                            .setRunWorkId(jobRunWorkPo.getRunWorkId());
+                    if (offsetTurnDate != null) {
+                        updateJobWork.setTurnDate(offsetTurnDate);
+                    }
+                    jobRunWorkMapper.updateById(updateJobWork);
+                }
+            }
+        }
+    }
+
 }

@@ -33,7 +33,7 @@ public class JobWorkMonitorHelper {
             while (!toStop) {
                 try {
                     // 修改节点翻牌时间
-                    JobAdminConfig.getAdminConfig().getRunNodeHelper().updateWorkTurnDate();
+                    JobAdminConfig.getAdminConfig().getRunWorkHelper().updateWorkTurnDate();
                     // 只保留30天的运行数据
                     JobAdminConfig.getAdminConfig().getRunWorkHelper().deleteRunWork();
                     // 修改超过固定时间，任务状态仍然为1的节点任务修改为0

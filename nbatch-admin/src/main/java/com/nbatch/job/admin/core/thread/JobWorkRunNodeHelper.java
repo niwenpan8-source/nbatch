@@ -11,6 +11,7 @@ import com.nbatch.job.admin.core.domain.po.JobLogPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkRunPo;
 import com.nbatch.job.admin.core.enums.ExecutorRouteStrategyEnum;
 import com.nbatch.job.admin.core.enums.WorkStatusEnum;
+import com.nbatch.job.admin.core.helper.RunNodeHelper.NodeStatusContext;
 import com.nbatch.job.admin.core.scheduler.JobScheduler;
 import com.nbatch.job.core.biz.ExecutorBiz;
 import com.nbatch.job.core.biz.model.ExecuteNodeParam;
@@ -151,15 +152,14 @@ public class JobWorkRunNodeHelper {
                 RUN_WORK_ID_CACHE.put(executeWorkParam.getRunWorkId(), context);
 
                 JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                        .updateNodeRunStatus(triggerParam.getExecuteWorkParam(), WorkStatusEnum.START.getCode());
+                        .handleNodeStatus(NodeStatusContext.runStatus(triggerParam.getExecuteWorkParam(), WorkStatusEnum.START.getCode()));
                 ReturnT<String> runResult = executorBiz.run(triggerParam);
 
                 // 如果请求失败需要将作业节点置为停止,当遇到的异常为者执行超时,应该如何处理，如果不出，他会一直超时
                 if (runResult.getCode() >= HandleCodeConstant.HANDLE_CODE_FAIL) {
                     for (ExecuteNodeParam executeNodeParam : executeWorkParam.getExecuteNodeParamList()) {
                         JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                                .updateNodeStatusById(executeNodeParam.getRunNodeId(),
-                                        WorkStatusEnum.STOP.getCode());
+                                .updateNodeStatusById(executeNodeParam.getRunNodeId(), WorkStatusEnum.STOP.getCode());
                         JobAdminConfig.getAdminConfig().getRunNodeHelper()
                                 .updateCallBackRunNodeLog(executeNodeParam.getNodeLogId()
                                         , HandleCodeConstant.HANDLE_CODE_FAIL

@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -68,5 +69,15 @@ public class JobWorkRunNodePo extends Model<JobWorkRunNodePo> {
 	 * 重试次数，如果归零则不再能够进行重试
 	 */
 	private Integer retryTimes;
+
+	/**
+	 * 运行节点开始时间
+	 */
+	private LocalDateTime startTime;
+
+	/**
+	 * 运行节点结束时间
+	 */
+	private LocalDateTime endTime;
 
 }

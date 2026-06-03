@@ -10,6 +10,7 @@ import com.nbatch.job.admin.core.domain.po.JobLogPo;
 import com.nbatch.job.admin.core.enums.ExecutorRouteStrategyEnum;
 import com.nbatch.job.admin.core.enums.TriggerTypeEnum;
 import com.nbatch.job.admin.core.exception.JobException;
+import com.nbatch.job.admin.core.helper.RunNodeHelper.NodeStatusContext;
 import com.nbatch.job.admin.core.scheduler.JobScheduler;
 import com.nbatch.job.admin.core.thread.JobWorkRunNodeHelper;
 import com.nbatch.job.admin.core.util.I18nUtil;
@@ -18,7 +19,6 @@ import com.nbatch.job.core.biz.model.ExecuteWorkParam;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.TriggerParam;
 import com.nbatch.job.core.enums.ExecutorBlockStrategyEnum;
-import com.nbatch.job.core.enums.RunWorkStatusEnum;
 import com.nbatch.job.core.glue.GlueTypeEnum;
 import com.nbatch.job.core.util.IpUtil;
 import com.nbatch.job.core.util.ThrowableUtil;
@@ -240,14 +240,14 @@ public class JobTrigger {
             if (runResult.getCode() == ReturnT.FAIL.getCode()) {
                 if (StrUtil.equals(triggerParam.getGlueType(), GlueTypeEnum.WORK.name())) {
                     JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                            .updateNodeRunStatus(triggerParam.getExecuteWorkParam(), RunWorkStatusEnum.WAIT.getCode());
+                            .handleNodeStatus(NodeStatusContext.waiting(triggerParam.getExecuteWorkParam()));
                 }
             }
         } catch (Exception e) {
             // 如果发生异常需要将作业节点置为停止
             if (StrUtil.equals(triggerParam.getGlueType(), GlueTypeEnum.WORK.name())) {
                 JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                        .updateNodeRunStatus(triggerParam.getExecuteWorkParam(), RunWorkStatusEnum.WAIT.getCode());
+                        .handleNodeStatus(NodeStatusContext.waiting(triggerParam.getExecuteWorkParam()));
             }
             log.error(">>>>>>>>>>> job trigger error, please check if the executor[{}] is running.", address, e);
             runResult = new ReturnT<>(ReturnT.FAIL.getCode(), ThrowableUtil.toString(e));
@@ -269,13 +269,14 @@ public class JobTrigger {
         // 获取可执行节点
         JobAdminConfig.getAdminConfig().getRunWorkHelper().initRunWork(triggerParam.getWorkId());
 
+        // 得到所有可以进行运行的作业节点
         ExecuteWorkParam executeWorkParam
                 = JobAdminConfig.getAdminConfig().getRunNodeHelper().getExecuteWorkObj(triggerParam.getWorkId());
 
         triggerParam.setExecuteWorkParam(executeWorkParam);
 
         JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                .updateNodeRunStatus(triggerParam.getExecuteWorkParam(), RunWorkStatusEnum.RUNNING.getCode());
+                .handleNodeStatus(NodeStatusContext.running(triggerParam.getExecuteWorkParam()));
     }
 
 }

@@ -16,6 +16,7 @@ import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkRunNodeLogPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkRunNodePo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeVo;
+import com.nbatch.job.admin.core.enums.WorkStatusEnum;
 import com.nbatch.job.core.enums.RunWorkStatusEnum;
 import com.nbatch.job.core.enums.WorkTypeEnum;
 import com.nbatch.job.admin.mapper.IJobWorkRunMapper;
@@ -30,15 +31,13 @@ import com.nbatch.job.core.biz.model.ExecuteDbToFileParam;
 import com.nbatch.job.core.biz.model.ExecuteFileToDbParam;
 import com.nbatch.job.core.biz.model.ExecuteNodeParam;
 import com.nbatch.job.core.biz.model.ExecuteWorkParam;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.nbatch.job.admin.core.enums.NodeTypeEnum.NODE_TYPE_DB_TO_FILE;
@@ -69,6 +68,106 @@ public class RunNodeHelper {
     private final IJobWorkRunNodeLogMapper jobWorkRunNodeLogMapper;
 
     private final IJobWorkMapper jobWorkMapper;
+
+    public void handleNodeStatus(NodeStatusContext context) {
+        if (context == null || context.getStrategy() == null) {
+            return;
+        }
+        context.getStrategy().handle(this, context);
+    }
+
+    public enum NodeStatusHandleStrategy {
+
+        /**
+         * 运行状态
+         */
+        RUN_STATUS {
+            @Override
+            void handle(RunNodeHelper helper, NodeStatusContext context) {
+                helper.updateNodeRunStatus(context.getExecuteWorkParam(), context.getNodeStatus());
+            }
+        },
+
+        /**
+         * 完成
+         */
+        COMPLETE {
+            @Override
+            void handle(RunNodeHelper helper, NodeStatusContext context) {
+                helper.updateNodeTurnDate(context.getRunNodeId(), context.getRunWorkId(), context.getWorkType());
+            }
+        },
+
+        /**
+         * 重试失败
+         */
+        RETRY_FAIL {
+            @Override
+            void handle(RunNodeHelper helper, NodeStatusContext context) {
+                helper.updateNodeStatusWithRetry(context.getRunNodeId());
+            }
+        };
+
+        abstract void handle(RunNodeHelper helper, NodeStatusContext context);
+    }
+
+    @Getter
+    public static class NodeStatusContext {
+        private NodeStatusHandleStrategy strategy;
+        private ExecuteWorkParam executeWorkParam;
+        private Integer nodeStatus;
+        private String runNodeId;
+        private String runWorkId;
+        private Integer workType;
+
+        /**
+         * 运行中
+         */
+        public static NodeStatusContext running(ExecuteWorkParam executeWorkParam) {
+            return runStatus(executeWorkParam, RunWorkStatusEnum.RUNNING.getCode());
+        }
+
+        /**
+         * 等待中
+         */
+        public static NodeStatusContext waiting(ExecuteWorkParam executeWorkParam) {
+            return runStatus(executeWorkParam, RunWorkStatusEnum.WAIT.getCode());
+        }
+
+        /**
+         * 运行状态
+         */
+        public static NodeStatusContext runStatus(ExecuteWorkParam executeWorkParam, Integer nodeStatus) {
+            NodeStatusContext context = new NodeStatusContext();
+            context.strategy = NodeStatusHandleStrategy.RUN_STATUS;
+            context.executeWorkParam = executeWorkParam;
+            context.nodeStatus = nodeStatus;
+            return context;
+        }
+
+        /**
+         * 完成
+         */
+        public static NodeStatusContext complete(String runNodeId, String runWorkId, Integer workType) {
+            NodeStatusContext context = new NodeStatusContext();
+            context.strategy = NodeStatusHandleStrategy.COMPLETE;
+            context.runNodeId = runNodeId;
+            context.runWorkId = runWorkId;
+            context.workType = workType;
+            return context;
+        }
+
+        /**
+         * 重试失败
+         */
+        public static NodeStatusContext retryFail(String runNodeId) {
+            NodeStatusContext context = new NodeStatusContext();
+            context.strategy = NodeStatusHandleStrategy.RETRY_FAIL;
+            context.runNodeId = runNodeId;
+            return context;
+        }
+
+    }
 
     /**
      * 获取所有运行的节点
@@ -273,7 +372,7 @@ public class RunNodeHelper {
      * @param executeWorkParam 执行作业参数
      * @param nodeStatus       节点状态
      */
-    public void updateNodeRunStatus(ExecuteWorkParam executeWorkParam, Integer nodeStatus) {
+    private void updateNodeRunStatus(ExecuteWorkParam executeWorkParam, Integer nodeStatus) {
         if (executeWorkParam == null || CollUtil.isEmpty(executeWorkParam.getExecuteNodeParamList())) {
             return;
         }
@@ -282,6 +381,10 @@ public class RunNodeHelper {
                 .collect(Collectors.toList());
         JobWorkRunNodePo jobWorkRunNodePo = new JobWorkRunNodePo();
         jobWorkRunNodePo.setNodeRunStatus(nodeStatus);
+        // 如果为开始节点，初始化运行节点开始时间
+        if (Objects.equals(nodeStatus, WorkStatusEnum.START.getCode())) {
+            jobWorkRunNodePo.setStartTime(LocalDateTime.now());
+        }
 
         List<JobWorkRunNodeLogPo> nodeLogList = executeWorkParam.getExecuteNodeParamList().stream()
                 .map(x -> {
@@ -291,7 +394,8 @@ public class RunNodeHelper {
                     jobWorkRunNodeLogPo.setNodeId(x.getNodeId());
                     jobWorkRunNodeLogPo.setRunNodeId(x.getRunNodeId());
                     jobWorkRunNodeLogPo.setHandleCode(0);
-                    jobWorkRunNodeLogPo.setCreateTime(DateUtil.date());
+                    jobWorkRunNodeLogPo.setCreateTime(LocalDateTime.now());
+                    jobWorkRunNodeLogPo.setCallBackTime(null);
                     return jobWorkRunNodeLogPo;
                 }).collect(Collectors.toList());
         for (JobWorkRunNodeLogPo jobWorkRunNodeLogPo : nodeLogList) {
@@ -314,7 +418,7 @@ public class RunNodeHelper {
      *
      * @param runNodeId 节点id
      */
-    public void updateNodeTurnDate(String runNodeId, String runWorkId, Integer workType) {
+    private void updateNodeTurnDate(String runNodeId, String runWorkId, Integer workType) {
         JobWorkRunNodePo jobWorkRunNodePo = jobWorkRunNodeMapper.selectById(runNodeId);
         JobWorkRunPo jobRunWorkPo = jobRunWorkMapper.selectById(runWorkId);
         if (jobWorkRunNodePo == null || jobRunWorkPo == null) {
@@ -325,6 +429,8 @@ public class RunNodeHelper {
                 && DateUtil.compare(jobWorkRunNodePo.getTurnDate(), jobRunWorkPo.getTurnDate()) == 0);
         if (canComplete) {
             jobWorkRunNodePo.setRunWorkId(runWorkId);
+            // 如果节点已经完成初始化结束时间
+            jobWorkRunNodePo.setEndTime(LocalDateTime.now());
             // 只有翻牌节点类型才会设置翻牌时间
             if (workType == WorkTypeEnum.TYPE_TURN.getCode()) {
                 jobWorkRunNodePo.setTurnDate(DateUtil.offset(jobWorkRunNodePo.getTurnDate(), DateField.DAY_OF_MONTH, 1));
@@ -335,65 +441,29 @@ public class RunNodeHelper {
     }
 
     /**
-     * 修改作业翻牌时间
-     */
-    public void updateWorkTurnDate() {
-        List<JobWorkRunPo> jobRunWorkList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkRunPo.class)
-                .in(JobWorkRunPo::getRunWorkStatus, RunWorkStatusEnum.RUNNING.getCode(), RunWorkStatusEnum.WAIT.getCode()));
-        for (JobWorkRunPo jobRunWorkPo : jobRunWorkList) {
-            List<JobWorkRunNodePo> jobWorkRunNodePos = jobWorkRunNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
-                    .eq(JobWorkRunNodePo::getRunWorkId, jobRunWorkPo.getRunWorkId()));
-
-            if (CollUtil.isNotEmpty(jobWorkRunNodePos)) {
-                DateTime offsetTurnDate = jobRunWorkPo.getTurnDate() == null ? null : DateUtil.offset(jobRunWorkPo.getTurnDate(), DateField.DAY_OF_MONTH, 1);
-                long count = jobWorkRunNodePos.stream()
-                        .filter(x -> {
-                            boolean flag = x.getNodeRunStatus() == RunWorkStatusEnum.COMPLETE.getCode();
-                            // 这里由于当作业类型为顺序类型时翻牌时间为空，不判断翻牌时间
-                            if (flag && x.getTurnDate() != null) {
-                                flag = DateUtil.compare(x.getTurnDate(), offsetTurnDate) == 0;
-                            }
-                            return flag;
-                        })
-                        .count();
-                if (count == jobWorkRunNodePos.size()) {
-                    JobWorkRunPo updateJobWork = new JobWorkRunPo()
-                            .setRunWorkStatus(RunWorkStatusEnum.COMPLETE.getCode())
-                            .setWorkId(jobRunWorkPo.getWorkId())
-                            .setRunWorkId(jobRunWorkPo.getRunWorkId());
-                    if (offsetTurnDate != null) {
-                        updateJobWork.setTurnDate(offsetTurnDate);
-                    }
-                    jobRunWorkMapper.updateById(updateJobWork);
-                }
-            }
-        }
-    }
-
-    /**
      * 更新节点状态
      *
      * @param nodeRunId  节点id
      * @param nodeStatus 节点状态
      */
-    public void updateNodeStatusById(String nodeRunId, Integer nodeStatus) {
-        JobWorkRunNodePo oldRunNodePo = jobWorkRunNodeMapper.selectById(nodeRunId);
+    public void updateRunNodeStatusById(String nodeRunId, Integer nodeStatus) {
         JobWorkRunNodePo jobWorkRunNodePo = new JobWorkRunNodePo();
         jobWorkRunNodePo.setRunNodeId(nodeRunId);
         jobWorkRunNodePo.setNodeRunStatus(nodeStatus);
-        jobWorkRunNodeMapper.updateById(jobWorkRunNodePo);
-        if (oldRunNodePo != null && nodeStatus == RunWorkStatusEnum.FAIL.getCode()) {
-            JobWorkRunPo jobRunWorkPo = new JobWorkRunPo();
-            jobRunWorkPo.setRunWorkId(oldRunNodePo.getRunWorkId());
-            jobRunWorkPo.setRunWorkStatus(RunWorkStatusEnum.FAIL.getCode());
-            jobRunWorkMapper.updateById(jobRunWorkPo);
+        // 如果节点已经完成初始化结束时间
+        if (nodeStatus.equals(RunWorkStatusEnum.FAIL.getCode())) {
+            jobWorkRunNodePo.setEndTime(LocalDateTime.now());
         }
+        if (nodeStatus.equals(RunWorkStatusEnum.RUNNING.getCode())) {
+            jobWorkRunNodePo.setStartTime(LocalDateTime.now());
+        }
+        jobWorkRunNodeMapper.updateById(jobWorkRunNodePo);
     }
 
     /**
      * 根据剩余重试次数更新节点失败状态。
      */
-    public void updateNodeStatusWithRetry(String nodeRunId) {
+    private void updateNodeStatusWithRetry(String nodeRunId) {
         JobWorkRunNodePo oldRunNodePo = jobWorkRunNodeMapper.selectById(nodeRunId);
         if (oldRunNodePo == null) {
             return;
@@ -414,7 +484,7 @@ public class RunNodeHelper {
             return;
         }
 
-        updateNodeStatusById(nodeRunId, RunWorkStatusEnum.FAIL.getCode());
+        updateRunNodeStatusById(nodeRunId, RunWorkStatusEnum.FAIL.getCode());
     }
 
     /**

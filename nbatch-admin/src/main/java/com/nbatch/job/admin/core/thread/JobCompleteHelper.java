@@ -8,6 +8,7 @@ import com.nbatch.job.admin.core.complete.JobCompleter;
 import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
 import com.nbatch.job.admin.core.domain.po.JobRegistryPo;
+import com.nbatch.job.admin.core.helper.RunNodeHelper.NodeStatusContext;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.ReturnT;
@@ -212,11 +213,11 @@ public class JobCompleteHelper {
                 = handleCallbackParam.getNodeStatusCallbackParam();
         if (nodeStatusCallbackParam.getHandleCode() == HandleCodeConstant.HANDLE_CODE_SUCCESS) {
             JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                    .updateNodeTurnDate(nodeStatusCallbackParam.getRunNodeId(),
-                            nodeStatusCallbackParam.getRunWorkId(), nodeStatusCallbackParam.getWorkType());
+                    .handleNodeStatus(NodeStatusContext.complete(nodeStatusCallbackParam.getRunNodeId(),
+                            nodeStatusCallbackParam.getRunWorkId(), nodeStatusCallbackParam.getWorkType()));
         } else {
             JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                    .updateNodeStatusWithRetry(nodeStatusCallbackParam.getRunNodeId());
+                    .handleNodeStatus(NodeStatusContext.retryFail(nodeStatusCallbackParam.getRunNodeId()));
         }
         JobAdminConfig.getAdminConfig().getRunNodeHelper()
                 .updateCallBackRunNodeLog(nodeStatusCallbackParam.getNodeLogId()

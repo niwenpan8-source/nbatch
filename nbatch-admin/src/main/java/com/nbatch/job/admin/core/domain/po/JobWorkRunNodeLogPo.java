@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
 import lombok.experimental.Accessors;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -55,7 +56,7 @@ public class JobWorkRunNodeLogPo extends Model<JobWorkRunNodeLogPo> {
 	/**
 	 * 创建时间
 	 */
-	private Date createTime;
+	private LocalDateTime createTime;
 
 	/**
 	 * 回调时间
