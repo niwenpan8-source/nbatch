@@ -53,4 +53,14 @@ public class JobWorkVo {
 
     private Date updateTime;
 
+    /**
+     * 最近一次运行作业的翻牌日期
+     */
+    private String turnDate;
+
+    /**
+     * 最近一次运行作业状态
+     */
+    private Integer runWorkStatus;
+
 }

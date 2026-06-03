@@ -1,6 +1,7 @@
 package com.nbatch.job.admin.core.domain.po;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -48,30 +49,5 @@ public class JobWorkNodeRelationPo extends Model<JobWorkNodeRelationPo> {
 	 * 节点顺序（用于顺序类型流程）
 	 */
 	private Integer nodeOrder;
-
-	/**
-	 * 条件表达式（用于条件分支）
-	 */
-	private String conditionExpression;
-
-	/**
-	 * 执行延迟时间，单位分钟
-	 */
-	private Integer delayMinutes;
-
-	/**
-	 * 关系类型：sequential-顺序, parallel-并行, conditional-条件
-	 */
-	private String relationType;
-
-	/**
-	 * 创建时间
-	 */
-	private Date createTime;
-
-	/**
-	 * 修改时间
-	 */
-	private Date updateTime;
 
 }

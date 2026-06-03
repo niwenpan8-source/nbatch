@@ -1,6 +1,7 @@
 package com.nbatch.job.admin.core.domain.po;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.EqualsAndHashCode;
 import lombok.Data;
@@ -77,15 +78,5 @@ public class JobWorkExportFilePo extends Model<JobWorkExportFilePo> {
 	 * 生成文件名，特殊替换字符
 	 */
 	private String fileNameParam;
-
-	/**
-	 * 创建时间
-	 */
-	private Date createTime;
-
-	/**
-	 * 修改时间
-	 */
-	private Date updateTime;
 
 }

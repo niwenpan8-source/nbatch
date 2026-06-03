@@ -1,5 +1,6 @@
 package com.nbatch.job.admin.core.domain.po;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.EqualsAndHashCode;
 import lombok.Data;
@@ -52,16 +53,6 @@ public class JobWorkRunNodePo extends Model<JobWorkRunNodePo> {
 	 * 创建时间
 	 */
 	private Date createTime;
-
-	/**
-	 * 执行结束时间
-	 */
-	private Date endTime;
-
-	/**
-	 * 执行失败的错误信息
-	 */
-	private String errorMsg;
 
 	/**
 	 * 已重试次数
