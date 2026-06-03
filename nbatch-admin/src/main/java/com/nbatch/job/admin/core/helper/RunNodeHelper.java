@@ -391,6 +391,33 @@ public class RunNodeHelper {
     }
 
     /**
+     * 根据剩余重试次数更新节点失败状态。
+     */
+    public void updateNodeStatusWithRetry(String nodeRunId) {
+        JobWorkRunNodePo oldRunNodePo = jobWorkRunNodeMapper.selectById(nodeRunId);
+        if (oldRunNodePo == null) {
+            return;
+        }
+
+        Integer retryTimes = oldRunNodePo.getRetryTimes();
+        if (retryTimes != null && retryTimes > 0) {
+            JobWorkRunNodePo jobWorkRunNodePo = new JobWorkRunNodePo();
+            jobWorkRunNodePo.setRunNodeId(nodeRunId);
+            jobWorkRunNodePo.setNodeRunStatus(RunWorkStatusEnum.WAIT.getCode());
+            jobWorkRunNodePo.setRetryTimes(retryTimes - 1);
+            jobWorkRunNodeMapper.updateById(jobWorkRunNodePo);
+
+            JobWorkRunPo jobRunWorkPo = new JobWorkRunPo();
+            jobRunWorkPo.setRunWorkId(oldRunNodePo.getRunWorkId());
+            jobRunWorkPo.setRunWorkStatus(RunWorkStatusEnum.WAIT.getCode());
+            jobRunWorkMapper.updateById(jobRunWorkPo);
+            return;
+        }
+
+        updateNodeStatusById(nodeRunId, RunWorkStatusEnum.FAIL.getCode());
+    }
+
+    /**
      * 修改运行节点日志状态
      */
     public void updateCallBackRunNodeLog(String nodeLogId,

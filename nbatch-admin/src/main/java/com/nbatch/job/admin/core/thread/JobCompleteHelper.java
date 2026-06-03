@@ -12,7 +12,6 @@ import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.constant.HandleCodeConstant;
-import com.nbatch.job.core.enums.RunWorkStatusEnum;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Date;
@@ -216,11 +215,8 @@ public class JobCompleteHelper {
                     .updateNodeTurnDate(nodeStatusCallbackParam.getRunNodeId(),
                             nodeStatusCallbackParam.getRunWorkId(), nodeStatusCallbackParam.getWorkType());
         } else {
-            // todo这里需要增加代码处理根据重试次数进行处理，如果没有达到重试次数上限可以吧状态置为待执行，如果超过可以置为失败
-            // todo但是后续失败如何进行处理，可以参考rocketmq的死信队列，一旦为失败，后续所有的依赖节点都不能够执行
             JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                    .updateNodeStatusById(nodeStatusCallbackParam.getRunNodeId(),
-                            RunWorkStatusEnum.FAIL.getCode());
+                    .updateNodeStatusWithRetry(nodeStatusCallbackParam.getRunNodeId());
         }
         JobAdminConfig.getAdminConfig().getRunNodeHelper()
                 .updateCallBackRunNodeLog(nodeStatusCallbackParam.getNodeLogId()
