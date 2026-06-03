@@ -53,4 +53,19 @@ public class JobWorkRunNodePo extends Model<JobWorkRunNodePo> {
 	 */
 	private Date createTime;
 
+	/**
+	 * 执行结束时间
+	 */
+	private Date endTime;
+
+	/**
+	 * 执行失败的错误信息
+	 */
+	private String errorMsg;
+
+	/**
+	 * 已重试次数
+	 */
+	private Integer retryTimes;
+
 }

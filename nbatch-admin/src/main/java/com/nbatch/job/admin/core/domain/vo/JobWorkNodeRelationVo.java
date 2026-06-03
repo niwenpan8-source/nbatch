@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 /**
  * @description: 作业节点关系表
  * @author: Mr.ni
@@ -42,5 +44,15 @@ public class JobWorkNodeRelationVo {
      * 节点顺序
      */
     private Integer nodeOrder;
+
+    private String conditionExpression;
+
+    private Integer delayMinutes;
+
+    private String relationType;
+
+    private Date createTime;
+
+    private Date updateTime;
 
 }

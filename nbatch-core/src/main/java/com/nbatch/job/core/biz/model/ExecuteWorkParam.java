@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -38,6 +39,16 @@ public class ExecuteWorkParam {
      * 日志
      */
     private String jobLogId;
+
+    /**
+     * 作业翻牌时间
+     */
+    private Date turnDate;
+
+    /**
+     * 流程上下文变量（JSON格式）
+     */
+    private String contextJson;
 
     /**
      * 执行节点参数列表

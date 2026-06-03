@@ -41,4 +41,10 @@ public class JobWorkRunNodeParam {
      */
     private Date turnDate;
 
+    private Date endTime;
+
+    private String errorMsg;
+
+    private Integer retryTimes;
+
 }

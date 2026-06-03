@@ -41,14 +41,16 @@ public class JobWorkVo {
      */
     private Integer workStatus;
 
-    /**
-     * 作业状态：0=停用、1=启用
-     */
-    private Integer runWorkStatus;
+    private String cronExpression;
 
-    /**
-     * 翻牌时间
-     */
-    private String turnDate;
+    private Integer timeout;
+
+    private String notifyEmail;
+
+    private Integer version;
+
+    private Date createTime;
+
+    private Date updateTime;
 
 }

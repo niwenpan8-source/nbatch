@@ -1,4 +1,4 @@
-package com.nbatch.job.admin.core.enums;
+package com.nbatch.job.core.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +14,7 @@ public enum RunWorkStatusEnum {
     WAIT(0, "待执行"),
     RUNNING(1, "进行中"),
     COMPLETE(2, "执行完毕"),
+    FAIL(3, "执行失败"),
     ;
 
     /**
@@ -25,4 +26,13 @@ public enum RunWorkStatusEnum {
      * 状态描述
      */
     private final String value;
+
+    public static String getValueByCode(int code) {
+        for (RunWorkStatusEnum value : RunWorkStatusEnum.values()) {
+            if (value.getCode() == code) {
+                return value.getValue();
+            }
+        }
+        return null;
+    }
 }

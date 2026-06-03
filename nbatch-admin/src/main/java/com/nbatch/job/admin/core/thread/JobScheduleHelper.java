@@ -99,7 +99,7 @@ public class JobScheduleHelper {
                             // time-ring jump
                             if (nowTime > jobInfo.getTriggerNextTime() + PRE_READ_MS) {
                                 // 2.1、trigger-expire > 5s：pass && make next-trigger-time
-                                log.warn(">>>>>>>>>>> job, schedule misfire, jobId = " + jobInfo.getId());
+                                log.warn(">>>>>>>>>>> job, schedule misfire, jobId = {}", jobInfo.getId());
 
                                 // 1、misfire match
                                 MisfireStrategyEnum misfireStrategyEnum = MisfireStrategyEnum.match(jobInfo.getMisfireStrategy(), MisfireStrategyEnum.DO_NOTHING);
@@ -262,7 +262,7 @@ public class JobScheduleHelper {
                     }
 
                     // ring trigger
-                    log.debug(">>>>>>>>>>> job, time-ring beat : " + nowSecond + " = " + Collections.singletonList(ringItemData));
+                    log.debug(">>>>>>>>>>> job, time-ring beat : {} = {}", nowSecond, Collections.singletonList(ringItemData));
                     if (CollUtil.isNotEmpty(ringItemData)) {
                         // do trigger
                         for (String jobId : ringItemData) {

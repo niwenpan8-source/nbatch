@@ -11,19 +11,29 @@
     <form class="form-horizontal form" role="form" id="addModel" action="/work/insert">
         <#-- 基础信息 -->
         <div class="form-group">
-            <label for="firstname" class="col-sm-2 control-label">作业名称<font color="red">*</font></label>
+            <label class="col-sm-2 control-label">${I18n.job_work_field_name}<font color="red">*</font></label>
             <div class="col-sm-4">
                 <input type="text" class="form-control" name="workName" placeholder="${I18n.system_please_input}" maxlength="50">
             </div>
 
-            <label for="lastname" class="col-sm-2 control-label">作业描述<font color="red">*</font></label>
+            <label class="col-sm-2 control-label">${I18n.job_work_field_desc}<font color="red">*</font></label>
             <div class="col-sm-4">
                 <input type="text" class="form-control" name="workDesc" placeholder="${I18n.system_please_input}" maxlength="50">
             </div>
         </div>
 
         <div class="form-group">
-            <label for="firstname" class="col-sm-2 control-label">作业状态<font color="red">*</font></label>
+            <label class="col-sm-2 control-label">${I18n.job_work_field_work_type}<font color="red">*</font></label>
+            <div class="col-sm-4">
+                <select class="form-control" name="workType">
+                    <option value="" >--请选择--</option>
+                    <#list workTypeEnum as type>
+                        <option value="${type.code}">${type.value}</option>
+                    </#list>
+                </select>
+            </div>
+
+            <label class="col-sm-2 control-label">${I18n.job_work_field_status}<font color="red">*</font></label>
             <div class="col-sm-4">
                 <select class="form-control" id="workStatus" name="workStatus">
                     <option value="" >--请选择--</option>
@@ -32,10 +42,29 @@
                     </#list>
                 </select>
             </div>
+        </div>
 
-            <label for="lastname" class="col-sm-2 control-label">翻牌日期<font color="red">*</font></label>
+        <div class="form-group">
+            <label class="col-sm-2 control-label">${I18n.job_work_field_cron}</label>
+            <div class="col-sm-4">
+                <input type="text" class="form-control" name="cronExpression" placeholder="0 0 0 * * ? *" maxlength="128">
+            </div>
+
+            <label class="col-sm-2 control-label">${I18n.job_work_field_turn_time}</label>
             <div class="col-sm-4">
                 <input type="text" class="form-control" id="turnTime" name="turnTime" placeholder="yyyy-MM-dd">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">${I18n.job_work_field_timeout}</label>
+            <div class="col-sm-4">
+                <input type="number" class="form-control" name="timeout" placeholder="0" min="0">
+            </div>
+
+            <label class="col-sm-2 control-label">${I18n.job_work_field_notify_email}</label>
+            <div class="col-sm-4">
+                <input type="email" class="form-control" name="notifyEmail" placeholder="xxx@example.com" maxlength="255">
             </div>
         </div>
 

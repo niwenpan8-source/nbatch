@@ -10,15 +10,15 @@ import com.nbatch.job.admin.core.domain.po.JobRunWorkPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkNodePo;
 import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkRunNodePo;
-import com.nbatch.job.admin.core.enums.RunWorkStatusEnum;
-import com.nbatch.job.admin.core.enums.WorkTypeEnum;
+import com.nbatch.job.core.enums.RunWorkStatusEnum;
+import com.nbatch.job.core.enums.WorkTypeEnum;
 import com.nbatch.job.admin.mapper.IJobRunWorkMapper;
 import com.nbatch.job.admin.mapper.IJobWorkMapper;
 import com.nbatch.job.admin.mapper.IJobWorkNodeMapper;
 import com.nbatch.job.admin.mapper.IJobWorkRunNodeMapper;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -29,7 +29,6 @@ import java.util.List;
  * @author: Mr.ni
  * @date: 2025/11/20
  */
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class RunWorkHelper {
@@ -42,22 +41,19 @@ public class RunWorkHelper {
 
     private final IJobWorkRunNodeMapper jobWorkRunNodeMapper;
 
-    public JobRunWorkPo initRunWork(String workId) {
+    /**
+     * 初始化运行作业
+     * @param workId 作业id
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void initRunWork(String workId) {
 
         JobWorkPo jobWorkPo = jobWorkMapper.selectById(workId);
-        if (jobWorkPo == null) {
-            log.error("作业不存在");
-            return null;
-        }
-        if (jobWorkPo.getWorkStatus() != 1) {
-            log.error("作业状态异常未启用");
-            return null;
-        }
         List<JobRunWorkPo> jobRunWorkList = jobRunWorkMapper
                 .selectList(Wrappers.lambdaQuery(JobRunWorkPo.class)
                         .eq(JobRunWorkPo::getWorkId, jobWorkPo.getWorkId())
                         .orderByDesc(JobRunWorkPo::getCreateTime));
-        JobRunWorkPo jobRunWorkPo;
+        JobRunWorkPo jobRunWorkPo = null;
         if (CollUtil.isEmpty(jobRunWorkList)) {
             jobRunWorkPo = initRunWork(jobWorkPo.getWorkId(), jobWorkPo.getWorkType(), DateUtil.parseDate(DateUtil.today()));
         } else {
@@ -68,19 +64,19 @@ public class RunWorkHelper {
                 // DateUtil.compare(currentTurnDate, DateUtil.parseDate(DateUtil.today())) 为-1，所有顺序类型作业不需要增加判断
                 DateTime currentTurnDate = DateUtil.offset(lastJobRunWorkPo.getTurnDate(), DateField.DAY_OF_MONTH, 1);
                 if (DateUtil.compare(currentTurnDate, DateUtil.parseDate(DateUtil.today())) > 0) {
-                    return null;
+                    return;
                 }
                 jobRunWorkPo = initRunWork(lastJobRunWorkPo.getWorkId(), jobWorkPo.getWorkType(), currentTurnDate);
-            } else {
-                return lastJobRunWorkPo;
             }
+        }
+        if (jobRunWorkPo == null) {
+            return;
         }
         List<JobWorkRunNodePo> insertRunNodeList = new ArrayList<>();
         List<JobWorkNodePo> jobWorkNodePos = jobWorkNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkNodePo.class)
-                .eq(JobWorkNodePo::getWorkId, jobRunWorkPo.getWorkId())
-                .eq(JobWorkNodePo::getNodeStatus, 1));
+                .eq(JobWorkNodePo::getWorkId, jobRunWorkPo.getWorkId()));
         if (CollUtil.isEmpty(jobWorkNodePos)) {
-            return null;
+            return;
         }
         for (JobWorkNodePo elementNode : jobWorkNodePos) {
             JobWorkRunNodePo jobWorkRunNodePo = new JobWorkRunNodePo();
@@ -93,11 +89,10 @@ public class RunWorkHelper {
             jobWorkRunNodePo.setCreateTime(DateUtil.date());
             insertRunNodeList.add(jobWorkRunNodePo);
         }
+        jobRunWorkMapper.insert(jobRunWorkPo);
         for (JobWorkRunNodePo jobWorkRunNodePo : insertRunNodeList) {
             jobWorkRunNodeMapper.insert(jobWorkRunNodePo);
         }
-        jobRunWorkMapper.insert(jobRunWorkPo);
-        return jobRunWorkPo;
     }
 
     /**
@@ -123,21 +118,13 @@ public class RunWorkHelper {
      */
     public void deleteRunWork() {
         List<JobRunWorkPo> jobRunWorkPoList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobRunWorkPo.class)
-                .eq(JobRunWorkPo::getRunWorkStatus, RunWorkStatusEnum.COMPLETE.getCode())
+                .in(JobRunWorkPo::getRunWorkStatus, RunWorkStatusEnum.COMPLETE.getCode(), RunWorkStatusEnum.FAIL.getCode())
                 .lt(JobRunWorkPo::getCreateTime, DateUtil.offsetDay(new Date(), -30)));
         for (JobRunWorkPo jobRunWorkPo : jobRunWorkPoList) {
             jobWorkRunNodeMapper.delete(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
                     .eq(JobWorkRunNodePo::getRunWorkId, jobRunWorkPo.getRunWorkId()));
             jobRunWorkMapper.deleteById(jobRunWorkPo);
         }
-    }
-
-    /**
-     * 得到所有需要运行的作业
-     */
-    public List<JobRunWorkPo> getALlNeedRunWorkList() {
-        return jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobRunWorkPo.class)
-                .in(JobRunWorkPo::getRunWorkStatus, RunWorkStatusEnum.WAIT.getCode(), RunWorkStatusEnum.RUNNING.getCode()));
     }
 
 }

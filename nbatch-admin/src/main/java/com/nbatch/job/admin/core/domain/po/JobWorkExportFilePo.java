@@ -9,6 +9,8 @@ import lombok.AllArgsConstructor;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
 
+import java.util.Date;
+
 /**
  * @description: 作业节点导出文件表
  * @author:  Mr.ni
@@ -75,5 +77,15 @@ public class JobWorkExportFilePo extends Model<JobWorkExportFilePo> {
 	 * 生成文件名，特殊替换字符
 	 */
 	private String fileNameParam;
+
+	/**
+	 * 创建时间
+	 */
+	private Date createTime;
+
+	/**
+	 * 修改时间
+	 */
+	private Date updateTime;
 
 }

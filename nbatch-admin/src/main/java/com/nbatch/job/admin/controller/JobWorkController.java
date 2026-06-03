@@ -8,6 +8,7 @@ import com.nbatch.job.admin.core.domain.vo.JobWorkNodeRelationVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkVo;
 import com.nbatch.job.admin.core.enums.RunWorkStatusEnum;
 import com.nbatch.job.admin.core.enums.WorkStatusEnum;
+import com.nbatch.job.core.enums.WorkTypeEnum;
 import com.nbatch.job.admin.service.IJobWorkNodeService;
 import com.nbatch.job.admin.service.IJobWorkService;
 import com.nbatch.job.core.biz.model.ReturnT;
@@ -65,6 +66,7 @@ public class JobWorkController {
     public String addModel(Model model) {
         // 枚举-字典路由策略-列表
         model.addAttribute("workStatusEnum", WorkStatusEnum.values());
+        model.addAttribute("workTypeEnum", WorkTypeEnum.values());
         return "jobwork/jobwork.add";
     }
 
@@ -79,6 +81,7 @@ public class JobWorkController {
         JobWorkVo workVo = jobWorkService.getModel(workId);
         // 枚举-字典路由策略-列表
         model.addAttribute("workStatusEnum", WorkStatusEnum.values());
+        model.addAttribute("workTypeEnum", WorkTypeEnum.values());
         model.addAttribute("model", workVo);
         return "jobwork/jobwork.update";
     }

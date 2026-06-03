@@ -10,7 +10,6 @@ $(function () {
             data: function (d) {
                 var obj = {};
                 obj.nodeType = $('#nodeType').val();
-                obj.workId = $('#workId').val();
                 obj.start = d.start;
                 obj.length = d.length;
                 return obj;
@@ -23,38 +22,28 @@ $(function () {
                 "data": 'nodeId',
                 "bSortable": false,
                 "visible": true,
-                "width": '12%'
+                "width": '15%'
             },
             {
                 "data": 'nodeName',
                 "visible": true,
-                "width": '12%'
-            },
-            {
-                "data": 'workId',
-                "visible": true,
-                "width": '12%'
-            },
-            {
-                "data": 'workName',
-                "visible": true,
-                "width": '12%'
+                "width": '15%'
             },
             {
                 "data": 'nodeDesc',
                 "visible": true,
-                "width": '15%'
+                "width": '20%'
             },
             {
                 "data": 'nodeStatus',
                 "visible": true,
-                "width": '12%',
+                "width": '15%',
                 "render": function (data, type, row) {
                     // status
                     if (1 === data) {
-                        return '<div style="text-align: left;"><small class="label label-success">启用</small></div>';
+                        return '<div style="text-align: left;"><small class="label label-success">' + I18n.jobinfo_opt_start + '</small></div>';
                     } else {
-                        return '<div style="text-align: left;"><small class="label label-default">停用</small></div>';
+                        return '<div style="text-align: left;"><small class="label label-default">' + I18n.jobinfo_opt_stop + '</small></div>';
                     }
                 }
             },
@@ -81,37 +70,13 @@ $(function () {
                             '     <ul class="dropdown-menu" role="menu" _id="' + row.nodeId + '" >\n' +
                             '       <li><a href="javascript:void(0);" class="update">' + I18n.system_opt_edit + '</a></li>\n' +
                             '       <li><a href="javascript:void(0);" class="delete">' + I18n.system_opt_del + '</a></li>\n' +
-                            '       <li><a href="javascript:void(0);" class="viewLog">' + I18n.system_opt_view_log + '</a></li>\n' +
                             '     </ul>\n' +
                             '   </div>';
                     };
                 }
             }
         ],
-        "language": {
-            "sProcessing": I18n.dataTable_sProcessing,
-            "sLengthMenu": I18n.dataTable_sLengthMenu,
-            "sZeroRecords": I18n.dataTable_sZeroRecords,
-            "sInfo": I18n.dataTable_sInfo,
-            "sInfoEmpty": I18n.dataTable_sInfoEmpty,
-            "sInfoFiltered": I18n.dataTable_sInfoFiltered,
-            "sInfoPostFix": "",
-            "sSearch": I18n.dataTable_sSearch,
-            "sUrl": "",
-            "sEmptyTable": I18n.dataTable_sEmptyTable,
-            "sLoadingRecords": I18n.dataTable_sLoadingRecords,
-            "sInfoThousands": ",",
-            "oPaginate": {
-                "sFirst": I18n.dataTable_sFirst,
-                "sPrevious": I18n.dataTable_sPrevious,
-                "sNext": I18n.dataTable_sNext,
-                "sLast": I18n.dataTable_sLast
-            },
-            "oAria": {
-                "sSortAscending": I18n.dataTable_sSortAscending,
-                "sSortDescending": I18n.dataTable_sSortDescending
-            }
-        }
+        "language": dataTableI18n
     });
 
     // table data
@@ -127,7 +92,6 @@ $(function () {
 
         var url = base_url + "/node/delete";
         var id = $(this).parents('ul').attr("_id");
-        console.log(id);
         var typeName = I18n.system_opt_del;
 
         layer.confirm(I18n.system_ok + typeName + '?', {
@@ -162,45 +126,42 @@ $(function () {
         var url = base_url + "/node/addModel";
         layer.open({
             type: 2,
-            area: ['800px', '500px'],
-            title: '添加',
+            area: ['700px', '520px'],
+            title: I18n.jobinfo_field_add,
             shade: 0.6,
             shadeClose: false,
             maxmin: true,
             anim: 0,
             content: url,
-            btn: ['确认', '取消'],
+            btn: [I18n.system_ok, I18n.system_cancel],
             yes: function(index, layero) {
-                // 获取iframe内的表单数据并提交
                 var iframeWin = layero.find('iframe')[0].contentWindow;
                 var form = iframeWin.document.getElementById('addModel');
 
                 if (form) {
-                    // 创建FormData对象收集表单数据
                     var formData = new FormData(form);
 
-                    // 使用jQuery.ajax提交表单
                     $.ajax({
-                        url: base_url + '/node/insert',  // 替换为实际的提交地址
+                        url: base_url + '/node/insert',
                         type: 'POST',
                         data: formData,
                         processData: false,
                         contentType: false,
                         success: function(response) {
                             if (response.code === 200) {
-                                layer.msg('添加成功', {icon: 1});
+                                layer.msg(I18n.system_add_suc, {icon: 1});
                                 layer.close(index);
-                                workNodeTable.fnDraw();  // 刷新表格
+                                workNodeTable.fnDraw();
                             } else {
-                                layer.msg(response.msg || '添加失败', {icon: 2});
+                                layer.msg(response.msg || I18n.system_add_fail, {icon: 2});
                             }
                         },
                         error: function() {
-                            layer.msg('请求失败', {icon: 2});
+                            layer.msg(I18n.system_fail, {icon: 2});
                         }
                     });
                 } else {
-                    layer.msg('未找到表单', {icon: 2});
+                    layer.msg(I18n.system_fail, {icon: 2});
                 }
             },
             btn2: function(index) {
@@ -209,74 +170,53 @@ $(function () {
         });
     });
 
-    // update
+    // add
     $("#work_node_list").on('click', '.update',function() {
         var id = $(this).parents('ul').attr("_id");
-        console.log(id)
         var url = base_url + "/node/updateModel?workNodeId=" + id;
         layer.open({
             type: 2,
-            area: ['800px', '500px'],
-            title: '修改',
+            area: ['700px', '520px'],
+            title: I18n.jobinfo_field_update,
             shade: 0.6,
             shadeClose: false,
             maxmin: true,
             anim: 0,
             content: url,
-            btn: ['确认', '取消'],
+            btn: [I18n.system_ok, I18n.system_cancel],
             yes: function(index, layero) {
-                // 获取iframe内的表单数据并提交
                 var iframeWin = layero.find('iframe')[0].contentWindow;
                 var form = iframeWin.document.getElementById('updateModel');
 
                 if (form) {
-                    // 创建FormData对象收集表单数据
                     var formData = new FormData(form);
 
-                    // 使用jQuery.ajax提交表单
                     $.ajax({
-                        url: base_url + '/node/update',  // 替换为实际的提交地址
+                        url: base_url + '/node/update',
                         type: 'POST',
                         data: formData,
                         processData: false,
                         contentType: false,
                         success: function(response) {
                             if (response.code === 200) {
-                                layer.msg('添加成功', {icon: 1});
+                                layer.msg(I18n.system_update_suc, {icon: 1});
                                 layer.close(index);
-                                workNodeTable.fnDraw();  // 刷新表格
+                                workNodeTable.fnDraw();
                             } else {
-                                layer.msg(response.msg || '添加失败', {icon: 2});
+                                layer.msg(response.msg || I18n.system_update_fail, {icon: 2});
                             }
                         },
                         error: function() {
-                            layer.msg('请求失败', {icon: 2});
+                            layer.msg(I18n.system_fail, {icon: 2});
                         }
                     });
                 } else {
-                    layer.msg('未找到表单', {icon: 2});
+                    layer.msg(I18n.system_fail, {icon: 2});
                 }
             },
             btn2: function(index) {
                 layer.close(index);
             }
-        });
-    });
-
-    // 查看日志
-    $("#work_node_list").on('click', '.viewLog',function() {
-        var id = $(this).parents('ul').attr("_id");
-        var url = base_url + "/node/viewLogModel?workNodeId=" + id;
-        layer.open({
-            type: 2,
-            area: ['1000px', '650px'],
-            title: '查看日志',
-            shade: 0.6,
-            shadeClose: false,
-            maxmin: true,
-            anim: 0,
-            content: url,
-            btn: ['确认', '取消']
         });
     });
 

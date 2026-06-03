@@ -4,6 +4,8 @@ import lombok.Data;
 
 import java.util.List;
 
+import java.util.Date;
+
 /**
  * @description: 作业节点关系表
  * @author: Mr.ni
@@ -32,5 +34,15 @@ public class JobWorkNodeRelationParam {
          */
         private String nodeId2;
     }
+
+    private String conditionExpression;
+
+    private Integer delayMinutes;
+
+    private String relationType;
+
+    private Date createTime;
+
+    private Date updateTime;
 
 }

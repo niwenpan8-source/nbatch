@@ -5,6 +5,7 @@ import cn.hutool.json.JSONObject;
 import com.nbatch.job.core.biz.model.ExecuteNodeParam;
 import com.nbatch.job.core.biz.model.ExecuteWorkParam;
 import com.nbatch.job.core.context.BatchJobHelper;
+import com.nbatch.job.core.enums.RunWorkStatusEnum;
 import com.nbatch.job.core.handler.IJobHandlerHolder;
 import com.nbatch.job.handler.enums.NodeTypeEnum;
 import com.nbatch.job.handler.thread.BatchRunnable;
@@ -17,14 +18,17 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /**
  * @description: job handler 容器
  * @author: Mr.ni
  * @date: 2025/11/19
  */
-@Slf4j
 @RequiredArgsConstructor
 public class JobHandlerHolder implements IJobHandlerHolder {
 
@@ -43,37 +47,92 @@ public class JobHandlerHolder implements IJobHandlerHolder {
                     workNodeParam.getWorkId());
             return;
         }
-        for (ExecuteNodeParam nodeParam : executeNodeParamList) {
-            BatchThreadPoolExecutor batchThreadPoolExecutor = BatchThreadPoolUtil.getBatchThreadPoolExecutor(nodeParam.getNodeType());
-            if (batchThreadPoolExecutor == null) {
-                NodeTypeEnum nodeTypeEnum = NodeTypeEnum.getByCode(nodeParam.getNodeType());
-                if (nodeTypeEnum == null) {
-                    BatchJobHelper.log("不支持该节点类型：{}", nodeParam.getNodeType());
-                    continue;
-                }
-                Integer threadPoolNum = nodeTypeEnum.getThreadPoolNum();
-                batchThreadPoolExecutor = BatchThreadPoolUtil.newThreadPoolExecutorDiscard(nodeParam.getNodeType(), threadPoolNum,
-                        threadPoolNum, 30, TimeUnit.MINUTES, 1000);
+        AtomicBoolean hasFail = new AtomicBoolean(false);
+        while (!hasFail.get()) {
+            List<ExecuteNodeParam> runnableNodeList = getRunnableNodeList(executeNodeParamList);
+            if (CollUtil.isEmpty(runnableNodeList)) {
+                break;
             }
-            JobNodeHandlerAdapter jobHandlerAdapter = jobHandlerAdapterMap.get(nodeParam.getNodeType());
-            JSONObject cacheObj = getEntries(workNodeParam, nodeParam);
-            // 假如说节点发生异常该条流程是否需要停止
-            batchThreadPoolExecutor.executeBatch(new BatchRunnable(cacheObj) {
-                @Override
-                public void run() {
-                    Instant start = Instant.now();
-                    try {
-                        jobHandlerAdapter.execute(nodeParam);
-                        Instant end = Instant.now();
-                        Duration duration = Duration.between(start, end);
-                        log.warn("节点执行完成：{}, 执行时间: {} 毫秒", nodeParam.getNodeId(), duration.toMillis());
-                    } catch (Exception e) {
-                        Instant end = Instant.now();
-                        Duration duration = Duration.between(start, end);
-                        BatchJobHelper.log("jobId:{},workId：{},节点执行异常：{},执行时间: {} 毫秒", workNodeParam.getJobId(),
-                                workNodeParam.getWorkId(), e.getMessage(), duration.toMillis());
-                        throw new RuntimeException(e);
-                    }
+            CountDownLatch latch = new CountDownLatch(runnableNodeList.size());
+            for (ExecuteNodeParam nodeParam : runnableNodeList) {
+                executeNode(workNodeParam, nodeParam, latch, hasFail);
+            }
+            try {
+                latch.await();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            }
+        }
+        if (hasFail.get()) {
+            throw new RuntimeException("作业节点执行失败");
+        }
+        List<ExecuteNodeParam> waitNodeList = executeNodeParamList.stream()
+                .filter(x -> x.getNodeRunStatus() == RunWorkStatusEnum.WAIT.getCode())
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(waitNodeList)) {
+            throw new RuntimeException("存在未执行节点，可能依赖关系未满足");
+        }
+    }
+
+    private void executeNode(ExecuteWorkParam workNodeParam, ExecuteNodeParam nodeParam,
+                             CountDownLatch latch, AtomicBoolean hasFail) {
+        if (hasFail.get()) {
+            latch.countDown();
+            return;
+        }
+        BatchThreadPoolExecutor batchThreadPoolExecutor = BatchThreadPoolUtil.getBatchThreadPoolExecutor(nodeParam.getNodeType());
+        if (batchThreadPoolExecutor == null) {
+            NodeTypeEnum nodeTypeEnum = NodeTypeEnum.getByCode(nodeParam.getNodeType());
+            if (nodeTypeEnum == null) {
+                BatchJobHelper.log("不支持该节点类型：{}", nodeParam.getNodeType());
+                nodeParam.setNodeRunStatus(RunWorkStatusEnum.FAIL.getCode());
+                hasFail.set(true);
+                latch.countDown();
+                return;
+            }
+            Integer threadPoolNum = nodeTypeEnum.getThreadPoolNum();
+            batchThreadPoolExecutor = BatchThreadPoolUtil.newThreadPoolExecutorDiscard(nodeParam.getNodeType(), threadPoolNum,
+                    threadPoolNum, 30, TimeUnit.MINUTES, 1000);
+        }
+        JobNodeHandlerAdapter jobHandlerAdapter = jobHandlerAdapterMap.get(nodeParam.getNodeType());
+        if (jobHandlerAdapter == null) {
+            BatchJobHelper.log("未找到节点处理器：{}", nodeParam.getNodeType());
+            nodeParam.setNodeRunStatus(RunWorkStatusEnum.FAIL.getCode());
+            hasFail.set(true);
+            latch.countDown();
+            return;
+        }
+        JSONObject cacheObj = getEntries(workNodeParam, nodeParam);
+        batchThreadPoolExecutor.executeBatch(new BatchRunnable(cacheObj) {
+            private boolean success = false;
+
+            @Override
+            public void runBefore() {
+                nodeParam.setNodeRunStatus(RunWorkStatusEnum.RUNNING.getCode());
+            }
+
+            @Override
+            public void runBatch() {
+                try {
+                    jobHandlerAdapter.execute(nodeParam);
+                    success = true;
+                } catch (Exception e) {
+                    nodeParam.setNodeRunStatus(RunWorkStatusEnum.FAIL.getCode());
+                    hasFail.set(true);
+                    BatchJobHelper.log("jobId:{},workId：{},节点执行异常：{}", workNodeParam.getJobId(),
+                            workNodeParam.getWorkId(), e.getMessage());
+                    throw new RuntimeException(e);
+                }
+            }
+
+            @Override
+            public void runAfter() {
+                if (success) {
+                    nodeParam.setNodeRunStatus(RunWorkStatusEnum.COMPLETE.getCode());
+                } else if (nodeParam.getNodeRunStatus() != RunWorkStatusEnum.FAIL.getCode()) {
+                    nodeParam.setNodeRunStatus(RunWorkStatusEnum.FAIL.getCode());
+                    hasFail.set(true);
                 }
             });
 

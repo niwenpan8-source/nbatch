@@ -126,6 +126,7 @@ public class BatchThreadPoolUtil {
                     .setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
                     .setHandleMsg("线程被抛弃");
             TriggerCallbackThread.pushCallBack(handleCallbackParam);
+            batchRunnable.runAfter();
         }
     }
 

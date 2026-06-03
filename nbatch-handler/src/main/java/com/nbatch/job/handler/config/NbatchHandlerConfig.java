@@ -92,6 +92,8 @@ public class NbatchHandlerConfig {
         return new JobHandlerHolder(jobHandlerAdapterMap);
     }
 
+
+
     /**
      * 销毁线程池
      */

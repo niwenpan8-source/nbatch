@@ -108,10 +108,10 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
                         .setWorkType(batchRunnable.getCacheObj().getInt("workType"))
                         .setHandleCode(HandleCodeConstant.HANDLE_CODE_SUCCESS)
                         .setHandleMsg("执行成功");
-                currentRunningTaskList.remove(r);
             }
         }
 
+        currentRunningTaskList.remove(r);
         TriggerCallbackThread.pushCallBack(handleCallbackParam);
         super.afterExecute(r, t);
     }

@@ -150,15 +150,15 @@ public class ScriptUtil {
             final Process process = Runtime.getRuntime().exec(cmdArrayFinal);
             inputThread = new Thread(() -> {
                 String content = IoUtil.readUtf8(process.getInputStream());
-                log.info("content:{}", content);
                 if (StrUtil.isNotBlank(content)) {
+                    log.info("content:{}", content);
                     param.pushRunNodeLogDetailCallback(content);
                 }
             });
             errThread = new Thread(() -> {
                 String content = IoUtil.readUtf8(process.getErrorStream());
-                log.info("error content:{}", content);
                 if (StrUtil.isNotBlank(content)) {
+                    log.info("error content:{}", content);
                     param.pushRunNodeLogDetailCallback(content);
                 }
             });

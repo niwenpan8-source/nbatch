@@ -29,6 +29,7 @@ public class WorkJobHandler extends IJobHandler {
         IJobHandlerHolder handlerHolder = (IJobHandlerHolder) SpringUtil.getBean("jobHandlerHolder");
         workNodeParam.setWorkId(workNodeParam.getWorkId());
         handlerHolder.handle(workNodeParam);
+        BatchJobHelper.handleSuccess("作业节点执行完成");
         BatchJobHelper.log("作业执行器执行作业结束：{}", workNodeParam.getJobId());
     }
 }

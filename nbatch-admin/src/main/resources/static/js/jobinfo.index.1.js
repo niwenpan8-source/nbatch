@@ -164,30 +164,7 @@ $(function() {
 	                	}
 	                }
 	            ],
-		"language" : {
-			"sProcessing" : I18n.dataTable_sProcessing ,
-			"sLengthMenu" : I18n.dataTable_sLengthMenu ,
-			"sZeroRecords" : I18n.dataTable_sZeroRecords ,
-			"sInfo" : I18n.dataTable_sInfo ,
-			"sInfoEmpty" : I18n.dataTable_sInfoEmpty ,
-			"sInfoFiltered" : I18n.dataTable_sInfoFiltered ,
-			"sInfoPostFix" : "",
-			"sSearch" : I18n.dataTable_sSearch ,
-			"sUrl" : "",
-			"sEmptyTable" : I18n.dataTable_sEmptyTable ,
-			"sLoadingRecords" : I18n.dataTable_sLoadingRecords ,
-			"sInfoThousands" : ",",
-			"oPaginate" : {
-				"sFirst" : I18n.dataTable_sFirst ,
-				"sPrevious" : I18n.dataTable_sPrevious ,
-				"sNext" : I18n.dataTable_sNext ,
-				"sLast" : I18n.dataTable_sLast
-			},
-			"oAria" : {
-				"sSortAscending" : I18n.dataTable_sSortAscending ,
-				"sSortDescending" : I18n.dataTable_sSortDescending
-			}
-		}
+		"language": dataTableI18n
 	});
 
     // table data
