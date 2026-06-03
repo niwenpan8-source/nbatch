@@ -45,6 +45,6 @@ public class JobWorkRunNodeParam {
 
     private String errorMsg;
 
-    private Integer retryTimes;
+    private Integer retries;
 
 }

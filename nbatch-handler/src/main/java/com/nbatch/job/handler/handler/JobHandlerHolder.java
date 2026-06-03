@@ -12,10 +12,7 @@ import com.nbatch.job.handler.thread.BatchRunnable;
 import com.nbatch.job.handler.thread.BatchThreadPoolExecutor;
 import com.nbatch.job.handler.utils.BatchThreadPoolUtil;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +28,7 @@ import java.util.stream.Collectors;
  */
 @RequiredArgsConstructor
 public class JobHandlerHolder implements IJobHandlerHolder {
+
 
     private final Map<String, JobNodeHandlerAdapter> jobHandlerAdapterMap;
 
@@ -128,15 +126,35 @@ public class JobHandlerHolder implements IJobHandlerHolder {
 
             @Override
             public void runAfter() {
-                if (success) {
-                    nodeParam.setNodeRunStatus(RunWorkStatusEnum.COMPLETE.getCode());
-                } else if (nodeParam.getNodeRunStatus() != RunWorkStatusEnum.FAIL.getCode()) {
-                    nodeParam.setNodeRunStatus(RunWorkStatusEnum.FAIL.getCode());
-                    hasFail.set(true);
+                try {
+                    if (success) {
+                        nodeParam.setNodeRunStatus(RunWorkStatusEnum.COMPLETE.getCode());
+                    } else if (nodeParam.getNodeRunStatus() != RunWorkStatusEnum.FAIL.getCode()) {
+                        nodeParam.setNodeRunStatus(RunWorkStatusEnum.FAIL.getCode());
+                        hasFail.set(true);
+                    }
+                } finally {
+                    latch.countDown();
                 }
-            });
+            }
+        });
 
-        }
+    }
+
+    /**
+     * 获取可运行的节点列表
+     */
+    private List<ExecuteNodeParam> getRunnableNodeList(List<ExecuteNodeParam> executeNodeParamList) {
+        Set<String> completeNodeIdSet = executeNodeParamList.stream()
+                .filter(x -> x.getNodeRunStatus() == RunWorkStatusEnum.COMPLETE.getCode())
+                .map(ExecuteNodeParam::getNodeId)
+                .collect(Collectors.toSet());
+
+        return executeNodeParamList.stream()
+                .filter(x -> x.getNodeRunStatus() == RunWorkStatusEnum.WAIT.getCode())
+                .filter(x -> CollUtil.isEmpty(x.getNodeRelationIdList())
+                        || completeNodeIdSet.containsAll(x.getNodeRelationIdList()))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -154,6 +172,8 @@ public class JobHandlerHolder implements IJobHandlerHolder {
         cacheObj.putOpt("workType", workNodeParam.getWorkType());
         return cacheObj;
     }
+
 }
+
 
 

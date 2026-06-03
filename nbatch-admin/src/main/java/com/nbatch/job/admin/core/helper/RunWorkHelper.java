@@ -6,16 +6,13 @@ import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.nbatch.job.admin.core.domain.po.JobRunWorkPo;
+import com.nbatch.job.admin.core.domain.po.JobWorkRunPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkNodePo;
 import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkRunNodePo;
+import com.nbatch.job.admin.mapper.*;
 import com.nbatch.job.core.enums.RunWorkStatusEnum;
 import com.nbatch.job.core.enums.WorkTypeEnum;
-import com.nbatch.job.admin.mapper.IJobRunWorkMapper;
-import com.nbatch.job.admin.mapper.IJobWorkMapper;
-import com.nbatch.job.admin.mapper.IJobWorkNodeMapper;
-import com.nbatch.job.admin.mapper.IJobWorkRunNodeMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +32,7 @@ public class RunWorkHelper {
 
     private final IJobWorkMapper jobWorkMapper;
 
-    private final IJobRunWorkMapper jobRunWorkMapper;
+    private final IJobWorkRunMapper jobRunWorkMapper;
 
     private final IJobWorkNodeMapper jobWorkNodeMapper;
 
@@ -49,15 +46,15 @@ public class RunWorkHelper {
     public void initRunWork(String workId) {
 
         JobWorkPo jobWorkPo = jobWorkMapper.selectById(workId);
-        List<JobRunWorkPo> jobRunWorkList = jobRunWorkMapper
-                .selectList(Wrappers.lambdaQuery(JobRunWorkPo.class)
-                        .eq(JobRunWorkPo::getWorkId, jobWorkPo.getWorkId())
-                        .orderByDesc(JobRunWorkPo::getCreateTime));
-        JobRunWorkPo jobRunWorkPo = null;
+        List<JobWorkRunPo> jobRunWorkList = jobRunWorkMapper
+                .selectList(Wrappers.lambdaQuery(JobWorkRunPo.class)
+                        .eq(JobWorkRunPo::getWorkId, jobWorkPo.getWorkId())
+                        .orderByDesc(JobWorkRunPo::getCreateTime));
+        JobWorkRunPo jobRunWorkPo = null;
         if (CollUtil.isEmpty(jobRunWorkList)) {
             jobRunWorkPo = initRunWork(jobWorkPo.getWorkId(), jobWorkPo.getWorkType(), DateUtil.parseDate(DateUtil.today()));
         } else {
-            JobRunWorkPo lastJobRunWorkPo = jobRunWorkList.get(0);
+            JobWorkRunPo lastJobRunWorkPo = jobRunWorkList.get(0);
             // 如果运行状态为待执行或者进行中，则不处理
             if (lastJobRunWorkPo.getRunWorkStatus() == RunWorkStatusEnum.COMPLETE.getCode()) {
                 // 当jobRunWorkPo.getTurnDate()为空时currentTurnDate为空，
@@ -81,12 +78,16 @@ public class RunWorkHelper {
         for (JobWorkNodePo elementNode : jobWorkNodePos) {
             JobWorkRunNodePo jobWorkRunNodePo = new JobWorkRunNodePo();
             jobWorkRunNodePo.setRunWorkId(jobRunWorkPo.getRunWorkId());
+            jobWorkRunNodePo.setWorkId(jobRunWorkPo.getWorkId());
             jobWorkRunNodePo.setNodeId(elementNode.getNodeId());
             jobWorkRunNodePo.setNodeRunStatus(RunWorkStatusEnum.WAIT.getCode());
             if (jobRunWorkPo.getWorkType() == WorkTypeEnum.TYPE_TURN.getCode()) {
                 jobWorkRunNodePo.setTurnDate(jobRunWorkPo.getTurnDate());
             }
             jobWorkRunNodePo.setCreateTime(DateUtil.date());
+            // 错误策略
+            jobWorkRunNodePo.setErrorStrategy(elementNode.getErrorStrategy());
+            jobWorkRunNodePo.setRetryTimes(elementNode.getRetryTimes());
             insertRunNodeList.add(jobWorkRunNodePo);
         }
         jobRunWorkMapper.insert(jobRunWorkPo);
@@ -99,9 +100,9 @@ public class RunWorkHelper {
      * 初始化运行作业
      * @param workId 作业id
      */
-    private JobRunWorkPo initRunWork(String workId, Integer workType, Date turnDate) {
+    private JobWorkRunPo initRunWork(String workId, Integer workType, Date turnDate) {
         String runNodeId = IdUtil.getSnowflakeNextIdStr();
-        JobRunWorkPo jobRunWorkPo = new JobRunWorkPo();
+        JobWorkRunPo jobRunWorkPo = new JobWorkRunPo();
         jobRunWorkPo.setRunWorkId(runNodeId);
         jobRunWorkPo.setWorkId(workId);
         jobRunWorkPo.setRunWorkStatus(RunWorkStatusEnum.WAIT.getCode());
@@ -117,10 +118,10 @@ public class RunWorkHelper {
      * 删除运行作业(只保留30天的记录)
      */
     public void deleteRunWork() {
-        List<JobRunWorkPo> jobRunWorkPoList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobRunWorkPo.class)
-                .in(JobRunWorkPo::getRunWorkStatus, RunWorkStatusEnum.COMPLETE.getCode(), RunWorkStatusEnum.FAIL.getCode())
-                .lt(JobRunWorkPo::getCreateTime, DateUtil.offsetDay(new Date(), -30)));
-        for (JobRunWorkPo jobRunWorkPo : jobRunWorkPoList) {
+        List<JobWorkRunPo> jobRunWorkPoList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkRunPo.class)
+                .in(JobWorkRunPo::getRunWorkStatus, RunWorkStatusEnum.COMPLETE.getCode(), RunWorkStatusEnum.FAIL.getCode())
+                .lt(JobWorkRunPo::getCreateTime, DateUtil.offsetDay(new Date(), -30)));
+        for (JobWorkRunPo jobRunWorkPo : jobRunWorkPoList) {
             jobWorkRunNodeMapper.delete(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
                     .eq(JobWorkRunNodePo::getRunWorkId, jobRunWorkPo.getRunWorkId()));
             jobRunWorkMapper.deleteById(jobRunWorkPo);
@@ -130,10 +131,10 @@ public class RunWorkHelper {
     /**
      * 获取需要继续调度执行的运行作业
      */
-    public List<JobRunWorkPo> getAllNeedRunWorkList() {
-        return jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobRunWorkPo.class)
-                .in(JobRunWorkPo::getRunWorkStatus, RunWorkStatusEnum.WAIT.getCode(), RunWorkStatusEnum.RUNNING.getCode())
-                .orderByAsc(JobRunWorkPo::getCreateTime));
+    public List<JobWorkRunPo> getAllNeedRunWorkList() {
+        return jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkRunPo.class)
+                .in(JobWorkRunPo::getRunWorkStatus, RunWorkStatusEnum.WAIT.getCode(), RunWorkStatusEnum.RUNNING.getCode())
+                .orderByAsc(JobWorkRunPo::getCreateTime));
     }
 
 }

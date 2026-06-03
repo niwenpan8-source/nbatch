@@ -1,7 +1,6 @@
 package com.nbatch.job.admin.core.domain.po;
 
 import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.EqualsAndHashCode;
 import lombok.Data;
@@ -23,8 +22,8 @@ import java.util.Date;
 @Accessors(chain = true)
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("nbatch_job_run_work")
-public class JobRunWorkPo extends Model<JobRunWorkPo> {
+@TableName("nbatch_job_work_run")
+public class JobWorkRunPo extends Model<JobWorkRunPo> {
 
 	/**
 	 * 运行作业id

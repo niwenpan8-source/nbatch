@@ -13,3 +13,6 @@ ALTER TABLE nbatch_job_run_work
 
 ALTER TABLE nbatch_job_work_run_node
     ADD COLUMN retry_times int DEFAULT 0 COMMENT '已重试次数';
+
+alter table nbatch_job_work_run_node
+    add column work_id varchar(32) comment '作业id' after run_work_id;

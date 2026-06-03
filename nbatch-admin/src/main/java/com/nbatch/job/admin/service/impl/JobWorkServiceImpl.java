@@ -6,10 +6,10 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nbatch.job.admin.core.domain.param.JobWorkPageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkParam;
-import com.nbatch.job.admin.core.domain.po.JobRunWorkPo;
+import com.nbatch.job.admin.core.domain.po.JobWorkRunPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkVo;
-import com.nbatch.job.admin.mapper.IJobRunWorkMapper;
+import com.nbatch.job.admin.mapper.IJobWorkRunMapper;
 import com.nbatch.job.admin.mapper.IJobWorkMapper;
 import com.nbatch.job.admin.service.IJobWorkService;
 import org.springframework.stereotype.Service;
@@ -34,7 +34,7 @@ public class JobWorkServiceImpl implements IJobWorkService {
     private IJobWorkMapper jobWorkMapper;
 
     @Resource
-    private IJobRunWorkMapper jobRunWorkMapper;
+    private IJobWorkRunMapper jobRunWorkMapper;
 
     /**
      * 分页列表
@@ -45,15 +45,15 @@ public class JobWorkServiceImpl implements IJobWorkService {
                 Wrappers.lambdaQuery(JobWorkPo.class));
         List<JobWorkPo> records = page.getRecords();
         List<String> workIdList = records.stream().map(JobWorkPo::getWorkId).collect(Collectors.toList());
-        List<JobRunWorkPo> jobRunWorkPoList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobRunWorkPo.class)
-                .in(JobRunWorkPo::getWorkId, workIdList)
-                .orderByDesc(JobRunWorkPo::getCreateTime));
+        List<JobWorkRunPo> jobRunWorkPoList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkRunPo.class)
+                .in(JobWorkRunPo::getWorkId, workIdList)
+                .orderByDesc(JobWorkRunPo::getCreateTime));
 
-        Map<String, JobRunWorkPo> jobRunWorkPoMap = jobRunWorkPoList.stream()
-                .collect(Collectors.toMap(JobRunWorkPo::getWorkId, jobRunWorkPo -> jobRunWorkPo, (old, v) -> old));
+        Map<String, JobWorkRunPo> jobRunWorkPoMap = jobRunWorkPoList.stream()
+                .collect(Collectors.toMap(JobWorkRunPo::getWorkId, jobRunWorkPo -> jobRunWorkPo, (old, v) -> old));
 
         List<JobWorkVo> jobWorkVoList = records.stream().map(x -> {
-            JobRunWorkPo jobRunWorkPo = jobRunWorkPoMap.get(x.getWorkId());
+            JobWorkRunPo jobRunWorkPo = jobRunWorkPoMap.get(x.getWorkId());
             JobWorkVo jobWorkVo = BeanUtil.toBean(x, JobWorkVo.class);
             if (jobRunWorkPo != null) {
                 if (jobRunWorkPo.getTurnDate() != null) {

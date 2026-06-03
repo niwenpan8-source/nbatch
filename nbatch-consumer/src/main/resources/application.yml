@@ -65,7 +65,7 @@ spring:
 nbatch:
   job:
     admin:
-      addresses: http://192.168.10.225:8095/xxl-job-admin
+      addresses: http://192.168.10.225:8095/nbatch
       accessToken: default_token
       timeout: 3
     executor:

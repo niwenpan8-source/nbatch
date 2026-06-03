@@ -7,7 +7,7 @@ import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.nbatch.job.admin.core.domain.po.JobRunWorkPo;
+import com.nbatch.job.admin.core.domain.po.JobWorkRunPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkExportFilePo;
 import com.nbatch.job.admin.core.domain.po.JobWorkImportFilePo;
 import com.nbatch.job.admin.core.domain.po.JobWorkNodePo;
@@ -18,7 +18,7 @@ import com.nbatch.job.admin.core.domain.po.JobWorkRunNodePo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeVo;
 import com.nbatch.job.core.enums.RunWorkStatusEnum;
 import com.nbatch.job.core.enums.WorkTypeEnum;
-import com.nbatch.job.admin.mapper.IJobRunWorkMapper;
+import com.nbatch.job.admin.mapper.IJobWorkRunMapper;
 import com.nbatch.job.admin.mapper.IJobWorkExportFileMapper;
 import com.nbatch.job.admin.mapper.IJobWorkImportFileMapper;
 import com.nbatch.job.admin.mapper.IJobWorkMapper;
@@ -60,7 +60,7 @@ public class RunNodeHelper {
 
     private final IJobWorkNodeRelationMapper jobWorkNodeRelationMapper;
 
-    private final IJobRunWorkMapper jobRunWorkMapper;
+    private final IJobWorkRunMapper jobRunWorkMapper;
 
     private final IJobWorkExportFileMapper jobWorkExportFileMapper;
 
@@ -76,15 +76,15 @@ public class RunNodeHelper {
      * @param workId 作业id
      */
     public ExecuteWorkParam getExecuteWorkObj(String workId) {
-        List<JobRunWorkPo> jobRunWorkPoList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobRunWorkPo.class)
-                .eq(JobRunWorkPo::getWorkId, workId)
-                .in(JobRunWorkPo::getRunWorkStatus, RunWorkStatusEnum.RUNNING.getCode(), RunWorkStatusEnum.WAIT.getCode())
-                .orderByDesc(JobRunWorkPo::getCreateTime));
+        List<JobWorkRunPo> jobRunWorkPoList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkRunPo.class)
+                .eq(JobWorkRunPo::getWorkId, workId)
+                .in(JobWorkRunPo::getRunWorkStatus, RunWorkStatusEnum.RUNNING.getCode(), RunWorkStatusEnum.WAIT.getCode())
+                .orderByDesc(JobWorkRunPo::getCreateTime));
         if (CollUtil.isEmpty(jobRunWorkPoList)) {
             log.info("workId:{},不存在运行作业！", workId);
             return null;
         }
-        JobRunWorkPo jobRunWorkPo = jobRunWorkPoList.get(0);
+        JobWorkRunPo jobRunWorkPo = jobRunWorkPoList.get(0);
         // 对于作业来说等待中以及待运行的作业都可以再次进入
         if (jobRunWorkPo.getRunWorkStatus() != RunWorkStatusEnum.WAIT.getCode()) {
             log.info("workId:{},workStatus:{},只有等待中的节点才可以执行！", workId,
@@ -99,7 +99,7 @@ public class RunNodeHelper {
      *
      * @param jobRunWorkPo 运行作业
      */
-    public ExecuteWorkParam getEnableExecuteWork(JobRunWorkPo jobRunWorkPo) {
+    public ExecuteWorkParam getEnableExecuteWork(JobWorkRunPo jobRunWorkPo) {
         ExecuteWorkParam executeWorkParam = buildExecuteWorkParam(jobRunWorkPo);
         if (executeWorkParam == null || CollUtil.isEmpty(executeWorkParam.getExecuteNodeParamList())) {
             return null;
@@ -135,7 +135,7 @@ public class RunNodeHelper {
      *
      * @param jobRunWorkPo 运行作业
      */
-    private ExecuteWorkParam buildExecuteWorkParam(JobRunWorkPo jobRunWorkPo) {
+    private ExecuteWorkParam buildExecuteWorkParam(JobWorkRunPo jobRunWorkPo) {
         if (jobRunWorkPo == null) {
             return null;
         }
@@ -302,7 +302,7 @@ public class RunNodeHelper {
         if (nodeStatus == RunWorkStatusEnum.RUNNING.getCode()
                 || nodeStatus == RunWorkStatusEnum.WAIT.getCode()
                 || nodeStatus == RunWorkStatusEnum.FAIL.getCode()) {
-            JobRunWorkPo jobRunWorkPo = new JobRunWorkPo();
+            JobWorkRunPo jobRunWorkPo = new JobWorkRunPo();
             jobRunWorkPo.setRunWorkId(executeWorkParam.getRunWorkId());
             jobRunWorkPo.setRunWorkStatus(nodeStatus);
             jobRunWorkMapper.updateById(jobRunWorkPo);
@@ -316,7 +316,7 @@ public class RunNodeHelper {
      */
     public void updateNodeTurnDate(String runNodeId, String runWorkId, Integer workType) {
         JobWorkRunNodePo jobWorkRunNodePo = jobWorkRunNodeMapper.selectById(runNodeId);
-        JobRunWorkPo jobRunWorkPo = jobRunWorkMapper.selectById(runWorkId);
+        JobWorkRunPo jobRunWorkPo = jobRunWorkMapper.selectById(runWorkId);
         if (jobWorkRunNodePo == null || jobRunWorkPo == null) {
             return;
         }
@@ -338,9 +338,9 @@ public class RunNodeHelper {
      * 修改作业翻牌时间
      */
     public void updateWorkTurnDate() {
-        List<JobRunWorkPo> jobRunWorkList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobRunWorkPo.class)
-                .in(JobRunWorkPo::getRunWorkStatus, RunWorkStatusEnum.RUNNING.getCode(), RunWorkStatusEnum.WAIT.getCode()));
-        for (JobRunWorkPo jobRunWorkPo : jobRunWorkList) {
+        List<JobWorkRunPo> jobRunWorkList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkRunPo.class)
+                .in(JobWorkRunPo::getRunWorkStatus, RunWorkStatusEnum.RUNNING.getCode(), RunWorkStatusEnum.WAIT.getCode()));
+        for (JobWorkRunPo jobRunWorkPo : jobRunWorkList) {
             List<JobWorkRunNodePo> jobWorkRunNodePos = jobWorkRunNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
                     .eq(JobWorkRunNodePo::getRunWorkId, jobRunWorkPo.getRunWorkId()));
 
@@ -357,7 +357,7 @@ public class RunNodeHelper {
                         })
                         .count();
                 if (count == jobWorkRunNodePos.size()) {
-                    JobRunWorkPo updateJobWork = new JobRunWorkPo()
+                    JobWorkRunPo updateJobWork = new JobWorkRunPo()
                             .setRunWorkStatus(RunWorkStatusEnum.COMPLETE.getCode())
                             .setWorkId(jobRunWorkPo.getWorkId())
                             .setRunWorkId(jobRunWorkPo.getRunWorkId());
@@ -383,7 +383,7 @@ public class RunNodeHelper {
         jobWorkRunNodePo.setNodeRunStatus(nodeStatus);
         jobWorkRunNodeMapper.updateById(jobWorkRunNodePo);
         if (oldRunNodePo != null && nodeStatus == RunWorkStatusEnum.FAIL.getCode()) {
-            JobRunWorkPo jobRunWorkPo = new JobRunWorkPo();
+            JobWorkRunPo jobRunWorkPo = new JobWorkRunPo();
             jobRunWorkPo.setRunWorkId(oldRunNodePo.getRunWorkId());
             jobRunWorkPo.setRunWorkStatus(RunWorkStatusEnum.FAIL.getCode());
             jobRunWorkMapper.updateById(jobRunWorkPo);

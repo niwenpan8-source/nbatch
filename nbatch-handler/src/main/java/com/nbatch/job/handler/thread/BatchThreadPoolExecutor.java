@@ -139,7 +139,6 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
                     HandleCallbackParam handleCallbackParam = new HandleCallbackParam();
                     handleCallbackParam.setCallBackType(NODE_STATUS_CALLBACK.getValue());
                     handleCallbackParam.setLogId(batchRunnable.getCacheObj().getStr("logId"));
-                    handleCallbackParam.setLogId(batchRunnable.getCacheObj().getStr("logId"));
                     handleCallbackParam.setCallBackType(NODE_STATUS_CALLBACK.getValue());
                     generateHandleCallbackParam(currentNotRunningFinishTaskList, batchRunnable, handleCallbackParam);
                 }

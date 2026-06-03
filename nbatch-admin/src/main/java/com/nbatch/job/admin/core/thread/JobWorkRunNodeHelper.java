@@ -8,7 +8,7 @@ import com.nbatch.job.admin.core.domain.RunWorkExecuteContext;
 import com.nbatch.job.admin.core.domain.po.JobGroupPo;
 import com.nbatch.job.admin.core.domain.po.JobInfoPo;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
-import com.nbatch.job.admin.core.domain.po.JobRunWorkPo;
+import com.nbatch.job.admin.core.domain.po.JobWorkRunPo;
 import com.nbatch.job.admin.core.enums.ExecutorRouteStrategyEnum;
 import com.nbatch.job.admin.core.enums.WorkStatusEnum;
 import com.nbatch.job.admin.core.scheduler.JobScheduler;
@@ -119,8 +119,8 @@ public class JobWorkRunNodeHelper {
             preparedStatement.execute();
 
 
-            List<JobRunWorkPo> allNeedRunWorkList = JobAdminConfig.getAdminConfig().getRunWorkHelper().getAllNeedRunWorkList();
-            for (JobRunWorkPo jobRunWorkPo : allNeedRunWorkList) {
+            List<JobWorkRunPo> allNeedRunWorkList = JobAdminConfig.getAdminConfig().getRunWorkHelper().getAllNeedRunWorkList();
+            for (JobWorkRunPo jobRunWorkPo : allNeedRunWorkList) {
 
 
                 ExecuteWorkParam executeWorkParam
@@ -204,7 +204,7 @@ public class JobWorkRunNodeHelper {
 
     }
 
-    private RunWorkExecuteContext getRunWorkExecuteContext(JobRunWorkPo jobRunWorkPo, ExecuteWorkParam executeWorkParam) {
+    private RunWorkExecuteContext getRunWorkExecuteContext(JobWorkRunPo jobRunWorkPo, ExecuteWorkParam executeWorkParam) {
         String runWorkId = executeWorkParam.getRunWorkId();
         RunWorkExecuteContext context = RUN_WORK_ID_CACHE.get(runWorkId);
         if (context != null) {
@@ -224,7 +224,7 @@ public class JobWorkRunNodeHelper {
      *
      * @param jobRunWorkPo 运行作业
      */
-    private RunWorkExecuteContext rebuildRunWorkExecuteContext(JobRunWorkPo jobRunWorkPo) {
+    private RunWorkExecuteContext rebuildRunWorkExecuteContext(JobWorkRunPo jobRunWorkPo) {
         if (jobRunWorkPo == null || StrUtil.isBlank(jobRunWorkPo.getWorkId())) {
             return null;
         }

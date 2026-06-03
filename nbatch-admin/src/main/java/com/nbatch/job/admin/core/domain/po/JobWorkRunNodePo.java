@@ -35,6 +35,11 @@ public class JobWorkRunNodePo extends Model<JobWorkRunNodePo> {
 	private String runWorkId;
 
 	/**
+	 * 作业id
+	 */
+	private String workId;
+
+	/**
 	 * 作业节点id
 	 */
 	private String nodeId;
@@ -55,7 +60,12 @@ public class JobWorkRunNodePo extends Model<JobWorkRunNodePo> {
 	private Date createTime;
 
 	/**
-	 * 已重试次数
+	 * 失败策略：stop-停止整个流程, skip-跳过继续, retry-重试
+	 */
+	private String errorStrategy;
+
+	/**
+	 * 重试次数，如果归零则不再能够进行重试
 	 */
 	private Integer retryTimes;
 
