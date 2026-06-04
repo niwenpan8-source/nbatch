@@ -148,20 +148,6 @@ public class JobHandlerHolder implements IJobHandlerHolder {
     }
 
     /**
-     * 获取可运行的节点列表
-     */
-    private List<ExecuteNodeParam> getRunnableNodeList(List<ExecuteNodeParam> waitNodeList, Set<String> completeNodeIdSet) {
-        List<ExecuteNodeParam> runnableNodeList = new ArrayList<>();
-        for (ExecuteNodeParam nodeParam : waitNodeList) {
-            if (CollUtil.isEmpty(nodeParam.getNodeRelationIdList())
-                    || completeNodeIdSet.containsAll(nodeParam.getNodeRelationIdList())) {
-                runnableNodeList.add(nodeParam);
-            }
-        }
-        return runnableNodeList;
-    }
-
-    /**
      * 获取缓存对象
      */
     private JSONObject getEntries(ExecuteWorkParam workNodeParam, ExecuteNodeParam nodeParam) {

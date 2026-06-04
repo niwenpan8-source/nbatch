@@ -22,4 +22,9 @@ public interface HandleCodeConstant {
      */
     int HANDLE_CODE_TIMEOUT = 502;
 
+    /**
+     * 服务优雅关闭
+     */
+    int HANDLE_CODE_SERVER_SHUTDOWN = 503;
+
 }

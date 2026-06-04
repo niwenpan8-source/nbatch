@@ -137,11 +137,9 @@ public class JobWorkRunNodeHelper {
                         .handleNodeStatus(NodeStatusContext.runStatus(triggerParam.getExecuteWorkParam(), com.nbatch.job.core.enums.FlowStatusEnum.START.getCode()));
                 ReturnT<String> runResult = executorBiz.run(triggerParam);
 
-                // 如果请求失败需要将作业节点置为停止,让整条流程给停下来，让后运行状态给出失败，到时候让手动触发，比如当定时任务再次运行到的时候，或者在此手动触发的时候
+                // 如果存在网络问题，则将运行作业标记为异常
                 if (runResult.getCode() >= HandleCodeConstant.HANDLE_CODE_FAIL) {
                     for (ExecuteNodeParam executeNodeParam : executeWorkParam.getExecuteNodeParamList()) {
-                        JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                                .exceptionStopNode(executeNodeParam.getRunNodeId());
 
                         JobAdminConfig.getAdminConfig().getRunWorkHelper()
                                 .exceptionStopNode(executeNodeParam.getRunWorkId());

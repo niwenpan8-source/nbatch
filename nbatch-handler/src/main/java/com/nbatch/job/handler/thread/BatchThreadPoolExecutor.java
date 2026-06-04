@@ -170,7 +170,7 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
                 .setRunNodeId(batchRunnable.getCacheObj().getStr("runNodeId"))
                 .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
                 .setWorkType(batchRunnable.getCacheObj().getInt("workType"))
-                .setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
+                .setHandleCode(HandleCodeConstant.HANDLE_CODE_SERVER_SHUTDOWN)
                 .setHandleMsg("系统优雅关闭，任务停止");
         currentNotRunningFinishTaskList.add(handleCallbackParam);
     }
