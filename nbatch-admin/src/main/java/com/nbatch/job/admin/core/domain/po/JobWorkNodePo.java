@@ -84,7 +84,7 @@ public class JobWorkNodePo extends Model<JobWorkNodePo> {
 	private Date updateTime;
 
 	/**
-	 * 失败策略：stop-停止整个流程, skip-跳过继续, retry-重试
+	 * 失败策略：stop-该运行节点停止, skip-跳过继续, retry-重试
 	 */
 	private String errorStrategy;
 

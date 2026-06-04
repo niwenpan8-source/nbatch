@@ -10,7 +10,6 @@ import com.nbatch.job.admin.core.domain.po.JobInfoPo;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkRunPo;
 import com.nbatch.job.admin.core.enums.ExecutorRouteStrategyEnum;
-import com.nbatch.job.admin.core.enums.WorkStatusEnum;
 import com.nbatch.job.admin.core.helper.RunNodeHelper.NodeStatusContext;
 import com.nbatch.job.admin.core.scheduler.JobScheduler;
 import com.nbatch.job.core.biz.ExecutorBiz;
@@ -19,6 +18,7 @@ import com.nbatch.job.core.biz.model.ExecuteWorkParam;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.TriggerParam;
 import com.nbatch.job.core.constant.HandleCodeConstant;
+import com.nbatch.job.core.enums.FlowRunStatusEnum;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
@@ -152,14 +152,18 @@ public class JobWorkRunNodeHelper {
                 RUN_WORK_ID_CACHE.put(executeWorkParam.getRunWorkId(), context);
 
                 JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                        .handleNodeStatus(NodeStatusContext.runStatus(triggerParam.getExecuteWorkParam(), WorkStatusEnum.START.getCode()));
+                        .handleNodeStatus(NodeStatusContext.runStatus(triggerParam.getExecuteWorkParam(), com.nbatch.job.core.enums.FlowStatusEnum.START.getCode()));
                 ReturnT<String> runResult = executorBiz.run(triggerParam);
 
-                // 如果请求失败需要将作业节点置为停止,当遇到的异常为者执行超时,应该如何处理，如果不出，他会一直超时
+                // 如果请求失败需要将作业节点置为停止,让整条流程给停下来，让后运行状态给出失败，到时候让手动触发，比如当定时任务再次运行到的时候，或者在此手动触发的时候
                 if (runResult.getCode() >= HandleCodeConstant.HANDLE_CODE_FAIL) {
                     for (ExecuteNodeParam executeNodeParam : executeWorkParam.getExecuteNodeParamList()) {
                         JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                                .updateNodeStatusById(executeNodeParam.getRunNodeId(), WorkStatusEnum.STOP.getCode());
+                                .exceptionStopNode(executeNodeParam.getRunNodeId());
+
+                        JobAdminConfig.getAdminConfig().getRunWorkHelper()
+                                .exceptionStopNode(executeNodeParam.getRunWorkId());
+
                         JobAdminConfig.getAdminConfig().getRunNodeHelper()
                                 .updateCallBackRunNodeLog(executeNodeParam.getNodeLogId()
                                         , HandleCodeConstant.HANDLE_CODE_FAIL

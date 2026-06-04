@@ -84,6 +84,9 @@ public class JobWorkNodeVo {
 
     private Integer retryInterval;
 
+    /**
+     * 失败策略：stop-该运行节点停止, skip-跳过继续, retry-重试
+     */
     private String errorStrategy;
 
     private String notifyEmail;

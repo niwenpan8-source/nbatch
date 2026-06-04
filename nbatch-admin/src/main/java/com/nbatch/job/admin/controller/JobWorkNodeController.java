@@ -11,7 +11,6 @@ import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeLogVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeVo;
 import com.nbatch.job.admin.core.enums.DbTypeEnum;
 import com.nbatch.job.admin.core.enums.NodeTypeEnum;
-import com.nbatch.job.admin.core.enums.WorkStatusEnum;
 import com.nbatch.job.admin.service.IJobWorkNodeService;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.constant.HandleCodeConstant;
@@ -68,7 +67,7 @@ public class JobWorkNodeController {
         List<JobWorkPo> allEnableWorkList = jobWorkNodeService.getAllWorkList();
         model.addAttribute("allEnableWorkList", allEnableWorkList);
         model.addAttribute("nodeTypeEnum", NodeTypeEnum.values());
-        model.addAttribute("workStatusEnum", WorkStatusEnum.values());
+        model.addAttribute("workStatusEnum", com.nbatch.job.core.enums.FlowStatusEnum.values());
         model.addAttribute("scriptTypeEnum", ScriptTypeEnum.values());
         model.addAttribute("dbTypeEnum", DbTypeEnum.values());
         return "worknode/worknode.add";
@@ -87,7 +86,7 @@ public class JobWorkNodeController {
         List<JobWorkPo> allEnableWorkList = jobWorkNodeService.getAllWorkList();
         model.addAttribute("allEnableWorkList", allEnableWorkList);
         model.addAttribute("nodeTypeEnum", NodeTypeEnum.values());
-        model.addAttribute("workStatusEnum", WorkStatusEnum.values());
+        model.addAttribute("workStatusEnum", com.nbatch.job.core.enums.FlowStatusEnum.values());
         model.addAttribute("scriptTypeEnum", ScriptTypeEnum.values());
         model.addAttribute("dbTypeEnum", DbTypeEnum.values());
         if (workVo != null) {

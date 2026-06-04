@@ -10,7 +10,7 @@ import cn.hutool.json.JSONObject;
 import com.nbatch.job.core.biz.model.ExecuteNodeParam;
 import com.nbatch.job.core.biz.model.ExecuteWorkParam;
 import com.nbatch.job.core.context.BatchJobHelper;
-import com.nbatch.job.core.enums.RunWorkStatusEnum;
+import com.nbatch.job.core.enums.FlowRunStatusEnum;
 import com.nbatch.job.core.enums.WorkTypeEnum;
 import com.nbatch.job.core.executor.BatchJobExecutor;
 import com.nbatch.job.handler.enums.NodeTypeEnum;
@@ -167,7 +167,7 @@ public class HandleWorkNodeThread implements SmartInitializingSingleton, Disposa
                         ExecuteWorkParam cacheExecuteWorkParam = workNodeExecuteMap.get(nodeParam.getRunWorkId());
                         for (ExecuteNodeParam executeNodeParam : cacheExecuteWorkParam.getExecuteNodeParamList()) {
                             if (StrUtil.equals(executeNodeParam.getRunNodeId(), nodeParam.getRunNodeId())) {
-                                executeNodeParam.setNodeRunStatus(RunWorkStatusEnum.RUNNING.getCode());
+                                executeNodeParam.setNodeRunStatus(FlowRunStatusEnum.RUNNING.getCode());
                             }
                         }
                     }
@@ -177,7 +177,7 @@ public class HandleWorkNodeThread implements SmartInitializingSingleton, Disposa
                         try {
                             jobHandlerAdapter.execute(nodeParam);
                         } catch (Exception e) {
-                            nodeParam.setNodeRunStatus(RunWorkStatusEnum.FAIL.getCode());
+                            nodeParam.setNodeRunStatus(FlowRunStatusEnum.EXCEPTION.getCode());
                             BatchJobHelper.log("jobId:{},workId：{},节点执行异常：{}", needExecuteRunNode.getJobId(),
                                     needExecuteRunNode.getWorkId(), e.getMessage());
                             throw new RuntimeException(e);
@@ -189,10 +189,10 @@ public class HandleWorkNodeThread implements SmartInitializingSingleton, Disposa
                         ExecuteWorkParam cacheExecuteWorkParam = workNodeExecuteMap.get(nodeParam.getRunWorkId());
                         for (ExecuteNodeParam executeNodeParam : cacheExecuteWorkParam.getExecuteNodeParamList()) {
                             if (StrUtil.equals(executeNodeParam.getRunNodeId(), nodeParam.getRunNodeId())) {
-                                if (nodeParam.getNodeRunStatus() == RunWorkStatusEnum.FAIL.getCode()) {
-                                    executeNodeParam.setNodeRunStatus(RunWorkStatusEnum.FAIL.getCode());
+                                if (nodeParam.getNodeRunStatus() == FlowRunStatusEnum.EXCEPTION.getCode()) {
+                                    executeNodeParam.setNodeRunStatus(FlowRunStatusEnum.EXCEPTION.getCode());
                                 } else {
-                                    executeNodeParam.setNodeRunStatus(RunWorkStatusEnum.COMPLETE.getCode());
+                                    executeNodeParam.setNodeRunStatus(FlowRunStatusEnum.COMPLETE.getCode());
                                 }
                             }
                         }
@@ -240,7 +240,7 @@ public class HandleWorkNodeThread implements SmartInitializingSingleton, Disposa
 
         // 查找作业当中没有运行同时翻牌时间必须和作业时间相同的节点,对于节点只有运行状态为等待中的节点才需要执行
         List<ExecuteNodeParam> enableExecuteNode = copyExecuteWorkParam.getExecuteNodeParamList().stream()
-                .filter(x -> x.getNodeRunStatus() == RunWorkStatusEnum.WAIT.getCode()
+                .filter(x -> x.getNodeRunStatus() == FlowRunStatusEnum.WAIT.getCode()
                         && DateUtil.compare(x.getTurnDate(), turnDate) == 0).collect(Collectors.toList());
 
         List<String> allRunNodeIdByTypeList = getExecuteCompileteNodeIdByTypeList(copyExecuteWorkParam.getExecuteNodeParamList(), 
@@ -272,7 +272,7 @@ public class HandleWorkNodeThread implements SmartInitializingSingleton, Disposa
         if (workType == WorkTypeEnum.TYPE_TURN.getCode()) {
             return jobWorkRunNodePos.stream()
                     .filter(x -> {
-                        boolean flag = x.getNodeRunStatus() == RunWorkStatusEnum.COMPLETE.getCode();
+                        boolean flag = x.getNodeRunStatus() == FlowRunStatusEnum.COMPLETE.getCode();
                         // 这里由于当作业类型为顺序类型时翻牌时间为空，不判断翻牌时间
                         if (flag && x.getTurnDate() != null) {
                             flag = DateUtil.compare(x.getTurnDate(), DateUtil.offset(turnDate, DateField.DAY_OF_MONTH, 1)) == 0;
@@ -283,7 +283,7 @@ public class HandleWorkNodeThread implements SmartInitializingSingleton, Disposa
                     .collect(Collectors.toList());
         } else if (workType == WorkTypeEnum.TYPE_SEQUENCE.getCode()) {
             return jobWorkRunNodePos.stream()
-                    .filter(x -> x.getNodeRunStatus() == RunWorkStatusEnum.COMPLETE.getCode())
+                    .filter(x -> x.getNodeRunStatus() == FlowRunStatusEnum.COMPLETE.getCode())
                     .map(ExecuteNodeParam::getNodeId)
                     .collect(Collectors.toList());
         } else {

@@ -4,17 +4,21 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 运行作业状态枚举
+ * 运行流程状态
+ *
  * @author Mr.ni
  */
 @Getter
 @RequiredArgsConstructor
-public enum RunWorkStatusEnum {
+public enum FlowRunStatusEnum {
 
     WAIT(0, "待执行"),
+
     RUNNING(1, "进行中"),
+
     COMPLETE(2, "执行完毕"),
-    FAIL(3, "执行失败"),
+
+    EXCEPTION(3, "执行异常"),
     ;
 
     /**
@@ -28,7 +32,7 @@ public enum RunWorkStatusEnum {
     private final String value;
 
     public static String getValueByCode(int code) {
-        for (RunWorkStatusEnum value : RunWorkStatusEnum.values()) {
+        for (FlowRunStatusEnum value : FlowRunStatusEnum.values()) {
             if (value.getCode() == code) {
                 return value.getValue();
             }

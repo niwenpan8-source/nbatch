@@ -6,8 +6,7 @@ import com.nbatch.job.admin.core.domain.param.JobWorkParam;
 import com.nbatch.job.admin.core.domain.po.JobWorkNodePo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeRelationVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkVo;
-import com.nbatch.job.admin.core.enums.WorkStatusEnum;
-import com.nbatch.job.core.enums.RunWorkStatusEnum;
+import com.nbatch.job.core.enums.FlowRunStatusEnum;
 import com.nbatch.job.core.enums.WorkTypeEnum;
 import com.nbatch.job.admin.service.IJobWorkNodeService;
 import com.nbatch.job.admin.service.IJobWorkService;
@@ -44,8 +43,8 @@ public class JobWorkController {
     @RequestMapping
     public String index(Model model) {
         // 枚举-字典路由策略-列表
-        model.addAttribute("workStatusEnum", WorkStatusEnum.values());
-        model.addAttribute("runWorkStatusEnum", RunWorkStatusEnum.values());
+        model.addAttribute("workStatusEnum", com.nbatch.job.core.enums.FlowStatusEnum.values());
+        model.addAttribute("runWorkStatusEnum", FlowRunStatusEnum.values());
         return "jobwork/jobwork.index";
     }
 
@@ -65,7 +64,7 @@ public class JobWorkController {
     @RequestMapping("/addModel")
     public String addModel(Model model) {
         // 枚举-字典路由策略-列表
-        model.addAttribute("workStatusEnum", WorkStatusEnum.values());
+        model.addAttribute("workStatusEnum", com.nbatch.job.core.enums.FlowStatusEnum.values());
         model.addAttribute("workTypeEnum", WorkTypeEnum.values());
         return "jobwork/jobwork.add";
     }
@@ -80,7 +79,7 @@ public class JobWorkController {
     public String updateModel(Model model, String workId) {
         JobWorkVo workVo = jobWorkService.getModel(workId);
         // 枚举-字典路由策略-列表
-        model.addAttribute("workStatusEnum", WorkStatusEnum.values());
+        model.addAttribute("workStatusEnum", com.nbatch.job.core.enums.FlowStatusEnum.values());
         model.addAttribute("workTypeEnum", WorkTypeEnum.values());
         model.addAttribute("model", workVo);
         return "jobwork/jobwork.update";

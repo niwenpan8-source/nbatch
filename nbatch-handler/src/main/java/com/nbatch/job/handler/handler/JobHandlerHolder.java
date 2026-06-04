@@ -5,7 +5,7 @@ import cn.hutool.json.JSONObject;
 import com.nbatch.job.core.biz.model.ExecuteNodeParam;
 import com.nbatch.job.core.biz.model.ExecuteWorkParam;
 import com.nbatch.job.core.context.BatchJobHelper;
-import com.nbatch.job.core.enums.RunWorkStatusEnum;
+import com.nbatch.job.core.enums.FlowRunStatusEnum;
 import com.nbatch.job.core.handler.IJobHandlerHolder;
 import com.nbatch.job.handler.enums.NodeTypeEnum;
 import com.nbatch.job.handler.thread.BatchRunnable;
@@ -66,7 +66,7 @@ public class JobHandlerHolder implements IJobHandlerHolder {
             throw new RuntimeException("作业节点执行失败");
         }
         List<ExecuteNodeParam> waitNodeList = executeNodeParamList.stream()
-                .filter(x -> x.getNodeRunStatus() == RunWorkStatusEnum.WAIT.getCode())
+                .filter(x -> x.getNodeRunStatus() == FlowRunStatusEnum.WAIT.getCode())
                 .collect(Collectors.toList());
         if (CollUtil.isNotEmpty(waitNodeList)) {
             throw new RuntimeException("存在未执行节点，可能依赖关系未满足");
@@ -84,7 +84,7 @@ public class JobHandlerHolder implements IJobHandlerHolder {
             NodeTypeEnum nodeTypeEnum = NodeTypeEnum.getByCode(nodeParam.getNodeType());
             if (nodeTypeEnum == null) {
                 BatchJobHelper.log("不支持该节点类型：{}", nodeParam.getNodeType());
-                nodeParam.setNodeRunStatus(RunWorkStatusEnum.FAIL.getCode());
+                nodeParam.setNodeRunStatus(FlowRunStatusEnum.EXCEPTION.getCode());
                 hasFail.set(true);
                 latch.countDown();
                 return;
@@ -96,7 +96,7 @@ public class JobHandlerHolder implements IJobHandlerHolder {
         JobNodeHandlerAdapter jobHandlerAdapter = jobHandlerAdapterMap.get(nodeParam.getNodeType());
         if (jobHandlerAdapter == null) {
             BatchJobHelper.log("未找到节点处理器：{}", nodeParam.getNodeType());
-            nodeParam.setNodeRunStatus(RunWorkStatusEnum.FAIL.getCode());
+            nodeParam.setNodeRunStatus(FlowRunStatusEnum.EXCEPTION.getCode());
             hasFail.set(true);
             latch.countDown();
             return;
@@ -107,7 +107,7 @@ public class JobHandlerHolder implements IJobHandlerHolder {
 
             @Override
             public void runBefore() {
-                nodeParam.setNodeRunStatus(RunWorkStatusEnum.RUNNING.getCode());
+                nodeParam.setNodeRunStatus(FlowRunStatusEnum.RUNNING.getCode());
             }
 
             @Override
@@ -116,7 +116,7 @@ public class JobHandlerHolder implements IJobHandlerHolder {
                     jobHandlerAdapter.execute(nodeParam);
                     success = true;
                 } catch (Exception e) {
-                    nodeParam.setNodeRunStatus(RunWorkStatusEnum.FAIL.getCode());
+                    nodeParam.setNodeRunStatus(FlowRunStatusEnum.EXCEPTION.getCode());
                     hasFail.set(true);
                     BatchJobHelper.log("jobId:{},workId：{},节点执行异常：{}", workNodeParam.getJobId(),
                             workNodeParam.getWorkId(), e.getMessage());
@@ -128,9 +128,9 @@ public class JobHandlerHolder implements IJobHandlerHolder {
             public void runAfter() {
                 try {
                     if (success) {
-                        nodeParam.setNodeRunStatus(RunWorkStatusEnum.COMPLETE.getCode());
-                    } else if (nodeParam.getNodeRunStatus() != RunWorkStatusEnum.FAIL.getCode()) {
-                        nodeParam.setNodeRunStatus(RunWorkStatusEnum.FAIL.getCode());
+                        nodeParam.setNodeRunStatus(FlowRunStatusEnum.COMPLETE.getCode());
+                    } else if (nodeParam.getNodeRunStatus() != FlowRunStatusEnum.EXCEPTION.getCode()) {
+                        nodeParam.setNodeRunStatus(FlowRunStatusEnum.EXCEPTION.getCode());
                         hasFail.set(true);
                     }
                 } finally {
@@ -146,12 +146,12 @@ public class JobHandlerHolder implements IJobHandlerHolder {
      */
     private List<ExecuteNodeParam> getRunnableNodeList(List<ExecuteNodeParam> executeNodeParamList) {
         Set<String> completeNodeIdSet = executeNodeParamList.stream()
-                .filter(x -> x.getNodeRunStatus() == RunWorkStatusEnum.COMPLETE.getCode())
+                .filter(x -> x.getNodeRunStatus() == FlowRunStatusEnum.COMPLETE.getCode())
                 .map(ExecuteNodeParam::getNodeId)
                 .collect(Collectors.toSet());
 
         return executeNodeParamList.stream()
-                .filter(x -> x.getNodeRunStatus() == RunWorkStatusEnum.WAIT.getCode())
+                .filter(x -> x.getNodeRunStatus() == FlowRunStatusEnum.WAIT.getCode())
                 .filter(x -> CollUtil.isEmpty(x.getNodeRelationIdList())
                         || completeNodeIdSet.containsAll(x.getNodeRelationIdList()))
                 .collect(Collectors.toList());

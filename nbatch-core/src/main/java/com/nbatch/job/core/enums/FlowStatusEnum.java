@@ -1,18 +1,19 @@
-package com.nbatch.job.admin.core.enums;
+package com.nbatch.job.core.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 作业状态枚举
+ * 流程状态
  * @author Mr.ni
  */
 @Getter
 @RequiredArgsConstructor
-public enum WorkStatusEnum {
+public enum FlowStatusEnum {
 
     STOP(0, "停用"),
-    START(1, "启用")
+    START(1, "启用"),
+    EXCEPTION(2, "异常")
     ;
 
     /**

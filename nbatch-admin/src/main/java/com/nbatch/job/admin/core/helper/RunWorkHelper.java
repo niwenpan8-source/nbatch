@@ -11,7 +11,8 @@ import com.nbatch.job.admin.core.domain.po.JobWorkNodePo;
 import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkRunNodePo;
 import com.nbatch.job.admin.mapper.*;
-import com.nbatch.job.core.enums.RunWorkStatusEnum;
+import com.nbatch.job.core.enums.FlowRunStatusEnum;
+import com.nbatch.job.core.enums.FlowStatusEnum;
 import com.nbatch.job.core.enums.WorkTypeEnum;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -56,7 +57,7 @@ public class RunWorkHelper {
         } else {
             JobWorkRunPo lastJobRunWorkPo = jobRunWorkList.get(0);
             // 如果运行状态为待执行或者进行中，则不处理
-            if (lastJobRunWorkPo.getRunWorkStatus() == RunWorkStatusEnum.COMPLETE.getCode()) {
+            if (lastJobRunWorkPo.getRunWorkStatus() == FlowRunStatusEnum.COMPLETE.getCode()) {
                 // 当jobRunWorkPo.getTurnDate()为空时currentTurnDate为空，
                 // DateUtil.compare(currentTurnDate, DateUtil.parseDate(DateUtil.today())) 为-1，所有顺序类型作业不需要增加判断
                 DateTime currentTurnDate = DateUtil.offset(lastJobRunWorkPo.getTurnDate(), DateField.DAY_OF_MONTH, 1);
@@ -80,7 +81,7 @@ public class RunWorkHelper {
             jobWorkRunNodePo.setRunWorkId(jobRunWorkPo.getRunWorkId());
             jobWorkRunNodePo.setWorkId(jobRunWorkPo.getWorkId());
             jobWorkRunNodePo.setNodeId(elementNode.getNodeId());
-            jobWorkRunNodePo.setNodeRunStatus(RunWorkStatusEnum.WAIT.getCode());
+            jobWorkRunNodePo.setNodeRunStatus(FlowRunStatusEnum.WAIT.getCode());
             if (jobRunWorkPo.getWorkType() == WorkTypeEnum.TYPE_TURN.getCode()) {
                 jobWorkRunNodePo.setTurnDate(jobRunWorkPo.getTurnDate());
             }
@@ -105,7 +106,7 @@ public class RunWorkHelper {
         JobWorkRunPo jobRunWorkPo = new JobWorkRunPo();
         jobRunWorkPo.setRunWorkId(runNodeId);
         jobRunWorkPo.setWorkId(workId);
-        jobRunWorkPo.setRunWorkStatus(RunWorkStatusEnum.WAIT.getCode());
+        jobRunWorkPo.setRunWorkStatus(FlowRunStatusEnum.WAIT.getCode());
         if (workType == WorkTypeEnum.TYPE_TURN.getCode()) {
             jobRunWorkPo.setTurnDate(turnDate);
         }
@@ -119,7 +120,7 @@ public class RunWorkHelper {
      */
     public void deleteRunWork() {
         List<JobWorkRunPo> jobRunWorkPoList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkRunPo.class)
-                .in(JobWorkRunPo::getRunWorkStatus, RunWorkStatusEnum.COMPLETE.getCode(), RunWorkStatusEnum.FAIL.getCode())
+                .in(JobWorkRunPo::getRunWorkStatus, FlowRunStatusEnum.COMPLETE.getCode(), FlowRunStatusEnum.EXCEPTION.getCode())
                 .lt(JobWorkRunPo::getCreateTime, DateUtil.offsetDay(new Date(), -30)));
         for (JobWorkRunPo jobRunWorkPo : jobRunWorkPoList) {
             jobWorkRunNodeMapper.delete(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
@@ -133,7 +134,7 @@ public class RunWorkHelper {
      */
     public List<JobWorkRunPo> getAllNeedRunWorkList() {
         return jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkRunPo.class)
-                .in(JobWorkRunPo::getRunWorkStatus, RunWorkStatusEnum.WAIT.getCode(), RunWorkStatusEnum.RUNNING.getCode())
+                .in(JobWorkRunPo::getRunWorkStatus, FlowRunStatusEnum.WAIT.getCode(), FlowRunStatusEnum.RUNNING.getCode())
                 .orderByAsc(JobWorkRunPo::getCreateTime));
     }
 
@@ -142,7 +143,7 @@ public class RunWorkHelper {
      */
     public void updateWorkTurnDate() {
         List<JobWorkRunPo> jobRunWorkList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkRunPo.class)
-                .in(JobWorkRunPo::getRunWorkStatus, RunWorkStatusEnum.RUNNING.getCode(), RunWorkStatusEnum.WAIT.getCode()));
+                .in(JobWorkRunPo::getRunWorkStatus, FlowRunStatusEnum.RUNNING.getCode(), FlowRunStatusEnum.WAIT.getCode()));
         for (JobWorkRunPo jobRunWorkPo : jobRunWorkList) {
             List<JobWorkRunNodePo> jobWorkRunNodePos = jobWorkRunNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
                     .eq(JobWorkRunNodePo::getRunWorkId, jobRunWorkPo.getRunWorkId()));
@@ -151,7 +152,7 @@ public class RunWorkHelper {
                 DateTime offsetTurnDate = jobRunWorkPo.getTurnDate() == null ? null : DateUtil.offset(jobRunWorkPo.getTurnDate(), DateField.DAY_OF_MONTH, 1);
                 long count = jobWorkRunNodePos.stream()
                         .filter(x -> {
-                            boolean flag = x.getNodeRunStatus() == RunWorkStatusEnum.COMPLETE.getCode();
+                            boolean flag = x.getNodeRunStatus() == FlowRunStatusEnum.COMPLETE.getCode();
                             // 这里由于当作业类型为顺序类型时翻牌时间为空，不判断翻牌时间
                             if (flag && x.getTurnDate() != null) {
                                 flag = DateUtil.compare(x.getTurnDate(), offsetTurnDate) == 0;
@@ -161,7 +162,7 @@ public class RunWorkHelper {
                         .count();
                 if (count == jobWorkRunNodePos.size()) {
                     JobWorkRunPo updateJobWork = new JobWorkRunPo()
-                            .setRunWorkStatus(RunWorkStatusEnum.COMPLETE.getCode())
+                            .setRunWorkStatus(FlowRunStatusEnum.COMPLETE.getCode())
                             .setWorkId(jobRunWorkPo.getWorkId())
                             .setRunWorkId(jobRunWorkPo.getRunWorkId());
                     if (offsetTurnDate != null) {
@@ -171,6 +172,29 @@ public class RunWorkHelper {
                 }
             }
         }
+    }
+
+    /**
+     * 作业异常停止
+     * 需要将作业状态改为异常，然后将运行作业状态改为失败
+     *
+     * @param workRunId 运行作业id
+     */
+    public void exceptionStopNode(String workRunId) {
+        JobWorkRunPo jobWorkRunPo = jobRunWorkMapper.selectById(workRunId);
+        if (jobWorkRunPo == null) {
+            return;
+        }
+        JobWorkRunPo updateWorkRunPo = new JobWorkRunPo();
+        updateWorkRunPo.setRunWorkId(workRunId);
+        updateWorkRunPo.setRunWorkStatus(FlowRunStatusEnum.EXCEPTION.getCode());
+
+        JobWorkPo updateWorkPo = new JobWorkPo();
+        updateWorkPo.setWorkId(jobWorkRunPo.getWorkId());
+        updateWorkPo.setWorkStatus(FlowStatusEnum.EXCEPTION.getCode());
+
+        jobWorkMapper.updateById(updateWorkPo);
+        jobRunWorkMapper.updateById(updateWorkRunPo);
     }
 
 }
