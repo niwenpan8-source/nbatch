@@ -107,6 +107,7 @@ public class JobWorkController {
     }
 
     @RequestMapping("/edit")
+    @ResponseBody
     public ReturnT<String> editModel(@RequestBody JobWorkNodeRelationParam param) {
         jobWorkNodeService.updateWorkNodeRelation(param);
         return new ReturnT<>("修改成功");

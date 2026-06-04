@@ -91,4 +91,44 @@ public class JobWorkNodeVo {
 
     private String notifyEmail;
 
+    private String importFileId;
+
+    private String importFileName;
+
+    private String importTableName;
+
+    private String importTableFiled;
+
+    private String importTableCondition;
+
+    private String importFileCode;
+
+    private String importSep;
+
+    private Integer importAllUpdate;
+
+    private Integer importIsGzip;
+
+    private String importFileNameParam;
+
+    private String exportFileId;
+
+    private String exportFileName;
+
+    private String exportTableName;
+
+    private String exportTableFiled;
+
+    private String exportTableCondition;
+
+    private String exportFileCode;
+
+    private String exportSep;
+
+    private Integer exportAllUpdate;
+
+    private Integer exportIsGzip;
+
+    private String exportFileNameParam;
+
 }

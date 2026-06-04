@@ -23,6 +23,8 @@ public class JobWorkNodeLogPageParam extends BaseModel<JobWorkNodePageParam> {
 
     private String nodeId;
 
+    private String runNodeId;
+
     private Date startTime;
 
     private Date endTime;

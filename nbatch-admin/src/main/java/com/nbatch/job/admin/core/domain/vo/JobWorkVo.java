@@ -36,10 +36,14 @@ public class JobWorkVo {
      */
     private Integer workType;
 
+    private String workTypeName;
+
     /**
      * 作业状态：0=停用、1=启用
      */
     private Integer workStatus;
+
+    private String workStatusName;
 
     private String cronExpression;
 
@@ -58,9 +62,15 @@ public class JobWorkVo {
      */
     private String turnDate;
 
+    private String runWorkId;
+
+    private String runWorkCreateTime;
+
     /**
      * 最近一次运行作业状态
      */
     private Integer runWorkStatus;
+
+    private String runWorkStatusName;
 
 }

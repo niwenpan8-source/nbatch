@@ -8,6 +8,7 @@ import com.nbatch.job.admin.core.domain.param.JobWorkNodeRelationParam;
 import com.nbatch.job.admin.core.domain.po.JobWorkNodePo;
 import com.nbatch.job.admin.core.domain.po.JobWorkNodeRelationPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkPo;
+import com.nbatch.job.admin.core.domain.po.JobWorkRunNodeLogDetailPo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeRelationVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeTypeVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeVo;
@@ -73,6 +74,11 @@ public interface IJobWorkNodeService {
      * 获取作业节点关系
      */
     IPage<JobWorkRunNodeLogVo> logPageList(JobWorkNodeLogPageParam param);
+
+    /**
+     * 获取运行节点详细日志
+     */
+    IPage<JobWorkRunNodeLogDetailPo> logDetailPageList(JobWorkNodeLogPageParam param);
 
     /**
      * 获取作业节点

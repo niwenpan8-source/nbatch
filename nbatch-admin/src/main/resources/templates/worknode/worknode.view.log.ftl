@@ -1,102 +1,71 @@
 <!DOCTYPE html>
 <html>
-<div class="layui-fluid">
-	<div class="layui-row layui-col-space15">
-		<div class="layui-col-md1">
-			<button class="layui-btn layui-btn-normal" id="searchLogBtn">搜索</button>
-		</div>
-	</div>
-	<!-- Main content -->
-	<section class="layui-row layui-col-space15">
-		<input type="hidden" id="workId" value="${workNode.workId}">
-		<input type="hidden" id="nodeId" value="${workNode.nodeId}">
-		<div class="layui-col-md12">
-			<div class="layui-card">
-				<div class="layui-card-body">
-					<table class="layui-table" id="work_node_log_list" lay-filter="work_node_log_list"></table>
-				</div>
-			</div>
-		</div>
-	</section>
+<head>
+    <meta charset="utf-8">
+    <title>运行节点执行日志</title>
+    <link rel="stylesheet" href="${request.contextPath}/static/plugins/layui/css/layui.css">
+</head>
+<body>
+<div class="layui-fluid" style="padding: 15px;">
+    <div class="layui-card">
+        <div class="layui-card-header">运行节点执行日志</div>
+        <div class="layui-card-body">
+            <input type="hidden" id="workId" value="${workNode.workId}">
+            <input type="hidden" id="nodeId" value="${workNode.nodeId}">
+            <div class="layui-row layui-col-space10" style="margin-bottom: 10px;">
+                <div class="layui-col-md3">节点：${workNode.nodeName}</div>
+                <div class="layui-col-md4">节点ID：${workNode.nodeId}</div>
+                <div class="layui-col-md2"><button class="layui-btn layui-btn-normal layui-btn-sm" id="searchLogBtn">刷新</button></div>
+            </div>
+            <table class="layui-table" id="work_node_log_list" lay-filter="work_node_log_list"></table>
+        </div>
+    </div>
 </div>
 
-
-<!-- Layui CSS -->
-<link rel="stylesheet" href="${request.contextPath}/static/plugins/layui/css/layui.css">
-<!-- jQuery -->
 <script src="${request.contextPath}/static/adminlte/bower_components/jquery/jquery.min.js"></script>
-<!-- Layui JS -->
 <script src="${request.contextPath}/static/plugins/layui/layui.js"></script>
 
 <script>
-	layui.use(['table', 'form'], function(){
-		var table = layui.table;
-		var $ = layui.$;
-		var form = layui.form;
-		var base_url = '${request.contextPath}';
-		var workId = $('#workId').val()
-		var nodeId = $('#nodeId').val()
-		// 渲染表格
-		var workNodeLogTable = table.render({
-			elem: '#work_node_log_list',
-			url: base_url + '/node/logPageList',
-			method: 'post',
-			where: {
-				nodeId: nodeId,
-				workId: workId
-			},
-			request: {
-				pageName: 'start', // 页码的参数名称
-				limitName: 'length' // 每页数据条数的参数名称
-			},
-			parseData: function(res){ // 数据预处理
-				console.log(res);
-				// 参数验证
-				if (!res) {
-					return {
-						"code": 500,
-						"msg": "响应数据为空",
-						"count": 0,
-						"data": []
-					};
-				}
-				return {
-					"code": 0, // 解析接口状态码
-					"msg": "", // 解析提示文本
-					"count": res.content.total || 0, // 解析总数据量，提供默认值
-					"data": res. content.records || [] // 解析数据列表，提供默认值
-				};
-			},
-			cols: [[
-				{field: 'handleCode', title: '执行状态', width: '10%'},
-				{field: 'handleMsg', title: '执行信息', width: '30%'},
-				{field: 'createTime', title: '创建时间', width: '15%'},
-				{field: 'callBackTime', title: '回调时间', width: '15%'},
-				{field: 'logDetail', title: '日志详情', width: '30%', templet: function(row){
-						if(row.logDetail) {
-							return '<div style="white-space: pre-line;">' +
-										row.logDetail +
-									'</div>';
-						}
-						return '';
-					}}
-			]],
-			page: true, // 开启分页
-			limit: 10, // 每页显示数量
-			limits: [10, 20, 30, 40, 50], // 每页显示数量选择
-			loading: true // 开启加载条
-		});
+    layui.use(['table'], function(){
+        var table = layui.table;
+        var $ = layui.$;
+        var base_url = '${request.contextPath}';
+        var workId = $('#workId').val();
+        var nodeId = $('#nodeId').val();
 
-		// 搜索按钮事件
-		$('#searchLogBtn').on('click', function(){
-			table.reload('work_node_log_list', {
-				where: {
-					nodeId: nodeId,
-					workId: workId
-				}
-			});
-		});
-	});
+        table.render({
+            elem: '#work_node_log_list',
+            url: base_url + '/node/logPageList',
+            method: 'post',
+            where: {nodeId: nodeId, workId: workId},
+            request: {pageName: 'start', limitName: 'length'},
+            parseData: function(res){
+                var content = res && res.content ? res.content : {};
+                return {
+                    code: 0,
+                    msg: '',
+                    count: content.total || 0,
+                    data: content.records || []
+                };
+            },
+            cols: [[
+                {field: 'runWorkId', title: '运行作业ID', width: 180},
+                {field: 'runNodeId', title: '运行节点ID', width: 180},
+                {field: 'handleCode', title: '执行状态', width: 100},
+                {field: 'handleMsg', title: '执行信息', minWidth: 260},
+                {field: 'createTime', title: '创建时间', width: 170},
+                {field: 'callBackTime', title: '回调时间', width: 170}
+            ]],
+            page: true,
+            limit: 10,
+            limits: [10, 20, 30, 50],
+            loading: true
+        });
+
+        $('#searchLogBtn').on('click', function(){
+            table.reload('work_node_log_list', {where: {nodeId: nodeId, workId: workId}});
+        });
+    });
 </script>
 </body>
 </html>

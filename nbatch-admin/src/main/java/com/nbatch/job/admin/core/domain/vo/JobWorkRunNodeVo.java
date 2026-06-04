@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -55,10 +56,26 @@ public class JobWorkRunNodeVo {
      */
     private Integer nodeRunStatus;
 
+    private String nodeRunStatusName;
+
     /**
      * 节点运行时间
      */
     private Date turnDate;
+
+    private String turnDateText;
+
+    private String runNodeCreateTime;
+
+    private LocalDateTime startTime;
+
+    private LocalDateTime endTime;
+
+    private String startTimeText;
+
+    private String endTimeText;
+
+    private Integer retryTimes;
 
     /**
      * script:脚本,store_procedure:存储过程,execute_sql:执行sql,file_to_db:文件导入到数据库,db_to_file:数据库导出到文件

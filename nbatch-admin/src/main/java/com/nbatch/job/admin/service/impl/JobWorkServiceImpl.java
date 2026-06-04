@@ -12,15 +12,17 @@ import com.nbatch.job.admin.core.domain.vo.JobWorkVo;
 import com.nbatch.job.admin.mapper.IJobWorkRunMapper;
 import com.nbatch.job.admin.mapper.IJobWorkMapper;
 import com.nbatch.job.admin.service.IJobWorkService;
+import com.nbatch.job.core.enums.FlowRunStatusEnum;
+import com.nbatch.job.core.enums.FlowStatusEnum;
+import com.nbatch.job.core.enums.WorkTypeEnum;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import static cn.hutool.core.date.DatePattern.NORM_DATE_FORMATTER;
 
 /**
  * @description: 作业执行服务实现类
@@ -41,11 +43,14 @@ public class JobWorkServiceImpl implements IJobWorkService {
      */
     @Override
     public Map<String, Object> pageList(JobWorkPageParam param) {
-        Page<JobWorkPo> page = jobWorkMapper.selectPage(new Page<>(param.getStart(), param.getLength()),
-                Wrappers.lambdaQuery(JobWorkPo.class));
+        Page<JobWorkPo> page = jobWorkMapper.selectPage(
+                new Page<>((param.getStart() / param.getLength()) + 1, param.getLength()),
+                Wrappers.lambdaQuery(JobWorkPo.class)
+                        .eq(param.getWorkStatus() != null, JobWorkPo::getWorkStatus, param.getWorkStatus()));
         List<JobWorkPo> records = page.getRecords();
         List<String> workIdList = records.stream().map(JobWorkPo::getWorkId).collect(Collectors.toList());
-        List<JobWorkRunPo> jobRunWorkPoList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkRunPo.class)
+        List<JobWorkRunPo> jobRunWorkPoList = workIdList.isEmpty() ? Collections.emptyList()
+                : jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkRunPo.class)
                 .in(JobWorkRunPo::getWorkId, workIdList)
                 .orderByDesc(JobWorkRunPo::getCreateTime));
 
@@ -55,11 +60,18 @@ public class JobWorkServiceImpl implements IJobWorkService {
         List<JobWorkVo> jobWorkVoList = records.stream().map(x -> {
             JobWorkRunPo jobRunWorkPo = jobRunWorkPoMap.get(x.getWorkId());
             JobWorkVo jobWorkVo = BeanUtil.toBean(x, JobWorkVo.class);
+            jobWorkVo.setWorkStatusName(getFlowStatusName(x.getWorkStatus()));
+            jobWorkVo.setWorkTypeName(getWorkTypeName(x.getWorkType()));
             if (jobRunWorkPo != null) {
+                jobWorkVo.setRunWorkId(jobRunWorkPo.getRunWorkId());
                 if (jobRunWorkPo.getTurnDate() != null) {
-                    jobWorkVo.setTurnDate(DateUtil.format(jobRunWorkPo.getTurnDate(), NORM_DATE_FORMATTER));
+                    jobWorkVo.setTurnDate(DateUtil.formatDate(jobRunWorkPo.getTurnDate()));
+                }
+                if (jobRunWorkPo.getCreateTime() != null) {
+                    jobWorkVo.setRunWorkCreateTime(DateUtil.formatDateTime(jobRunWorkPo.getCreateTime()));
                 }
                 jobWorkVo.setRunWorkStatus(jobRunWorkPo.getRunWorkStatus());
+                jobWorkVo.setRunWorkStatusName(FlowRunStatusEnum.getValueByCode(jobRunWorkPo.getRunWorkStatus()));
             }
             return jobWorkVo;
         }).collect(Collectors.toList());
@@ -72,6 +84,30 @@ public class JobWorkServiceImpl implements IJobWorkService {
         // 分页列表
         maps.put("data", jobWorkVoList);
         return maps;
+    }
+
+    private String getFlowStatusName(Integer code) {
+        if (code == null) {
+            return null;
+        }
+        for (FlowStatusEnum value : FlowStatusEnum.values()) {
+            if (value.getCode().equals(code)) {
+                return value.getValue();
+            }
+        }
+        return null;
+    }
+
+    private String getWorkTypeName(Integer code) {
+        if (code == null) {
+            return null;
+        }
+        for (WorkTypeEnum value : WorkTypeEnum.values()) {
+            if (value.getCode() == code) {
+                return value.getValue();
+            }
+        }
+        return null;
     }
 
     /**

@@ -1,4 +1,28 @@
 $(function () {
+    function escapeHtml(value) {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function statusLabel(status, text) {
+        var labelClass = 'label-default';
+        if (status === 1) {
+            labelClass = 'label-success';
+        } else if (status === 2) {
+            labelClass = 'label-info';
+        } else if (status === 3) {
+            labelClass = 'label-danger';
+        }
+        return '<small class="label ' + labelClass + '">' + escapeHtml(text || '-') + '</small>';
+    }
+
     // init date tables
     var jobWorkTable = $("#job_work_list").dataTable({
         "deferRender": true,
@@ -19,51 +43,36 @@ $(function () {
         "ordering": false,
         "columns": [
             {
-                "data": 'workId',
+                "data": 'workName',
                 "bSortable": false,
                 "visible": true,
-                "width": '20%'
-            },
-            {
-                "data": 'workName',
-                "visible": true,
-                "width": '20%'
-            },
-            {
-                "data": 'workDesc',
-                "visible": true,
-                "width": '20%'
-            },
-            {
-                "data": 'workStatus',
-                "visible": true,
-                "width": '13%',
+                "width": '48%',
                 "render": function (data, type, row) {
-                    // status
-                    if (1 === data) {
-                        return '<div style="text-align: left;"><small class="label label-success">' + I18n.jobinfo_opt_start + '</small></div>';
-                    } else {
-                        return '<div style="text-align: left;"><small class="label label-default">' + I18n.jobinfo_opt_stop + '</small></div>';
-                    }
+                    return '<div class="work-info-title">' + escapeHtml(row.workName) + '</div>' +
+                        '<div class="work-info-line"><span>作业ID：' + escapeHtml(row.workId) + '</span><span>类型：' + escapeHtml(row.workTypeName || '-') + '</span><span>版本：' + escapeHtml(row.version || 0) + '</span></div>' +
+                        '<div class="work-info-line"><span>状态：' + statusLabel(row.workStatus, row.workStatusName) + '</span><span>描述：' + escapeHtml(row.workDesc || '-') + '</span></div>';
                 }
             },
             {
-                "data": 'turnTime',
+                "data": 'runWorkId',
                 "visible": true,
+                "width": '38%',
                 "render": function (data, type, row) {
-                    return data ? moment(new Date(data)).format("YYYY-MM-DD") : "";
+                    if (!row.runWorkId) {
+                        return '<div class="run-info-empty">暂无运行作业记录</div>';
+                    }
+                    return '<div class="work-info-title">' + statusLabel(row.runWorkStatus, row.runWorkStatusName) + '</div>' +
+                        '<div class="work-info-line"><span>运行ID：<span class="run-info-id">' + escapeHtml(row.runWorkId) + '</span></span></div>' +
+                        '<div class="work-info-line"><span>翻牌时间：' + escapeHtml(row.turnDate || '-') + '</span><span>创建时间：' + escapeHtml(row.runWorkCreateTime || '-') + '</span></div>';
                 }
             },
             {
                 "data": I18n.system_opt,
-                "width": '10%',
+                "width": '14%',
                 "render": function (data, type, row) {
                     return function () {
+                        tableData['key' + row.workId] = row;
 
-                        // data
-                        tableData['key' + row.id] = row;
-
-                        // opt
                         return '<div class="btn-group">\n' +
                             '     <button type="button" class="btn btn-primary btn-sm">' + I18n.system_opt + '</button>\n' +
                             '     <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown">\n' +
@@ -73,7 +82,7 @@ $(function () {
                             '     <ul class="dropdown-menu" role="menu" _id="' + row.workId + '" >\n' +
                             '       <li><a href="javascript:void(0);" class="update">' + I18n.system_opt_edit + '</a></li>\n' +
                             '       <li><a href="javascript:void(0);" class="delete">' + I18n.system_opt_del + '</a></li>\n' +
-                            '       <li><a href="javascript:void(0);" class="edit">' + I18n.system_opt_edit + '</a></li>\n' +
+                            '       <li><a href="javascript:void(0);" class="edit">设置节点依赖关系</a></li>\n' +
                             '     </ul>\n' +
                             '   </div>';
                     };
@@ -93,7 +102,6 @@ $(function () {
 
     // job operate
     $("#job_work_list").on('click', '.delete', function () {
-
         var url = base_url + "/work/delete";
         var id = $(this).parents('ul').attr("_id");
         var typeName = I18n.system_opt_del;
@@ -123,7 +131,6 @@ $(function () {
             });
         });
     });
-
 
     // add
     $(".add").click(function () {
@@ -174,7 +181,7 @@ $(function () {
         });
     });
 
-    // add
+    // update
     $("#job_work_list").on('click', '.update',function() {
         var id = $(this).parents('ul').attr("_id");
         var url = base_url + "/work/updateModel?workId=" + id;
@@ -224,13 +231,19 @@ $(function () {
         });
     });
 
-    // add
+    // relation edit
     $("#job_work_list").on('click', '.edit',function() {
         var id = $(this).parents('ul').attr("_id");
         var url = base_url + "/work/editModel?workId=" + id;
-        // 打开新页签
-        window.open(url, '_blank');
+        layer.open({
+            type: 2,
+            area: ['92%', '86%'],
+            title: '设置节点依赖关系',
+            shade: 0.6,
+            shadeClose: false,
+            maxmin: true,
+            anim: 0,
+            content: url
+        });
     });
-
-
 });

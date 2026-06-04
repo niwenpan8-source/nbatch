@@ -6,6 +6,7 @@ import com.nbatch.job.admin.core.domain.param.JobWorkNodePageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodeParam;
 import com.nbatch.job.admin.core.domain.po.JobWorkNodePo;
 import com.nbatch.job.admin.core.domain.po.JobWorkPo;
+import com.nbatch.job.admin.core.domain.po.JobWorkRunNodeLogDetailPo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeLogVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeVo;
@@ -115,10 +116,23 @@ public class JobWorkNodeController {
         return "worknode/worknode.view.log";
     }
 
+    @RequestMapping("/viewLogDetailModel")
+    public String viewLogDetailModel(Model model, String workNodeId) {
+        JobWorkNodePo workNode = jobWorkNodeService.getWorkNode(workNodeId);
+        model.addAttribute("workNode", workNode);
+        return "worknode/worknode.view.log.detail";
+    }
+
     @ResponseBody
     @PostMapping("/logPageList")
     public ReturnT<IPage<JobWorkRunNodeLogVo>> logPageList(JobWorkNodeLogPageParam param) {
         return new ReturnT<>(jobWorkNodeService.logPageList(param));
+    }
+
+    @ResponseBody
+    @PostMapping("/logDetailPageList")
+    public ReturnT<IPage<JobWorkRunNodeLogDetailPo>> logDetailPageList(JobWorkNodeLogPageParam param) {
+        return new ReturnT<>(jobWorkNodeService.logDetailPageList(param));
     }
 
 }
