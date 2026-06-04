@@ -18,7 +18,6 @@ import com.nbatch.job.core.biz.model.ExecuteWorkParam;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.TriggerParam;
 import com.nbatch.job.core.constant.HandleCodeConstant;
-import com.nbatch.job.core.enums.FlowRunStatusEnum;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
@@ -46,20 +45,6 @@ public class JobWorkRunNodeHelper {
 
 
     // ---------------------- monitor ----------------------
-
-    public static void putRunWorkCache(String runWorkId, RunWorkExecuteContext context) {
-        if (StrUtil.isBlank(runWorkId) || context == null) {
-            return;
-        }
-        context.setRunWorkId(runWorkId).setUpdateTime(System.currentTimeMillis());
-        RUN_WORK_ID_CACHE.put(runWorkId, context);
-    }
-
-    public static void putRunWorkCache(String runWorkId, String address, TriggerParam triggerParam) {
-        putRunWorkCache(runWorkId, new RunWorkExecuteContext()
-                .setAddress(address)
-                .setTriggerParam(triggerParam));
-    }
 
     private Thread workThread;
     private volatile boolean toStop = false;
@@ -89,8 +74,6 @@ public class JobWorkRunNodeHelper {
 
             }
 
-            executeRunWork();
-
             log.info(">>>>>>>>>>> job, JobWorkMonitorHelper stop");
 
         });
@@ -118,7 +101,6 @@ public class JobWorkRunNodeHelper {
 
             preparedStatement = conn.prepareStatement("select * from nbatch_job_lock where lock_name = 'schedule_lock' for update");
             preparedStatement.execute();
-
 
             List<JobWorkRunPo> allNeedRunWorkList = JobAdminConfig.getAdminConfig().getRunWorkHelper().getAllNeedRunWorkList();
             for (JobWorkRunPo jobRunWorkPo : allNeedRunWorkList) {

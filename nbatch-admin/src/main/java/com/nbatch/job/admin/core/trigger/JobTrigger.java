@@ -12,12 +12,11 @@ import com.nbatch.job.admin.core.enums.TriggerTypeEnum;
 import com.nbatch.job.admin.core.exception.JobException;
 import com.nbatch.job.admin.core.helper.RunNodeHelper.NodeStatusContext;
 import com.nbatch.job.admin.core.scheduler.JobScheduler;
-import com.nbatch.job.admin.core.thread.JobWorkRunNodeHelper;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.ExecutorBiz;
-import com.nbatch.job.core.biz.model.ExecuteWorkParam;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.TriggerParam;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.enums.ExecutorBlockStrategyEnum;
 import com.nbatch.job.core.glue.GlueTypeEnum;
 import com.nbatch.job.core.util.IpUtil;
@@ -38,18 +37,15 @@ public class JobTrigger {
     /**
      * trigger job
      *
-     * @param jobId  jobId
-     * @param triggerType  triggerType
-     * @param failRetryCount
-     * 			>=0: use this param
-     * 			<0: use param from job info config
-     * @param executorShardingParam  sharding param
-     * @param executorParam
-     *          null: use job param
-     *          not null: cover job param
-     * @param addressList
-     *          null: use executor addressList
-     *          not null: cover
+     * @param jobId                 jobId
+     * @param triggerType           triggerType
+     * @param failRetryCount        >=0: use this param
+     *                              <0: use param from job info config
+     * @param executorShardingParam sharding param
+     * @param executorParam         null: use job param
+     *                              not null: cover job param
+     * @param addressList           null: use executor addressList
+     *                              not null: cover
      */
     public static void trigger(String jobId,
                                TriggerTypeEnum triggerType,
@@ -111,12 +107,12 @@ public class JobTrigger {
     }
 
     /**
-     * @param group                     job group, registry list may be empty
-     * @param jobInfo                   job info
-     * @param finalFailRetryCount       retry count if fail
-     * @param triggerType               trigger type
-     * @param index                     sharding index
-     * @param total                     sharding index
+     * @param group               job group, registry list may be empty
+     * @param jobInfo             job info
+     * @param finalFailRetryCount retry count if fail
+     * @param triggerType         trigger type
+     * @param index               sharding index
+     * @param total               sharding index
      */
     private static void processTrigger(JobGroupPo group, JobInfoPo jobInfo, int finalFailRetryCount, TriggerTypeEnum triggerType, int index, int total) {
 
@@ -215,11 +211,12 @@ public class JobTrigger {
 
     /**
      * run executor
-     * @param triggerParam  triggerParam
-     * @param address       address
+     *
+     * @param triggerParam triggerParam
+     * @param address      address
      */
     public static ReturnT<String> runExecutor(TriggerParam triggerParam, String address) {
-        ReturnT<String> runResult;
+        ReturnT<String> runResult = null;
         try {
             ExecutorBiz executorBiz = JobScheduler.getExecutorBiz(address);
             assert executorBiz != null;
@@ -228,21 +225,11 @@ public class JobTrigger {
                 if (StrUtil.isBlank(triggerParam.getWorkId())) {
                     throw new JobException("如果为作业任务，job需要绑定作业id");
                 }
-                handleWorkTypeTaskParam(triggerParam);
-                if (triggerParam.getExecuteWorkParam() != null) {
-                    JobWorkRunNodeHelper.putRunWorkCache(triggerParam.getExecuteWorkParam().getRunWorkId(), address, triggerParam);
-                }
+                runResult = handleWorkTypeTaskParam(triggerParam);
+            } else if (StrUtil.equals(triggerParam.getGlueType(), GlueTypeEnum.WORK.name())) {
+                runResult = executorBiz.run(triggerParam);
             }
 
-            runResult = executorBiz.run(triggerParam);
-
-            // 如果请求失败需要将作业节点置为停止
-            if (runResult.getCode() == ReturnT.FAIL.getCode()) {
-                if (StrUtil.equals(triggerParam.getGlueType(), GlueTypeEnum.WORK.name())) {
-                    JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                            .handleNodeStatus(NodeStatusContext.waiting(triggerParam.getExecuteWorkParam()));
-                }
-            }
         } catch (Exception e) {
             // 如果发生异常需要将作业节点置为停止
             if (StrUtil.equals(triggerParam.getGlueType(), GlueTypeEnum.WORK.name())) {
@@ -263,20 +250,12 @@ public class JobTrigger {
 
     /**
      * 处理工作节点任务参数
+     *
      * @param triggerParam 调度参数
      */
-    private static void handleWorkTypeTaskParam(TriggerParam triggerParam) {
+    private static ReturnT<String> handleWorkTypeTaskParam(TriggerParam triggerParam) {
         // 获取可执行节点
-        JobAdminConfig.getAdminConfig().getRunWorkHelper().initRunWork(triggerParam.getWorkId());
-
-        // 得到所有可以进行运行的作业节点
-        ExecuteWorkParam executeWorkParam
-                = JobAdminConfig.getAdminConfig().getRunNodeHelper().getExecuteWorkObj(triggerParam.getWorkId());
-
-        triggerParam.setExecuteWorkParam(executeWorkParam);
-
-        JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                .handleNodeStatus(NodeStatusContext.running(triggerParam.getExecuteWorkParam()));
+        return JobAdminConfig.getAdminConfig().getRunWorkHelper().initRunWork(triggerParam.getWorkId());
     }
 
 }

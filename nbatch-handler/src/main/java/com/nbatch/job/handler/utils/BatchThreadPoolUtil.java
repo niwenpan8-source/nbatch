@@ -5,6 +5,7 @@ import cn.hutool.core.text.StrPool;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.thread.TriggerCallbackThread;
+import com.nbatch.job.handler.exception.HandlerException;
 import com.nbatch.job.handler.thread.BatchRunnable;
 import com.nbatch.job.handler.thread.BatchThreadPoolExecutor;
 import lombok.extern.log4j.Log4j2;
@@ -20,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.nbatch.job.core.enums.CallbackTypeEnum.NODE_STATUS_CALLBACK;
+import static com.nbatch.job.handler.enums.ExceptionCodeEnum.THREAD_DISCARD;
 
 /**
  * 线程池 工具类
@@ -126,7 +128,7 @@ public class BatchThreadPoolUtil {
                     .setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
                     .setHandleMsg("线程被抛弃");
             TriggerCallbackThread.pushCallBack(handleCallbackParam);
-            batchRunnable.runAfter();
+            throw new HandlerException(THREAD_DISCARD.getCode(), "线程被抛弃");
         }
     }
 

@@ -65,7 +65,6 @@ public class SpecialSqlUtil {
         return executeFlag;
     }
 
-
     /**
      * 执行更新sql
      */
@@ -73,8 +72,11 @@ public class SpecialSqlUtil {
         int executeNum;
         log.info("执行更新sql：{}", boundSql);
         try (PreparedStatement preparedStatement = conn.prepareStatement(boundSql)) {
+            // 设置查询超时时间，避免长时间挂起
+            preparedStatement.setQueryTimeout(30); // 30秒超时
             executeNum = preparedStatement.executeUpdate();
         } catch (SQLException e) {
+            log.error("执行更新SQL失败: {}", e.getMessage());
             throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
         } finally {
             // 这里使用连接代理关闭，重置线程池属性

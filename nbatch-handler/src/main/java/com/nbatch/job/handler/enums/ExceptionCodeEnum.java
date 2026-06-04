@@ -64,6 +64,11 @@ public enum ExceptionCodeEnum {
      * 操作不允许
      */
     OPERATION_NOT_ALLOWED(20005),
+
+    /**
+     * 线程被丢弃
+     */
+    THREAD_DISCARD(20006),
     ;
 
     private final Integer code;

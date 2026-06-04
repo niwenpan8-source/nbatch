@@ -168,30 +168,6 @@ public class RunNodeHelper {
     }
 
     /**
-     * 获取所有运行的节点
-     *
-     * @param workId 作业id
-     */
-    public ExecuteWorkParam getExecuteWorkObj(String workId) {
-        List<JobWorkRunPo> jobRunWorkPoList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkRunPo.class)
-                .eq(JobWorkRunPo::getWorkId, workId)
-                .in(JobWorkRunPo::getRunWorkStatus, FlowRunStatusEnum.RUNNING.getCode(), FlowRunStatusEnum.WAIT.getCode())
-                .orderByDesc(JobWorkRunPo::getCreateTime));
-        if (CollUtil.isEmpty(jobRunWorkPoList)) {
-            log.info("workId:{},不存在运行作业！", workId);
-            return null;
-        }
-        JobWorkRunPo jobRunWorkPo = jobRunWorkPoList.get(0);
-        // 对于作业来说等待中以及待运行的作业都可以再次进入
-        if (jobRunWorkPo.getRunWorkStatus() != FlowRunStatusEnum.WAIT.getCode()) {
-            log.info("workId:{},workStatus:{},只有等待中的节点才可以执行！", workId,
-                    FlowRunStatusEnum.getValueByCode(jobRunWorkPo.getRunWorkStatus()));
-            return null;
-        }
-        return buildExecuteWorkParam(jobRunWorkPo);
-    }
-
-    /**
      * 获取当前运行作业中依赖已满足、可继续下发执行的节点
      *
      * @param jobRunWorkPo 运行作业

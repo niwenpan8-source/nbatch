@@ -10,20 +10,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.opengauss.copy.CopyManager;
 import org.opengauss.core.BaseConnection;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_UPDATE_SQL_FAIL;
 
@@ -50,8 +42,6 @@ public class GaussDialect implements BaseDialect {
             // 开启自动提交
             connection.setAutoCommit(false);
             BaseConnection baseConnection = connection.unwrap(BaseConnection.class);
-            baseConnection.getNetworkTimeout();
-            baseConnection.getQueryExecutor().setNetworkTimeout(1);
             String line;
             int currentBatchLineCount = 0;
             long totalCopied = 0L;
@@ -124,6 +114,8 @@ public class GaussDialect implements BaseDialect {
         ) {
             // 使用 unwrap 获取底层 BaseConnection
             BaseConnection baseConnection = connection.unwrap(BaseConnection.class);
+
+            log.info("高斯数据库的 NetworkTimeout：{}", baseConnection.getNetworkTimeout());
             CopyManager copyManager = new CopyManager(baseConnection);
             String exportSql = generateDbToFileExecuteSql(param);
             log.info("高斯数据库导出sql：{}", exportSql);

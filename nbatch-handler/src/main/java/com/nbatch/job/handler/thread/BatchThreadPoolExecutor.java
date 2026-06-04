@@ -56,16 +56,18 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
     }
 
 
-    public void executeBatch(BatchRunnable runnable) {
+    public boolean executeBatch(BatchRunnable runnable) {
         try {
             this.execute(runnable);
         } catch (Exception e) {
             log.error("execute error.", e);
+            return false;
         }
         log.debug("execute runnable, hashCode:{}, threadPoolKey:{}, poolSize:{}, largestPoolSize:{}, activeCount:{}, " +
                         "taskCount:{}, completedTaskCount:{}, queueSize:{}",
                 runnable.hashCode(), threadPoolKey, this.getPoolSize(), this.getLargestPoolSize(),
                 this.getActiveCount(), this.getTaskCount(), this.getCompletedTaskCount(), this.getQueue().size());
+        return true;
 
     }
 
