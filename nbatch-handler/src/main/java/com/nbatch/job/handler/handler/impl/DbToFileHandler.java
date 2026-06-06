@@ -19,6 +19,7 @@ import java.io.File;
 import static com.nbatch.job.handler.constant.JobHandlerConstant.FILE_TYPE_SUFFIX_CSV;
 import static com.nbatch.job.handler.constant.JobHandlerConstant.FILE_TYPE_SUFFIX_EXECUTE;
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_UPDATE_SQL_FAIL;
+import static com.nbatch.job.handler.enums.NodeTypeEnum.NODE_TYPE_DB_TO_FILE;
 import static com.nbatch.job.handler.enums.NodeTypeEnum.NODE_TYPE_FILE_TO_DB;
 
 /**
@@ -35,7 +36,7 @@ public class DbToFileHandler implements JobNodeHandlerAdapter {
 
     @Override
     public boolean isSupport(String jobType) {
-        return StrUtil.equals(NODE_TYPE_FILE_TO_DB.getCode(), jobType);
+        return StrUtil.equals(NODE_TYPE_DB_TO_FILE.getCode(), jobType);
     }
 
     @Override

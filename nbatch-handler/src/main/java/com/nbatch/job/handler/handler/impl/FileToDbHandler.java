@@ -97,25 +97,47 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
         param.setRemoteFilePath(remoteDbExportFilePath);
     }
 
-
     private String getDeleteAllSql(String tableName) {
         return "truncate table " + tableName;
     }
 
-    private String getDeleteByConditionSql(String tableName) {
-        String templateSql = "delete from {}\n" +
-                "where fundcode in (select fundcode from\n" +
-                "    {}_today)";
-        return StrUtil.format(templateSql, tableName, tableName);
+
+    private String getDeleteByConditionSql(String tableName, String importTableCondition) {
+        // 将逗号分隔的字段串转换为数组，用于构建 EXISTS 中的关联条件
+        String[] fields = importTableCondition.split(",");
+
+        StringBuilder whereClause = new StringBuilder();
+        for (int i = 0; i < fields.length; i++) {
+            String field = fields[i].trim();
+            if (i > 0) {
+                whereClause.append(" AND ");
+            }
+            // 构建 t1.FIELD = t2.FIELD 的格式
+            whereClause.append("t1.").append(field).append(" = t2.").append(field);
+        }
+
+        String templateSql = "DELETE FROM {} t1\n" +
+                "WHERE EXISTS (\n" +
+                "    SELECT 1 FROM {}_today t2\n" +
+                "    WHERE {}\n" +
+                ")";
+
+        String formatted = StrUtil.format(templateSql, tableName, tableName, whereClause.toString());
+        log.info("删除临时表数据sql:{}", formatted);
+        return formatted;
     }
+
 
     /**
      * 获取导入正式表sql
      */
     private String getInsertFormalTable(String tableName, String tableFiled,
                                         String tempTableName) {
-        return "insert into " + tableName + " (" + tableFiled + ")" +
+
+        String formart = "insert into " + tableName + " (" + tableFiled + ")" +
                 " select " + tableFiled + " from " + tempTableName;
+        log.info("导入正式表sql:{}", formart);
+        return formart;
     }
 
 
@@ -140,7 +162,7 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
             throw new HandlerException(FILE_TO_DB_FAIL.getCode(), "导入文件表条件列不可为空！");
         }
         dialect.executeUpdate(dialectHelper.getConnection(dbType),
-                getDeleteByConditionSql(importTableName));
+                getDeleteByConditionSql(importTableName, param.getImportTableCondition()));
         String tableFiled = param.getImportTableFiled();
         if (StrUtil.isEmpty(tableFiled)) {
             log.info("===================导入增量文件导入文件表列不可为空！==================");

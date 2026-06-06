@@ -72,17 +72,16 @@ public class DialectHelper {
      * @return 数据库方言
      */
     public BaseDialect getDialect(String dbType) {
-        if (StrUtil.equals(dbType, DbType.GBASE.getDb())) {
+        if (StrUtil.equals(dbType.toLowerCase(), DbType.GBASE.getDb())) {
             return new GBaseDialect();
-        } else if (StrUtil.equals(dbType, DbType.OPENGAUSS.getDb())) {
+        } else if (StrUtil.equals(dbType.toLowerCase(), DbType.GAUSS_DB.getDb().toLowerCase())) {
             return new GaussDialect();
-        } else if (StrUtil.equals(dbType, DbType.MYSQL.getDb())) {
+        } else if (StrUtil.equals(dbType.toLowerCase(), DbType.MYSQL.getDb())) {
             return new MysqlDialect();
-        } else if (StrUtil.equals(dbType, DbType.CLICK_HOUSE.getDb())) {
+        } else if (StrUtil.equals(dbType.toLowerCase(), DbType.CLICK_HOUSE.getDb())) {
             return new ClickhouseDialect();
         }
         return null;
     }
-
 
 }
