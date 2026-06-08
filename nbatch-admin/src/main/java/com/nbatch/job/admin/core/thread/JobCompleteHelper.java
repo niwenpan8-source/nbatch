@@ -219,7 +219,7 @@ public class JobCompleteHelper {
         } else if (nodeStatusCallbackParam.getHandleCode() == HandleCodeConstant.HANDLE_CODE_SERVER_SHUTDOWN) {
 
             JobAdminConfig.getAdminConfig().getRunWorkHelper()
-                    .exceptionStopNode(handleCallbackParam.getNodeStatusCallbackParam().getRunWorkId());
+                    .exceptionStopWork(handleCallbackParam.getNodeStatusCallbackParam().getRunWorkId());
         } else {
             JobAdminConfig.getAdminConfig().getRunNodeHelper()
                     .handleNodeStatus(NodeStatusContext.retryFail(nodeStatusCallbackParam.getRunNodeId()));
