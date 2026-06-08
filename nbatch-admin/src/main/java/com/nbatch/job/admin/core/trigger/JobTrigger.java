@@ -216,7 +216,7 @@ public class JobTrigger {
      * @param address      address
      */
     public static ReturnT<String> runExecutor(TriggerParam triggerParam, String address) {
-        ReturnT<String> runResult = null;
+        ReturnT<String> runResult;
         try {
             ExecutorBiz executorBiz = JobScheduler.getExecutorBiz(address);
             assert executorBiz != null;
@@ -226,7 +226,7 @@ public class JobTrigger {
                     throw new JobException("如果为作业任务，job需要绑定作业id");
                 }
                 runResult = handleWorkTypeTaskParam(triggerParam);
-            } else if (StrUtil.equals(triggerParam.getGlueType(), GlueTypeEnum.WORK.name())) {
+            } else {
                 runResult = executorBiz.run(triggerParam);
             }
 
