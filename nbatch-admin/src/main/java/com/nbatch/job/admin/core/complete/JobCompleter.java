@@ -40,7 +40,7 @@ public class JobCompleter {
 
 
     /**
-     * do somethind to finish job
+     * do something to finish job
      */
     private static void finishJob(JobLogPo jobLogPo) {
 
