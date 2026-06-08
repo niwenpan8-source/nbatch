@@ -142,7 +142,7 @@ public class JobWorkRunNodeHelper {
                     for (ExecuteNodeParam executeNodeParam : executeWorkParam.getExecuteNodeParamList()) {
 
                         JobAdminConfig.getAdminConfig().getRunWorkHelper()
-                                .exceptionStopNode(executeNodeParam.getRunWorkId());
+                                .exceptionStopWork(executeNodeParam.getRunWorkId());
 
                         JobAdminConfig.getAdminConfig().getRunNodeHelper()
                                 .updateCallBackRunNodeLog(executeNodeParam.getNodeLogId()
