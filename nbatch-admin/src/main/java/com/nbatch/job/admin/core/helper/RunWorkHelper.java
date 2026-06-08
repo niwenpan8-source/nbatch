@@ -189,7 +189,7 @@ public class RunWorkHelper {
      *
      * @param workRunId 运行作业id
      */
-    public void exceptionStopNode(String workRunId) {
+    public void exceptionStopWork(String workRunId) {
         JobWorkRunPo jobWorkRunPo = jobRunWorkMapper.selectById(workRunId);
         if (jobWorkRunPo == null) {
             return;
