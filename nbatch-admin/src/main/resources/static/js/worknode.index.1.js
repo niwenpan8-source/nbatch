@@ -23,10 +23,15 @@ $(function () {
         return '<small class="label ' + labelClass + '">' + escapeHtml(text || '-') + '</small>';
     }
 
+    // Keep table cells readable after splitting composite info blocks into standalone columns.
+    function textOrDash(value) {
+        return escapeHtml(value || '-');
+    }
+
     function openNodeForm(url, title) {
         layer.open({
             type: 2,
-            area: ['900px', '720px'],
+            area: getLayerArea(980, 720),
             title: title,
             shade: 0.6,
             shadeClose: false,
@@ -93,49 +98,38 @@ $(function () {
                 "data": 'nodeName',
                 "bSortable": false,
                 "visible": true,
-                "width": '48%',
-                "render": function (data, type, row) {
-                    return '<div class="node-info-title">' + escapeHtml(row.nodeName) + '</div>' +
-                        '<div class="node-info-line"><span>节点ID：<span class="node-info-id">' + escapeHtml(row.nodeId) + '</span></span><span>作业：' + escapeHtml(row.workName || '-') + '</span></div>' +
-                        '<div class="node-info-line"><span>类型：' + escapeHtml(row.nodeTypeName || '-') + '</span><span>数据库：' + escapeHtml(row.dbType || '-') + '</span><span>状态：' + statusLabel(row.nodeStatus, row.nodeStatus === 1 ? I18n.jobinfo_opt_start : I18n.jobinfo_opt_stop) + '</span></div>' +
-                        '<div class="node-info-line"><span>描述：' + escapeHtml(row.nodeDesc || '-') + '</span></div>';
-                }
+                "width": '160px',
+                "render": function (data) { return textOrDash(data); }
             },
-            {
-                "data": 'runNodeId',
-                "visible": true,
-                "width": '38%',
-                "render": function (data, type, row) {
-                    if (!row.runNodeId) {
-                        return '<div class="run-info-empty">暂无运行节点记录</div>';
-                    }
-                    return '<div class="node-info-title">' + statusLabel(row.nodeRunStatus, row.nodeRunStatusName) + '</div>' +
-                        '<div class="node-info-line"><span>运行节点ID：<span class="node-info-id">' + escapeHtml(row.runNodeId) + '</span></span></div>' +
-                        '<div class="node-info-line"><span>运行作业ID：<span class="node-info-id">' + escapeHtml(row.runWorkId || '-') + '</span></span></div>' +
-                        '<div class="node-info-line"><span>翻牌时间：' + escapeHtml(row.turnDateText || '-') + '</span><span>剩余重试：' + escapeHtml(row.retryTimes == null ? '-' : row.retryTimes) + '</span></div>' +
-                        '<div class="node-info-line"><span>开始：' + escapeHtml(row.startTimeText || '-') + '</span><span>结束：' + escapeHtml(row.endTimeText || '-') + '</span></div>';
-                }
-            },
+            {"data": 'nodeId', "width": '180px', "render": function (data) { return textOrDash(data); }},
+            {"data": 'workName', "width": '140px', "render": function (data) { return textOrDash(data); }},
+            {"data": 'nodeTypeName', "width": '140px', "render": function (data) { return textOrDash(data); }},
+            {"data": 'dbType', "width": '100px', "render": function (data) { return textOrDash(data); }},
+            {"data": 'nodeStatus', "width": '80px', "render": function (data, type, row) { return statusLabel(row.nodeStatus, row.nodeStatus === 1 ? I18n.jobinfo_opt_start : I18n.jobinfo_opt_stop); }},
+            {"data": 'nodeDesc', "width": '180px', "render": function (data) { return textOrDash(data); }},
+            {"data": 'runNodeId', "width": '180px', "render": function (data) { return textOrDash(data); }},
+            {"data": 'runWorkId', "width": '180px', "render": function (data) { return textOrDash(data); }},
+            {"data": 'nodeRunStatusName', "width": '90px', "render": function (data, type, row) { return row.runNodeId ? statusLabel(row.nodeRunStatus, data) : '-'; }},
+            {"data": 'turnDateText', "width": '110px', "render": function (data) { return textOrDash(data); }},
+            {"data": 'retryTimes', "width": '80px', "render": function (data) { return escapeHtml(data == null ? '-' : data); }},
+            {"data": 'startTimeText', "width": '160px', "render": function (data) { return textOrDash(data); }},
+            {"data": 'endTimeText', "width": '160px', "render": function (data) { return textOrDash(data); }},
             {
                 "data": I18n.system_opt,
-                "width": '14%',
+                "width": '190px',
+                "className": 'table-action-cell',
                 "render": function (data, type, row) {
                     return function () {
                         tableData['key' + row.nodeId] = row;
-
-                        return '<div class="btn-group">\n' +
-                            '     <button type="button" class="btn btn-primary btn-sm">' + I18n.system_opt + '</button>\n' +
-                            '     <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown">\n' +
-                            '       <span class="caret"></span>\n' +
-                            '       <span class="sr-only">Toggle Dropdown</span>\n' +
-                            '     </button>\n' +
-                            '     <ul class="dropdown-menu" role="menu" _id="' + row.nodeId + '" >\n' +
-                            '       <li><a href="javascript:void(0);" class="update">' + I18n.system_opt_edit + '</a></li>\n' +
-                            '       <li><a href="javascript:void(0);" class="delete">' + I18n.system_opt_del + '</a></li>\n' +
-                            '       <li><a href="javascript:void(0);" class="view-log">查看运行节点执行日志</a></li>\n' +
-                            '       <li><a href="javascript:void(0);" class="view-log-detail">查看运行节点详细日志</a></li>\n' +
-                            '     </ul>\n' +
-                            '   </div>';
+                        // A single log entry opens a tabbed page that contains execution and detail logs.
+                        var logButtons = row.runNodeId
+                            ? '<button type="button" class="btn btn-default btn-xs view-log">日志</button>'
+                            : '';
+                        return '<div data-node-id="' + escapeHtml(row.nodeId) + '">' +
+                            '<button type="button" class="btn btn-primary btn-xs update">' + I18n.system_opt_edit + '</button>' +
+                            '<button type="button" class="btn btn-danger btn-xs delete">' + I18n.system_opt_del + '</button>' +
+                            logButtons +
+                            '</div>';
                     };
                 }
             }
@@ -154,7 +148,7 @@ $(function () {
     // job operate
     $("#work_node_list").on('click', '.delete', function () {
         var url = base_url + "/node/delete";
-        var id = $(this).parents('ul').attr("_id");
+        var id = $(this).closest('[data-node-id]').attr("data-node-id");
         var typeName = I18n.system_opt_del;
 
         layer.confirm(I18n.system_ok + typeName + '?', {
@@ -188,17 +182,17 @@ $(function () {
 
     // update
     $("#work_node_list").on('click', '.update',function() {
-        var id = $(this).parents('ul').attr("_id");
+        var id = $(this).closest('[data-node-id]').attr("data-node-id");
         openNodeForm(base_url + "/node/updateModel?workNodeId=" + id, I18n.jobinfo_field_update);
     });
 
     // view run node log
     $("#work_node_list").on('click', '.view-log',function() {
-        var id = $(this).parents('ul').attr("_id");
+        var id = $(this).closest('[data-node-id]').attr("data-node-id");
         layer.open({
             type: 2,
-            area: ['92%', '82%'],
-            title: '运行节点执行日志',
+            area: getLayerArea(1180, 720),
+            title: '运行节点日志',
             shade: 0.6,
             shadeClose: true,
             maxmin: true,
@@ -207,18 +201,4 @@ $(function () {
         });
     });
 
-    // view run node log detail
-    $("#work_node_list").on('click', '.view-log-detail',function() {
-        var id = $(this).parents('ul').attr("_id");
-        layer.open({
-            type: 2,
-            area: ['92%', '82%'],
-            title: '运行节点详细日志',
-            shade: 0.6,
-            shadeClose: true,
-            maxmin: true,
-            anim: 0,
-            content: base_url + "/node/viewLogDetailModel?workNodeId=" + id
-        });
-    });
 });

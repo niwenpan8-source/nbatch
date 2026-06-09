@@ -17,6 +17,39 @@
     <link rel="stylesheet" href="${request.contextPath}/static/adminlte/dist/css/AdminLTE.min.css">
     <!-- Skin -->
     <link rel="stylesheet" href="${request.contextPath}/static/adminlte/dist/css/skins/skin-blue.min.css">
+    <style>
+        .content .row + .row {margin-top: 12px;}
+        .box .box-body {overflow-x: auto;}
+        .table > thead > tr > th, .table > tbody > tr > td {vertical-align: middle;}
+        .table-action-cell {width: 180px; min-width: 160px; white-space: normal;}
+        .table-action-cell .btn {margin: 0 4px 6px 0;}
+        .dataTables_wrapper .row {margin-left: 0; margin-right: 0;}
+        .modal-dialog {margin-top: 7vh;}
+        .modal-content, .layui-layer {border: 0; border-radius: 8px; box-shadow: 0 14px 40px rgba(15, 23, 42, .22); overflow: hidden;}
+        .modal-header, .layui-layer-title {background: #f8fafc; border-bottom: 1px solid #e5e7eb; color: #1f2937; font-weight: 600;}
+        .modal-header {padding: 14px 18px;}
+        .modal-title {font-size: 16px; font-weight: 600;}
+        .modal-body {padding: 18px 20px; max-height: 70vh; overflow-y: auto;}
+        body > .modal-body {max-height: none; min-height: 100vh; overflow: visible;}
+        .modal-footer, .layui-layer-btn {background: #fff; border-top: 1px solid #edf2f7; padding: 12px 18px;}
+        .layui-layer-title {height: 46px; line-height: 46px; padding: 0 80px 0 18px; font-size: 15px;}
+        .layui-layer-setwin {top: 13px; right: 14px;}
+        .layui-layer-iframe .layui-layer-content {background: #fff;}
+        .layui-layer-btn {text-align: right;}
+        .layui-layer-btn .layui-layer-btn0 {border-color: #3c8dbc; background-color: #3c8dbc;}
+        .form-horizontal .form-group {margin-bottom: 14px;}
+        .form-horizontal .control-label {color: #374151; font-weight: 500;}
+        .form-control {border-radius: 4px; box-shadow: none;}
+        .form-control:focus {border-color: #3c8dbc; box-shadow: 0 0 0 2px rgba(60, 141, 188, .12);}
+        @media (max-width: 767px) {
+            .content .row > [class^="col-xs-"], .content .row > [class*=" col-xs-"] {width: 100%; margin-bottom: 8px;}
+            .table-action-cell {min-width: 180px;}
+            .modal-dialog {width: auto; margin: 10px;}
+            .modal-body {max-height: 76vh; padding: 14px;}
+            body > .modal-body {max-height: none;}
+            .form-horizontal .control-label {text-align: left; padding-top: 0;}
+        }
+    </style>
 
 	<#-- i18n -->
 	<#global I18n = I18nUtil.getMultString()?eval />

@@ -109,11 +109,14 @@ public class JobWorkNodeController {
         return new ReturnT<>("修改成功");
     }
 
+    /**
+     * 运行节点日志统一入口，页面内通过标签切换执行日志和详细日志。
+     */
     @RequestMapping("/viewLogModel")
     public String viewLogModel(Model model, String workNodeId) {
         JobWorkNodePo workNode = jobWorkNodeService.getWorkNode(workNodeId);
         model.addAttribute("workNode", workNode);
-        return "worknode/worknode.view.log";
+        return "worknode/worknode.view.logs";
     }
 
     @RequestMapping("/viewLogDetailModel")

@@ -469,13 +469,17 @@ public class RunNodeHelper {
      * 修改运行节点日志状态
      */
     public void updateCallBackRunNodeLog(String nodeLogId,
-                                         Integer handleCode,
-                                         String handleMsg) {
+                                          Integer handleCode,
+                                          String handleMsg) {
         JobWorkRunNodeLogPo jobWorkRunNodeLogPo = new JobWorkRunNodeLogPo();
 
         jobWorkRunNodeLogPo.setNodeLogId(nodeLogId)
                 .setHandleCode(handleCode).setHandleMsg(handleMsg).setCallBackTime(DateUtil.date());
         jobWorkRunNodeLogMapper.updateById(jobWorkRunNodeLogPo);
+    }
+
+    public JobWorkRunNodeLogPo getRunNodeLog(String nodeLogId) {
+        return jobWorkRunNodeLogMapper.selectById(nodeLogId);
     }
 
     /**

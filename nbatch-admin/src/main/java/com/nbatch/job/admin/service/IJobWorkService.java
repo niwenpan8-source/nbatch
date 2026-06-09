@@ -4,6 +4,7 @@ import com.nbatch.job.admin.core.domain.param.JobWorkPageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkParam;
 import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkVo;
+import com.nbatch.job.core.biz.model.ReturnT;
 
 import java.util.List;
 import java.util.Map;
@@ -44,4 +45,14 @@ public interface IJobWorkService {
      * 删除
      */
     int delete(String id);
+
+    /**
+     * 恢复运行作业重跑
+     */
+    ReturnT<String> recoverRunWork(String runWorkId);
+
+    /**
+     * 重跑最新运行作业
+     */
+    ReturnT<String> rerunLatestRunWork(String workId);
 }

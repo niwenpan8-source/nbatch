@@ -24,6 +24,15 @@ var dataTableI18n = {
 	}
 };
 
+// Resolve iframe popup size against the current viewport to avoid clipped layer dialogs on small screens.
+function getLayerArea(width, height) {
+    var viewportWidth = $(window).width();
+    var viewportHeight = $(window).height();
+    var resolvedWidth = Math.min(width, Math.max(320, viewportWidth - 32));
+    var resolvedHeight = Math.min(height, Math.max(320, viewportHeight - 32));
+    return [resolvedWidth + 'px', resolvedHeight + 'px'];
+}
+
 $(function(){
 
 	// logout

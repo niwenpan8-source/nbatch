@@ -118,7 +118,7 @@ $(function() {
 		if (row.registryList) {
 			for (var index in row.registryList) {
 				html += '<tr><th>' + (parseInt(index)+1) + '</th>';
-				html += '<th><span class="badge bg-green" >' + row.registryList[index] + '</span></th><tr>';
+				html += '<th><span class="badge bg-green" >' + row.registryList[index] + '</span></th></tr>';
 			}
 		}
 		html += '</tbody></table>';

@@ -61,6 +61,24 @@ public class JobWorkController {
         return ReturnT.SUCCESS;
     }
 
+    /**
+     * 将进行中的运行作业恢复为待执行，用于异常中断后的手动恢复。
+     */
+    @RequestMapping("/recoverRunWork")
+    @ResponseBody
+    public ReturnT<String> recoverRunWork(String runWorkId) {
+        return jobWorkService.recoverRunWork(runWorkId);
+    }
+
+    /**
+     * 一键重跑指定流程最近一次运行作业。
+     */
+    @RequestMapping("/rerunLatestRunWork")
+    @ResponseBody
+    public ReturnT<String> rerunLatestRunWork(String workId) {
+        return jobWorkService.rerunLatestRunWork(workId);
+    }
+
     @RequestMapping("/addModel")
     public String addModel(Model model) {
         // 枚举-字典路由策略-列表

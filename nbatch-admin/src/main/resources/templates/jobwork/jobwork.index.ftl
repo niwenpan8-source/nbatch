@@ -7,11 +7,8 @@
     <link rel="stylesheet" href="${request.contextPath}/static/adminlte/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css">
     <title>${I18n.admin_name}</title>
     <style>
-        .work-info-title {font-weight: 600; font-size: 14px; margin-bottom: 6px;}
-        .work-info-line {color: #666; line-height: 22px;}
-        .work-info-line span {display: inline-block; margin-right: 18px;}
-        .run-info-empty {color: #999; line-height: 52px;}
         .run-info-id {font-family: Menlo, Monaco, Consolas, monospace; color: #555;}
+        #job_work_list th, #job_work_list td {vertical-align: middle;}
     </style>
 </head>
 <body class="hold-transition skin-blue sidebar-mini <#if cookieMap?exists && cookieMap["xxljob_adminlte_settings"]?exists && "off" == cookieMap["xxljob_adminlte_settings"].value >sidebar-collapse</#if>">
@@ -35,6 +32,7 @@
                     <div class="input-group">
                         <span class="input-group-addon">${I18n.job_work_field_status}</span>
                         <select class="form-control" id="workStatus">
+                            <option value="">全部</option>
                             <#list workStatusEnum as status>
                                 <option value="${status.code}">${status.value}</option>
                             </#list>
@@ -55,9 +53,17 @@
                             <table id="job_work_list" class="table table-bordered table-striped" width="100%">
                                 <thead>
                                 <tr>
-                                    <th>作业信息</th>
-                                    <th>最近运行作业信息</th>
-                                    <th>${I18n.system_opt}</th>
+                                    <th>作业名称</th>
+                                    <th>作业ID</th>
+                                    <th>类型</th>
+                                    <th>状态</th>
+                                    <th>描述</th>
+                                    <th>版本</th>
+                                    <th>运行ID</th>
+                                    <th>运行状态</th>
+                                    <th>翻牌时间</th>
+                                    <th>创建时间</th>
+                                    <th class="table-action-cell">${I18n.system_opt}</th>
                                 </tr>
                                 </thead>
                                 <tbody></tbody>

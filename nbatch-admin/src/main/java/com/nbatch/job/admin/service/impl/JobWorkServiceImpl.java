@@ -7,15 +7,20 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nbatch.job.admin.core.domain.param.JobWorkPageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkParam;
 import com.nbatch.job.admin.core.domain.po.JobWorkRunPo;
+import com.nbatch.job.admin.core.domain.po.JobWorkRunNodePo;
 import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkVo;
+import com.nbatch.job.admin.mapper.IJobWorkRunNodeMapper;
 import com.nbatch.job.admin.mapper.IJobWorkRunMapper;
 import com.nbatch.job.admin.mapper.IJobWorkMapper;
 import com.nbatch.job.admin.service.IJobWorkService;
+import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.enums.FlowRunStatusEnum;
 import com.nbatch.job.core.enums.FlowStatusEnum;
 import com.nbatch.job.core.enums.WorkTypeEnum;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Collections;
@@ -37,6 +42,9 @@ public class JobWorkServiceImpl implements IJobWorkService {
 
     @Resource
     private IJobWorkRunMapper jobRunWorkMapper;
+
+    @Resource
+    private IJobWorkRunNodeMapper jobWorkRunNodeMapper;
 
     /**
      * 分页列表
@@ -156,6 +164,65 @@ public class JobWorkServiceImpl implements IJobWorkService {
             return 1;
         }
         return jobWorkMapper.deleteById(id);
+    }
+
+    @Override
+    public ReturnT<String> recoverRunWork(String runWorkId) {
+        if (runWorkId == null || runWorkId.trim().isEmpty()) {
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "运行作业ID不能为空");
+        }
+        JobWorkRunPo oldRunWorkPo = jobRunWorkMapper.selectById(runWorkId);
+        if (oldRunWorkPo == null) {
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "运行作业不存在");
+        }
+        if (oldRunWorkPo.getRunWorkStatus() != null
+                && oldRunWorkPo.getRunWorkStatus() != FlowRunStatusEnum.RUNNING.getCode()) {
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "只有进行中的运行作业可以恢复重跑");
+        }
+
+        // 只回滚运行中的节点，避免已完成或已失败节点被误重置。
+        JobWorkRunNodePo updateRunNodePo = new JobWorkRunNodePo();
+        updateRunNodePo.setNodeRunStatus(FlowRunStatusEnum.WAIT.getCode());
+        jobWorkRunNodeMapper.update(updateRunNodePo, Wrappers.lambdaQuery(JobWorkRunNodePo.class)
+                .eq(JobWorkRunNodePo::getRunWorkId, runWorkId)
+                .eq(JobWorkRunNodePo::getNodeRunStatus, FlowRunStatusEnum.RUNNING.getCode()));
+
+        JobWorkRunPo updateRunWorkPo = new JobWorkRunPo();
+        updateRunWorkPo.setRunWorkId(runWorkId);
+        updateRunWorkPo.setRunWorkStatus(FlowRunStatusEnum.WAIT.getCode());
+        jobRunWorkMapper.updateById(updateRunWorkPo);
+        return ReturnT.SUCCESS;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ReturnT<String> rerunLatestRunWork(String workId) {
+        if (workId == null || workId.trim().isEmpty()) {
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "作业ID不能为空");
+        }
+        // 一键重跑以页面展示的最新运行作业为准，防止重置历史运行批次。
+        JobWorkRunPo latestRunWorkPo = jobRunWorkMapper.selectOne(Wrappers.lambdaQuery(JobWorkRunPo.class)
+                .eq(JobWorkRunPo::getWorkId, workId)
+                .orderByDesc(JobWorkRunPo::getCreateTime)
+                .orderByDesc(JobWorkRunPo::getRunWorkId)
+                .last("LIMIT 1"));
+        if (latestRunWorkPo == null) {
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "暂无运行作业记录");
+        }
+
+        // 运行作业先回到待执行，后续调度线程会重新扫描并推动失败节点继续执行。
+        jobRunWorkMapper.update(null, Wrappers.lambdaUpdate(JobWorkRunPo.class)
+                .set(JobWorkRunPo::getRunWorkStatus, FlowRunStatusEnum.WAIT.getCode())
+                .eq(JobWorkRunPo::getRunWorkId, latestRunWorkPo.getRunWorkId()));
+
+        // 仅重置失败节点，并同步翻牌日期，保证节点执行批次与运行作业保持一致。
+        jobWorkRunNodeMapper.update(null, Wrappers.lambdaUpdate(JobWorkRunNodePo.class)
+                .set(JobWorkRunNodePo::getNodeRunStatus, FlowRunStatusEnum.WAIT.getCode())
+                .set(JobWorkRunNodePo::getTurnDate, latestRunWorkPo.getTurnDate())
+                .eq(JobWorkRunNodePo::getRunWorkId, latestRunWorkPo.getRunWorkId())
+                .eq(JobWorkRunNodePo::getNodeRunStatus, FlowRunStatusEnum.EXCEPTION.getCode()));
+
+        return ReturnT.SUCCESS;
     }
 
 

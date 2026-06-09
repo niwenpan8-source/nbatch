@@ -5,8 +5,8 @@
     <@netCommon.commonStyle />
     <link rel="stylesheet" href="${request.contextPath}/static/plugins/layui/css/layui.css">
     <style>
-        .config-section {display: none; margin-top: 12px; padding: 14px 14px 4px; background: #f8fafc; border: 1px solid #e7edf3; border-radius: 4px;}
-        .config-title {font-weight: 600; margin-bottom: 12px; color: #333;}
+        .config-section {display: none; margin: 14px 0 4px; padding: 16px 16px 6px; background: #f8fafc; border: 1px solid #e7edf3; border-radius: 6px;}
+        .config-title {font-weight: 600; margin-bottom: 14px; color: #1f2937;}
         textarea.form-control {min-height: 90px; resize: vertical;}
     </style>
 </head>
@@ -135,7 +135,7 @@
             </div>
             <div class="form-group">
                 <label class="col-sm-2 control-label">文件编码</label>
-                <div class="col-sm-4"><input type="text" class="form-control" name="importFileCode" value="UTF-8"></div>
+                <div class="col-sm-4"><input type="text" class="form-control" name="importFileCode" value="utf8"></div>
                 <label class="col-sm-2 control-label">分隔符</label>
                 <div class="col-sm-4"><input type="text" class="form-control" name="importSep" value=","></div>
             </div>
@@ -166,7 +166,7 @@
             </div>
             <div class="form-group">
                 <label class="col-sm-2 control-label">文件编码</label>
-                <div class="col-sm-4"><input type="text" class="form-control" name="exportFileCode" value="UTF-8"></div>
+                <div class="col-sm-4"><input type="text" class="form-control" name="exportFileCode" value="utf8"></div>
                 <label class="col-sm-2 control-label">分隔符</label>
                 <div class="col-sm-4"><input type="text" class="form-control" name="exportSep" value=","></div>
             </div>

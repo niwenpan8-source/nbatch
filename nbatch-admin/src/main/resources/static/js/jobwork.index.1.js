@@ -23,6 +23,11 @@ $(function () {
         return '<small class="label ' + labelClass + '">' + escapeHtml(text || '-') + '</small>';
     }
 
+    // Keep table cells readable after splitting composite info blocks into standalone columns.
+    function textOrDash(value) {
+        return escapeHtml(value || '-');
+    }
+
     // init date tables
     var jobWorkTable = $("#job_work_list").dataTable({
         "deferRender": true,
@@ -46,45 +51,40 @@ $(function () {
                 "data": 'workName',
                 "bSortable": false,
                 "visible": true,
-                "width": '48%',
-                "render": function (data, type, row) {
-                    return '<div class="work-info-title">' + escapeHtml(row.workName) + '</div>' +
-                        '<div class="work-info-line"><span>作业ID：' + escapeHtml(row.workId) + '</span><span>类型：' + escapeHtml(row.workTypeName || '-') + '</span><span>版本：' + escapeHtml(row.version || 0) + '</span></div>' +
-                        '<div class="work-info-line"><span>状态：' + statusLabel(row.workStatus, row.workStatusName) + '</span><span>描述：' + escapeHtml(row.workDesc || '-') + '</span></div>';
-                }
+                "width": '160px',
+                "render": function (data) { return textOrDash(data); }
             },
-            {
-                "data": 'runWorkId',
-                "visible": true,
-                "width": '38%',
-                "render": function (data, type, row) {
-                    if (!row.runWorkId) {
-                        return '<div class="run-info-empty">暂无运行作业记录</div>';
-                    }
-                    return '<div class="work-info-title">' + statusLabel(row.runWorkStatus, row.runWorkStatusName) + '</div>' +
-                        '<div class="work-info-line"><span>运行ID：<span class="run-info-id">' + escapeHtml(row.runWorkId) + '</span></span></div>' +
-                        '<div class="work-info-line"><span>翻牌时间：' + escapeHtml(row.turnDate || '-') + '</span><span>创建时间：' + escapeHtml(row.runWorkCreateTime || '-') + '</span></div>';
-                }
-            },
+            {"data": 'workId', "width": '180px', "render": function (data) { return textOrDash(data); }},
+            {"data": 'workTypeName', "width": '100px', "render": function (data) { return textOrDash(data); }},
+            {"data": 'workStatusName', "width": '90px', "render": function (data, type, row) { return statusLabel(row.workStatus, data); }},
+            {"data": 'workDesc', "width": '180px', "render": function (data) { return textOrDash(data); }},
+            {"data": 'version', "width": '70px', "render": function (data) { return escapeHtml(data == null ? 0 : data); }},
+            {"data": 'runWorkId', "width": '180px', "render": function (data) { return textOrDash(data); }},
+            {"data": 'runWorkStatusName', "width": '90px', "render": function (data, type, row) { return row.runWorkId ? statusLabel(row.runWorkStatus, data) : '-'; }},
+            {"data": 'turnDate', "width": '110px', "render": function (data) { return textOrDash(data); }},
+            {"data": 'runWorkCreateTime', "width": '160px', "render": function (data) { return textOrDash(data); }},
             {
                 "data": I18n.system_opt,
-                "width": '14%',
+                "width": '220px',
+                "className": 'table-action-cell',
                 "render": function (data, type, row) {
                     return function () {
                         tableData['key' + row.workId] = row;
-
-                        return '<div class="btn-group">\n' +
-                            '     <button type="button" class="btn btn-primary btn-sm">' + I18n.system_opt + '</button>\n' +
-                            '     <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown">\n' +
-                            '       <span class="caret"></span>\n' +
-                            '       <span class="sr-only">Toggle Dropdown</span>\n' +
-                            '     </button>\n' +
-                            '     <ul class="dropdown-menu" role="menu" _id="' + row.workId + '" >\n' +
-                            '       <li><a href="javascript:void(0);" class="update">' + I18n.system_opt_edit + '</a></li>\n' +
-                            '       <li><a href="javascript:void(0);" class="delete">' + I18n.system_opt_del + '</a></li>\n' +
-                            '       <li><a href="javascript:void(0);" class="edit">设置节点依赖关系</a></li>\n' +
-                            '     </ul>\n' +
-                            '   </div>';
+                        var recoverBtn = '';
+                        if (row.runWorkId && row.runWorkStatus === 1) {
+                            recoverBtn = '<button type="button" class="btn btn-warning btn-xs recover" data-run-work-id="' + escapeHtml(row.runWorkId) + '">恢复重跑</button>';
+                        }
+                        // Latest-run rerun is only meaningful when the workflow has at least one run record.
+                        var rerunLatestBtn = row.runWorkId
+                            ? '<button type="button" class="btn btn-warning btn-xs rerun-latest">一键重跑</button>'
+                            : '';
+                        return '<div data-work-id="' + escapeHtml(row.workId) + '">' +
+                            '<button type="button" class="btn btn-primary btn-xs update">' + I18n.system_opt_edit + '</button>' +
+                            '<button type="button" class="btn btn-danger btn-xs delete">' + I18n.system_opt_del + '</button>' +
+                            rerunLatestBtn +
+                            '<button type="button" class="btn btn-info btn-xs edit">依赖关系</button>' +
+                            recoverBtn +
+                            '</div>';
                     };
                 }
             }
@@ -103,7 +103,7 @@ $(function () {
     // job operate
     $("#job_work_list").on('click', '.delete', function () {
         var url = base_url + "/work/delete";
-        var id = $(this).parents('ul').attr("_id");
+        var id = $(this).closest('[data-work-id]').attr("data-work-id");
         var typeName = I18n.system_opt_del;
 
         layer.confirm(I18n.system_ok + typeName + '?', {
@@ -137,7 +137,7 @@ $(function () {
         var url = base_url + "/work/addModel";
         layer.open({
             type: 2,
-            area: ['700px', '480px'],
+            area: getLayerArea(760, 460),
             title: I18n.jobinfo_field_add,
             shade: 0.6,
             shadeClose: false,
@@ -183,11 +183,11 @@ $(function () {
 
     // update
     $("#job_work_list").on('click', '.update',function() {
-        var id = $(this).parents('ul').attr("_id");
+        var id = $(this).closest('[data-work-id]').attr("data-work-id");
         var url = base_url + "/work/updateModel?workId=" + id;
         layer.open({
             type: 2,
-            area: ['700px', '480px'],
+            area: getLayerArea(760, 460),
             title: I18n.jobinfo_field_update,
             shade: 0.6,
             shadeClose: false,
@@ -233,17 +233,75 @@ $(function () {
 
     // relation edit
     $("#job_work_list").on('click', '.edit',function() {
-        var id = $(this).parents('ul').attr("_id");
+        var id = $(this).closest('[data-work-id]').attr("data-work-id");
         var url = base_url + "/work/editModel?workId=" + id;
         layer.open({
             type: 2,
-            area: ['92%', '86%'],
+            area: getLayerArea(1180, 760),
             title: '设置节点依赖关系',
             shade: 0.6,
             shadeClose: false,
             maxmin: true,
             anim: 0,
             content: url
+        });
+    });
+
+    // Rerun the latest run work and only reset failed nodes on the server side.
+    $("#job_work_list").on('click', '.rerun-latest', function () {
+        var workId = $(this).closest('[data-work-id]').attr('data-work-id');
+        layer.confirm('确认将该流程最新运行作业置为待执行，并重跑失败节点？', {
+            icon: 3,
+            title: I18n.system_tips,
+            btn: [I18n.system_ok, I18n.system_cancel]
+        }, function (index) {
+            layer.close(index);
+            $.ajax({
+                type: 'POST',
+                url: base_url + '/work/rerunLatestRunWork',
+                data: {workId: workId},
+                dataType: 'json',
+                success: function (data) {
+                    if (data.code === 200) {
+                        layer.msg('重跑设置成功', {icon: 1});
+                        jobWorkTable.fnDraw(false);
+                    } else {
+                        layer.msg(data.msg || '重跑设置失败', {icon: 2});
+                    }
+                },
+                error: function () {
+                    layer.msg(I18n.system_fail, {icon: 2});
+                }
+            });
+        });
+    });
+
+    // recover run work
+    $("#job_work_list").on('click', '.recover', function () {
+        var runWorkId = $(this).attr('data-run-work-id');
+        layer.confirm('确认将该运行作业恢复为待执行并重跑？', {
+            icon: 3,
+            title: I18n.system_tips,
+            btn: [I18n.system_ok, I18n.system_cancel]
+        }, function (index) {
+            layer.close(index);
+            $.ajax({
+                type: 'POST',
+                url: base_url + '/work/recoverRunWork',
+                data: {runWorkId: runWorkId},
+                dataType: 'json',
+                success: function (data) {
+                    if (data.code === 200) {
+                        layer.msg('恢复成功', {icon: 1});
+                        jobWorkTable.fnDraw(false);
+                    } else {
+                        layer.msg(data.msg || '恢复失败', {icon: 2});
+                    }
+                },
+                error: function () {
+                    layer.msg(I18n.system_fail, {icon: 2});
+                }
+            });
         });
     });
 });

@@ -7,11 +7,7 @@
     <link rel="stylesheet" href="${request.contextPath}/static/adminlte/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css">
     <title>${I18n.admin_name}</title>
     <style>
-        .node-info-title {font-weight: 600; font-size: 14px; margin-bottom: 6px;}
-        .node-info-line {color: #666; line-height: 22px;}
-        .node-info-line span {display: inline-block; margin-right: 16px;}
         .node-info-id {font-family: Menlo, Monaco, Consolas, monospace; color: #555;}
-        .run-info-empty {color: #999; line-height: 54px;}
     </style>
 </head>
 <body class="hold-transition skin-blue sidebar-mini <#if cookieMap?exists && cookieMap["xxljob_adminlte_settings"]?exists && "off" == cookieMap["xxljob_adminlte_settings"].value >sidebar-collapse</#if>">
@@ -67,9 +63,21 @@
                             <table id="work_node_list" class="table table-bordered table-striped" width="100%">
                                 <thead>
                                 <tr>
-                                    <th>节点信息</th>
-                                    <th>最近运行节点信息</th>
-                                    <th>${I18n.system_opt}</th>
+                                    <th>节点名称</th>
+                                    <th>节点ID</th>
+                                    <th>作业</th>
+                                    <th>类型</th>
+                                    <th>数据库</th>
+                                    <th>状态</th>
+                                    <th>描述</th>
+                                    <th>运行节点ID</th>
+                                    <th>运行作业ID</th>
+                                    <th>运行状态</th>
+                                    <th>翻牌时间</th>
+                                    <th>剩余重试</th>
+                                    <th>开始时间</th>
+                                    <th>结束时间</th>
+                                    <th class="table-action-cell">${I18n.system_opt}</th>
                                 </tr>
                                 </thead>
                                 <tbody></tbody>
