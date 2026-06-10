@@ -191,7 +191,7 @@
         document.querySelectorAll('.config-section').forEach(function(section) { section.style.display = 'none'; });
         if (nodeType === 'script') document.querySelector('[data-section="script"]').style.display = 'block';
         if (nodeType === 'bean') document.querySelector('[data-section="bean"]').style.display = 'block';
-        if (nodeType === 'execute_sql' || nodeType === 'store_procedure') document.querySelector('[data-section="sql"]').style.display = 'block';
+        if (nodeType === 'execute_sql' || nodeType === 'store_procedure' || nodeType === 'store_procedure_return_str') document.querySelector('[data-section="sql"]').style.display = 'block';
         if (nodeType === 'file_to_db') document.querySelector('[data-section="file_to_db"]').style.display = 'block';
         if (nodeType === 'db_to_file') document.querySelector('[data-section="db_to_file"]').style.display = 'block';
     }

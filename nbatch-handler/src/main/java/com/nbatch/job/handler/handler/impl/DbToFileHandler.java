@@ -76,11 +76,14 @@ public class DbToFileHandler implements JobNodeHandlerAdapter {
         }
     }
 
-
+    /**
+     * 对于正在导出的文件
+     */
     private void setFilePath(ExecuteDbToFileParam param, String finishGenerateFileName) {
         String dbExportFilePath = handlerPropertiesConstant.getTempPath()
-                + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_CSV;
-        String remoteDbExportFilePath = handlerPropertiesConstant.getRemoteTempPath() + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_CSV;
+                + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_EXECUTE;
+        String remoteDbExportFilePath = handlerPropertiesConstant.getRemoteTempPath()
+                + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_EXECUTE;
         param.setFilePath(dbExportFilePath);
         param.setRemoteFilePath(remoteDbExportFilePath);
     }
