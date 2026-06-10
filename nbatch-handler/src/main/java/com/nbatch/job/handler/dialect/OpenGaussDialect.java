@@ -25,7 +25,7 @@ import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_UPDATE_SQL_
  * @date: 2025/11/19
  */
 @Slf4j
-public class GaussDialect implements BaseDialect {
+public class OpenGaussDialect implements BaseDialect {
 
     @Override
     public long fileToDb(Connection connection, ExecuteFileToDbParam param) throws Exception {

@@ -1,5 +1,6 @@
 package com.nbatch.job.core.biz.impl;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import com.nbatch.job.core.biz.ExecutorBiz;
 import com.nbatch.job.core.biz.model.ExecuteWorkParam;
 import com.nbatch.job.core.biz.model.IdleBeatParam;
@@ -7,6 +8,9 @@ import com.nbatch.job.core.biz.model.KillParam;
 import com.nbatch.job.core.biz.model.LogParam;
 import com.nbatch.job.core.biz.model.LogResult;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.biz.model.RunNodeLogAckParam;
+import com.nbatch.job.core.biz.model.RunNodeLogPullParam;
+import com.nbatch.job.core.biz.model.RunNodeLogPullResult;
 import com.nbatch.job.core.biz.model.TriggerParam;
 import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.enums.ExecutorBlockStrategyEnum;
@@ -18,6 +22,7 @@ import com.nbatch.job.core.handler.impl.GlueJobHandler;
 import com.nbatch.job.core.handler.impl.ScriptJobHandler;
 import com.nbatch.job.core.handler.impl.WorkJobHandler;
 import com.nbatch.job.core.log.JobFileAppender;
+import com.nbatch.job.core.thread.RunNodeLogEventLog;
 import com.nbatch.job.core.thread.JobThread;
 import lombok.extern.slf4j.Slf4j;
 
@@ -122,7 +127,7 @@ public class ExecutorBizImpl implements ExecutorBiz {
                     jobHandler = new GlueJobHandler(originJobHandler, triggerParam.getGlueUpdatetime());
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
-                    return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, e.getMessage());
+                    return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, ExceptionUtil.getRootCauseMessage(e));
                 }
             }
         } else if (glueTypeEnum!=null && glueTypeEnum.isScript()) {
@@ -194,6 +199,21 @@ public class ExecutorBizImpl implements ExecutorBiz {
 
         LogResult logResult = JobFileAppender.readLog(logFileName, logParam.getFromLineNum());
         return new ReturnT<>(logResult);
+    }
+
+    @Override
+    public ReturnT<RunNodeLogPullResult> pullRunNodeLog(RunNodeLogPullParam pullParam) {
+        return new ReturnT<>(RunNodeLogEventLog.getInstance().pull(
+                pullParam == null ? null : pullParam.getOffset(),
+                pullParam == null ? null : pullParam.getMaxSize()));
+    }
+
+    @Override
+    public ReturnT<String> ackRunNodeLog(RunNodeLogAckParam ackParam) {
+        if (ackParam != null) {
+            RunNodeLogEventLog.getInstance().ack(ackParam.getOffset());
+        }
+        return ReturnT.SUCCESS;
     }
 
 }

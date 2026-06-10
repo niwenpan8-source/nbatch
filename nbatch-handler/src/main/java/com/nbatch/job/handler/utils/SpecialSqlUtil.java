@@ -148,25 +148,23 @@ public class SpecialSqlUtil {
     /**
      * 执行函数
      */
-    public static int executeCallFunction(Connection conn, String sql, JSONObject paramMap) throws SQLException {
+    public static String executeStoreProcedureReturnStr(Connection conn, String sql, JSONObject paramMap) throws SQLException {
         List<Object> params = new ArrayList<>();
         sql = replacePlaceholders(sql, paramMap, params);
-        if (StrUtil.count(sql, SQL_FIELD_REPLACE_CHAR) == params.size()) {
-            sql = "{ ? = " + sql + " }";
-        }
+        sql = "call " + sql;
         try (
                 CallableStatement call = conn.prepareCall(sql);
         ) {
-            call.registerOutParameter(1, Types.INTEGER);
+            call.registerOutParameter(params.size() + 1, Types.VARCHAR);
             if (CollUtil.isNotEmpty(params)) {
                 for (int i = 0; i < params.size(); i++) {
                     Object param = params.get(i);
-                    call.setObject(i + 2, param);
+                    call.setObject(i + 1, param);
                 }
             }
             // 输出OUT的值
             call.execute();
-            return call.getInt(1);
+            return call.getString(params.size() + 1);
         } catch (Exception e) {
             log.error("执行函数SQL发生异常");
             throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);

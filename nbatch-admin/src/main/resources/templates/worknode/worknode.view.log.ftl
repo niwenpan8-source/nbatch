@@ -4,15 +4,22 @@
     <meta charset="utf-8">
     <title>运行节点执行日志</title>
     <link rel="stylesheet" href="${request.contextPath}/static/plugins/layui/css/layui.css">
+    <style>
+        body {background: #f3f6fb;}
+        .layui-fluid {padding: 16px;}
+        .layui-card {border-radius: 12px; box-shadow: 0 8px 24px rgba(15, 23, 42, .08); overflow: hidden;}
+        .layui-card-header {font-weight: 600;}
+        .log-toolbar {margin-bottom: 12px; color: #4b5563;}
+    </style>
 </head>
 <body>
-<div class="layui-fluid" style="padding: 15px;">
+<div class="layui-fluid">
     <div class="layui-card">
         <div class="layui-card-header">运行节点执行日志</div>
         <div class="layui-card-body">
             <input type="hidden" id="workId" value="${workNode.workId}">
             <input type="hidden" id="nodeId" value="${workNode.nodeId}">
-            <div class="layui-row layui-col-space10" style="margin-bottom: 10px;">
+            <div class="layui-row layui-col-space10 log-toolbar">
                 <div class="layui-col-md3">节点：${workNode.nodeName}</div>
                 <div class="layui-col-md4">节点ID：${workNode.nodeId}</div>
                 <div class="layui-col-md2"><button class="layui-btn layui-btn-normal layui-btn-sm" id="searchLogBtn">刷新</button></div>

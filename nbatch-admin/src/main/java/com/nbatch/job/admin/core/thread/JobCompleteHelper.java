@@ -215,11 +215,6 @@ public class JobCompleteHelper {
             JobAdminConfig.getAdminConfig().getRunNodeHelper()
                     .handleNodeStatus(NodeStatusContext.complete(nodeStatusCallbackParam.getRunNodeId(),
                             nodeStatusCallbackParam.getRunWorkId(), nodeStatusCallbackParam.getWorkType()));
-            // 如果客户端进行了优雅关闭，则运行作业改为异常状态
-        } else if (nodeStatusCallbackParam.getHandleCode() == HandleCodeConstant.HANDLE_CODE_SERVER_SHUTDOWN) {
-
-            JobAdminConfig.getAdminConfig().getRunWorkHelper()
-                    .exceptionStopWork(handleCallbackParam.getNodeStatusCallbackParam().getRunWorkId());
         } else {
             JobAdminConfig.getAdminConfig().getRunNodeHelper()
                     .handleNodeStatus(NodeStatusContext.retryFail(nodeStatusCallbackParam.getRunNodeId()));

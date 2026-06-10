@@ -1,5 +1,6 @@
 package com.nbatch.job.core.thread;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.core.biz.AdminBiz;
 import com.nbatch.job.core.biz.model.RegistryParam;
@@ -74,7 +75,7 @@ public class ExecutorRegistryThread {
                     }
                 } catch (Throwable e) {
                     if (!toStop) {
-                        log.warn(">>>>>>>>>>> job, executor registry thread interrupted, error msg:{}", e.getMessage());
+                        log.warn(">>>>>>>>>>> job, executor registry thread interrupted, error msg:{}", ExceptionUtil.getRootCauseMessage(e));
                     }
                 }
             }

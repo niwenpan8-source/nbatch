@@ -13,7 +13,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum DbTypeEnum {
 
-    GAUSS_DB(DbType.OPENGAUSS.getDb(), DbType.OPENGAUSS.getDesc()),
+    OPEN_GAUSS_DB(DbType.OPENGAUSS.getDb(), DbType.OPENGAUSS.getDesc()),
+    GAUSS_DB(DbType.GAUSS_DB.getDb(), DbType.GAUSS_DB.getDesc()),
     GBASE_DB(DbType.GBASE.getDb(), DbType.GBASE.getDesc()),
     MYSQL_DB(DbType.MYSQL.getDb(), DbType.MYSQL.getDesc()),
     ;

@@ -54,6 +54,11 @@ public class JobWorkRunNodeLogPo extends Model<JobWorkRunNodeLogPo> {
 	private String handleMsg;
 
 	/**
+	 * 执行器地址
+	 */
+	private String executorAddress;
+
+	/**
 	 * 创建时间
 	 */
 	private LocalDateTime createTime;

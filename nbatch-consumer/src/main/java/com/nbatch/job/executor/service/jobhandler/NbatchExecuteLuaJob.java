@@ -1,5 +1,6 @@
 package com.nbatch.job.executor.service.jobhandler;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.core.biz.model.ExecuteNodeParam;
 import com.nbatch.job.core.handler.annotation.BatchJob;
@@ -95,7 +96,7 @@ public class NbatchExecuteLuaJob {
                 param.pushRunNodeLogDetailCallback(messageStr);
             }
         } catch (Exception e) {
-            param.pushRunNodeLogDetailCallback(e.getMessage());
+            param.pushRunNodeLogDetailCallback(ExceptionUtil.getRootCauseMessage(e));
             throw new HandlerException(LUA_SCRIPT_FAIL.getCode(), e);
         }
     }

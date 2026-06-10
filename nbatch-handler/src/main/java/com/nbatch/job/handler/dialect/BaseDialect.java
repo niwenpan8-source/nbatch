@@ -3,6 +3,7 @@ package com.nbatch.job.handler.dialect;
 import cn.hutool.json.JSONObject;
 import com.nbatch.job.core.biz.model.ExecuteDbToFileParam;
 import com.nbatch.job.core.biz.model.ExecuteFileToDbParam;
+import com.nbatch.job.handler.utils.SpecialSqlUtil;
 
 import java.sql.Connection;
 import java.util.List;
@@ -27,7 +28,12 @@ public interface BaseDialect {
     /**
      * 执行存储过程
      */
-    void executeFunction(Connection connection, String tableSql, JSONObject paramObj) throws Exception;
+    void executeStoreProcedure(Connection connection, String tableSql, JSONObject paramObj) throws Exception;
+
+    /**
+     * 执行存储过程返回str
+     */
+    String executeStoreProcedureReturnStr(Connection connection, String sql, JSONObject paramObj) throws Exception ;
 
     /**
      * 执行修改

@@ -5,11 +5,7 @@ import com.baomidou.dynamic.datasource.DynamicRoutingDataSource;
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.nbatch.job.core.context.BatchJobHelper;
 import com.nbatch.job.core.enums.FlowRunStatusEnum;
-import com.nbatch.job.handler.dialect.BaseDialect;
-import com.nbatch.job.handler.dialect.ClickhouseDialect;
-import com.nbatch.job.handler.dialect.GBaseDialect;
-import com.nbatch.job.handler.dialect.GaussDialect;
-import com.nbatch.job.handler.dialect.MysqlDialect;
+import com.nbatch.job.handler.dialect.*;
 import com.nbatch.job.handler.enums.NodeTypeEnum;
 import com.nbatch.job.handler.exception.HandlerException;
 import com.nbatch.job.handler.thread.BatchThreadPoolExecutor;
@@ -76,6 +72,8 @@ public class DialectHelper {
             return new GBaseDialect();
         } else if (StrUtil.equals(dbType.toLowerCase(), DbType.GAUSS_DB.getDb().toLowerCase())) {
             return new GaussDialect();
+        } else if (StrUtil.equals(dbType.toLowerCase(), DbType.OPENGAUSS.getDb().toLowerCase())) {
+            return new OpenGaussDialect();
         } else if (StrUtil.equals(dbType.toLowerCase(), DbType.MYSQL.getDb())) {
             return new MysqlDialect();
         } else if (StrUtil.equals(dbType.toLowerCase(), DbType.CLICK_HOUSE.getDb())) {

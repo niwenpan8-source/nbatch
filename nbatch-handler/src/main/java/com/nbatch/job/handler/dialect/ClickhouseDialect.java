@@ -1,5 +1,6 @@
 package com.nbatch.job.handler.dialect;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.clickhouse.client.ClickHouseRequest;
@@ -93,7 +94,7 @@ public class ClickhouseDialect implements BaseDialect {
             } catch (Exception e) {
                 log.error("CSV 导入失败:", e);
                 throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(),
-                        "CSV 导入失败: " + e.getMessage());
+                        "CSV 导入失败: " + ExceptionUtil.getRootCauseMessage(e));
             }
         } catch (Exception e) {
             throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
@@ -139,7 +140,7 @@ public class ClickhouseDialect implements BaseDialect {
             } catch (Exception e) {
                 log.error("CSV 导入失败:", e);
                 throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(),
-                        "CSV 导入失败: " + e.getMessage());
+                        "CSV 导入失败: " + ExceptionUtil.getRootCauseMessage(e));
             }
         } catch (Exception e) {
             throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
@@ -153,9 +154,15 @@ public class ClickhouseDialect implements BaseDialect {
 
 
     @Override
-    public void executeFunction(Connection connection, String sql, JSONObject paramObj) throws Exception {
+    public void executeStoreProcedure(Connection connection, String sql, JSONObject paramObj) throws Exception {
         log.info("执行 function paramObj sql：{}", sql);
         SpecialSqlUtil.executeStoreProcedure(connection, sql, paramObj);
+    }
+
+    @Override
+    public String executeStoreProcedureReturnStr(Connection connection, String sql, JSONObject paramObj) throws Exception {
+        log.info("执行 function paramObj sql：{}", sql);
+        return SpecialSqlUtil.executeStoreProcedureReturnStr(connection, sql, paramObj);
     }
 
     @Override

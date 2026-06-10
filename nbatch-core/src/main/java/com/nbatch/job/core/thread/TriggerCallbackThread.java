@@ -1,6 +1,7 @@
 package com.nbatch.job.core.thread;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ObjUtil;
@@ -178,7 +179,7 @@ public class TriggerCallbackThread {
                     callbackLog(callbackParamList, "<br>----------- job job callback fail, callbackResult:" + callbackResult);
                 }
             } catch (Throwable e) {
-                callbackLog(callbackParamList, "<br>----------- job job callback error, errorMsg:" + e.getMessage());
+                callbackLog(callbackParamList, "<br>----------- job job callback error, errorMsg:" + ExceptionUtil.getRootCauseMessage(e));
             }
         }
         if (!callbackRet) {

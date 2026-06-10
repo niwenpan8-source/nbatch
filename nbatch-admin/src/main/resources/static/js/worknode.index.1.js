@@ -31,8 +31,9 @@ $(function () {
     function openNodeForm(url, title) {
         layer.open({
             type: 2,
-            area: getLayerArea(980, 720),
+            area: getModalArea(980, 720),
             title: title,
+            closeBtn: 1,
             shade: 0.6,
             shadeClose: false,
             maxmin: true,
@@ -125,7 +126,7 @@ $(function () {
                         var logButtons = row.runNodeId
                             ? '<button type="button" class="btn btn-default btn-xs view-log">日志</button>'
                             : '';
-                        return '<div data-node-id="' + escapeHtml(row.nodeId) + '">' +
+                        return '<div class="table-action-buttons" data-node-id="' + escapeHtml(row.nodeId) + '">' +
                             '<button type="button" class="btn btn-primary btn-xs update">' + I18n.system_opt_edit + '</button>' +
                             '<button type="button" class="btn btn-danger btn-xs delete">' + I18n.system_opt_del + '</button>' +
                             logButtons +
@@ -191,8 +192,9 @@ $(function () {
         var id = $(this).closest('[data-node-id]').attr("data-node-id");
         layer.open({
             type: 2,
-            area: getLayerArea(1180, 720),
+            area: getModalArea(1180, 720),
             title: '运行节点日志',
+            closeBtn: 1,
             shade: 0.6,
             shadeClose: true,
             maxmin: true,

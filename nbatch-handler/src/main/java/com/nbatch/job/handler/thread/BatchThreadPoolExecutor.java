@@ -1,15 +1,12 @@
 package com.nbatch.job.handler.thread;
 
 import cn.hutool.core.collection.CollUtil;
-import com.nbatch.job.core.biz.AdminBiz;
-import com.nbatch.job.core.biz.model.HandleCallbackParam;
-import com.nbatch.job.core.biz.model.ReturnT;
+import cn.hutool.core.exceptions.ExceptionUtil;
+import com.nbatch.job.core.biz.model.RunNodeLogEventParam;
 import com.nbatch.job.core.constant.HandleCodeConstant;
-import com.nbatch.job.core.executor.BatchJobExecutor;
-import com.nbatch.job.core.thread.TriggerCallbackThread;
+import com.nbatch.job.core.thread.RunNodeLogEventLog;
 import lombok.extern.log4j.Log4j2;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -18,7 +15,9 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static com.nbatch.job.core.enums.CallbackTypeEnum.NODE_STATUS_CALLBACK;
+import static com.nbatch.job.core.enums.RunNodeLogEventTypeEnum.FAIL;
+import static com.nbatch.job.core.enums.RunNodeLogEventTypeEnum.STARTED;
+import static com.nbatch.job.core.enums.RunNodeLogEventTypeEnum.SUCCESS;
 
 /**
  * @description: 线程池
@@ -51,12 +50,14 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
     protected void beforeExecute(Thread t, Runnable r) {
         super.beforeExecute(t, r);
         if (r instanceof BatchRunnable) {
-            currentRunningTaskList.add((BatchRunnable) r);
+            BatchRunnable batchRunnable = (BatchRunnable) r;
+            currentRunningTaskList.add(batchRunnable);
         }
     }
 
 
     public boolean executeBatch(BatchRunnable runnable) {
+        appendRunNodeEvent(runnable, STARTED.getValue(), 0, "运行节点已接收");
         try {
             this.execute(runnable);
         } catch (Exception e) {
@@ -78,43 +79,21 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
 
     @Override
     protected void afterExecute(Runnable r, Throwable t) {
-        HandleCallbackParam handleCallbackParam = new HandleCallbackParam();
-        handleCallbackParam.setCallBackType(NODE_STATUS_CALLBACK.getValue());
-
         if (t != null) {
             // 如果说发生异常需要针对异常进行处理
             log.error("execute Runnable error, hashCode:{}", r.hashCode(), t);
             if (r instanceof BatchRunnable) {
                 BatchRunnable batchRunnable = (BatchRunnable) r;
-                handleCallbackParam.setLogId(batchRunnable.getCacheObj().getStr("logId"));
-                handleCallbackParam.getNodeStatusCallbackParam()
-                        .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
-                        .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
-                        .setRunWorkId(batchRunnable.getCacheObj().getStr("runWorkId"))
-                        .setRunNodeId(batchRunnable.getCacheObj().getStr("runNodeId"))
-                        .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
-                        .setWorkType(batchRunnable.getCacheObj().getInt("workType"))
-                        .setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
-                        .setHandleMsg(t.getMessage());
+                appendRunNodeEvent(batchRunnable, FAIL.getValue(), HandleCodeConstant.HANDLE_CODE_FAIL, ExceptionUtil.getRootCauseMessage(t));
             }
         } else {
             if (r instanceof BatchRunnable) {
                 BatchRunnable batchRunnable = (BatchRunnable) r;
-                handleCallbackParam.setLogId(batchRunnable.getCacheObj().getStr("logId"));
-                handleCallbackParam.getNodeStatusCallbackParam()
-                        .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
-                        .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
-                        .setRunWorkId(batchRunnable.getCacheObj().getStr("runWorkId"))
-                        .setRunNodeId(batchRunnable.getCacheObj().getStr("runNodeId"))
-                        .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
-                        .setWorkType(batchRunnable.getCacheObj().getInt("workType"))
-                        .setHandleCode(HandleCodeConstant.HANDLE_CODE_SUCCESS)
-                        .setHandleMsg("执行成功");
+                appendRunNodeEvent(batchRunnable, SUCCESS.getValue(), HandleCodeConstant.HANDLE_CODE_SUCCESS, "执行成功");
             }
         }
 
         currentRunningTaskList.remove(r);
-        TriggerCallbackThread.pushCallBack(handleCallbackParam);
         super.afterExecute(r, t);
     }
 
@@ -124,54 +103,23 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
     @Override
     public void shutdown() {
         log.info("shutdown threadPool:{}", threadPoolKey);
-        List<HandleCallbackParam> currentNotRunningFinishTaskList = new ArrayList<>();
-        if (CollUtil.isNotEmpty(currentRunningTaskList)) {
-            for (BatchRunnable batchRunnable : currentRunningTaskList) {
-                HandleCallbackParam handleCallbackParam = new HandleCallbackParam();
-                handleCallbackParam.setCallBackType(NODE_STATUS_CALLBACK.getValue());
-                handleCallbackParam.setLogId(batchRunnable.getCacheObj().getStr("logId"));
-                generateHandleCallbackParam(currentNotRunningFinishTaskList, batchRunnable, handleCallbackParam);
-            }
-        }
-        BlockingQueue<Runnable> queue = this.getQueue();
-        if (CollUtil.isNotEmpty(queue)) {
-            for (Runnable runnable : queue) {
-                if (runnable instanceof BatchRunnable) {
-                    BatchRunnable batchRunnable = (BatchRunnable) runnable;
-                    HandleCallbackParam handleCallbackParam = new HandleCallbackParam();
-                    handleCallbackParam.setCallBackType(NODE_STATUS_CALLBACK.getValue());
-                    handleCallbackParam.setLogId(batchRunnable.getCacheObj().getStr("logId"));
-                    handleCallbackParam.setCallBackType(NODE_STATUS_CALLBACK.getValue());
-                    generateHandleCallbackParam(currentNotRunningFinishTaskList, batchRunnable, handleCallbackParam);
-                }
-            }
-        }
-        log.info("currentNotRunningFinishTaskList:{}", currentNotRunningFinishTaskList);
-        for (AdminBiz adminBiz : BatchJobExecutor.getAdminBizList()) {
-            try {
-                ReturnT<String> callbackResult = adminBiz.callback(currentNotRunningFinishTaskList);
-                if (callbackResult != null && HandleCodeConstant.HANDLE_CODE_SUCCESS == callbackResult.getCode()) {
-                    log.error("<br>----------- graceful shutdown finish.");
-                } else {
-                    log.error("<br>----------- graceful shutdown fail, callbackResult:{}", callbackResult);
-                }
-            } catch (Throwable e) {
-                log.error("<br>----------- graceful shutdown error, errorMsg:{}", e.getMessage());
-            }
-        }
         this.shutdownNow();
     }
 
-    private void generateHandleCallbackParam(List<HandleCallbackParam> currentNotRunningFinishTaskList, BatchRunnable batchRunnable, HandleCallbackParam handleCallbackParam) {
-        handleCallbackParam.getNodeStatusCallbackParam()
+    public static void appendRunNodeEvent(BatchRunnable batchRunnable, String eventType, Integer handleCode, String handleMsg) {
+        if (batchRunnable == null || batchRunnable.getCacheObj() == null) {
+            return;
+        }
+        RunNodeLogEventParam eventParam = new RunNodeLogEventParam()
+                .setEventType(eventType)
                 .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
-                .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
                 .setRunWorkId(batchRunnable.getCacheObj().getStr("runWorkId"))
+                .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
                 .setRunNodeId(batchRunnable.getCacheObj().getStr("runNodeId"))
                 .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
                 .setWorkType(batchRunnable.getCacheObj().getInt("workType"))
-                .setHandleCode(HandleCodeConstant.HANDLE_CODE_SERVER_SHUTDOWN)
-                .setHandleMsg("系统优雅关闭，任务停止");
-        currentNotRunningFinishTaskList.add(handleCallbackParam);
+                .setHandleCode(handleCode)
+                .setHandleMsg(handleMsg);
+        RunNodeLogEventLog.getInstance().append(eventParam);
     }
 }

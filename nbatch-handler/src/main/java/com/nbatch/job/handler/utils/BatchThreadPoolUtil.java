@@ -2,9 +2,7 @@ package com.nbatch.job.handler.utils;
 
 
 import cn.hutool.core.text.StrPool;
-import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.constant.HandleCodeConstant;
-import com.nbatch.job.core.thread.TriggerCallbackThread;
 import com.nbatch.job.handler.exception.HandlerException;
 import com.nbatch.job.handler.thread.BatchRunnable;
 import com.nbatch.job.handler.thread.BatchThreadPoolExecutor;
@@ -20,7 +18,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.nbatch.job.core.enums.CallbackTypeEnum.NODE_STATUS_CALLBACK;
+import static com.nbatch.job.core.enums.RunNodeLogEventTypeEnum.FAIL;
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.THREAD_DISCARD;
 
 /**
@@ -78,18 +76,6 @@ public class BatchThreadPoolUtil {
     }
 
     /**
-     * 判断线程池是否有线程在运行
-     */
-    public static boolean isThreadPoolIdle(String threadPoolKey) {
-        ThreadPoolExecutor executor = THREAD_POOL_EXECUTOR.get(threadPoolKey);
-        if (executor == null || executor.isShutdown()) {
-            // 已关闭或不存在，认为是空闲
-            return true;
-        }
-        return executor.getActiveCount() == 0;
-    }
-
-    /**
      * 新建线程工厂
      */
     public static ThreadFactory newThreadFactory(String threadPrefix) {
@@ -115,19 +101,8 @@ public class BatchThreadPoolUtil {
         @Override
         public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
             log.error("线程被丢弃，{}", r);
-            HandleCallbackParam handleCallbackParam = new HandleCallbackParam();
-            handleCallbackParam.setCallBackType(NODE_STATUS_CALLBACK.getValue());
             BatchRunnable batchRunnable = (BatchRunnable) r;
-            handleCallbackParam.getNodeStatusCallbackParam()
-                    .setWorkId(batchRunnable.getCacheObj().getStr("workId"))
-                    .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
-                    .setRunWorkId(batchRunnable.getCacheObj().getStr("runWorkId"))
-                    .setRunNodeId(batchRunnable.getCacheObj().getStr("runNodeId"))
-                    .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
-                    .setWorkType(batchRunnable.getCacheObj().getInt("workType"))
-                    .setHandleCode(HandleCodeConstant.HANDLE_CODE_FAIL)
-                    .setHandleMsg("线程被抛弃");
-            TriggerCallbackThread.pushCallBack(handleCallbackParam);
+            BatchThreadPoolExecutor.appendRunNodeEvent(batchRunnable, FAIL.getValue(), HandleCodeConstant.HANDLE_CODE_FAIL, "线程被抛弃");
             throw new HandlerException(THREAD_DISCARD.getCode(), "线程被抛弃");
         }
     }

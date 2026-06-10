@@ -17,7 +17,7 @@ import static com.nbatch.job.handler.enums.NodeTypeEnum.NODE_TYPE_STORE_PROCEDUR
  * @date: 2025/11/27
  */
 @RequiredArgsConstructor
-public class StoreProcedureHandler implements JobNodeHandlerAdapter {
+public class StoreProcedureReturnStrHandler implements JobNodeHandlerAdapter {
 
     private final DialectHelper dialectHelper;
 
@@ -35,8 +35,10 @@ public class StoreProcedureHandler implements JobNodeHandlerAdapter {
             paramObj = new JSONObject();
         }
         paramObj.putOpt("date", DateUtil.format(nodeParam.getTurnDate(), DatePattern.NORM_DATE_FORMAT));
-        dialectHelper.getDialect(nodeParam.getDbType())
-                .executeStoreProcedure(dialectHelper.getConnection(nodeParam.getDbType()),
+        String result = dialectHelper.getDialect(nodeParam.getDbType())
+                .executeStoreProcedureReturnStr(dialectHelper.getConnection(nodeParam.getDbType()),
                         nodeParam.getExecuteContent(), paramObj);
+        // 将日志推送到详细日志表
+        nodeParam.pushRunNodeLogDetailCallback(result);
     }
 }

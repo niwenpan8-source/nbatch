@@ -20,6 +20,8 @@ import java.util.concurrent.TimeUnit;
 public class JobLogFileCleanThread {
 
     private static final JobLogFileCleanThread INSTANCE = new JobLogFileCleanThread();
+    private static final String LOG_DIR_DATE_PATTERN = "\\d{4}-\\d{2}-\\d{2}";
+
     public static JobLogFileCleanThread getInstance(){
         return INSTANCE;
     }
@@ -55,7 +57,7 @@ public class JobLogFileCleanThread {
                             if (!childFile.isDirectory()) {
                                 continue;
                             }
-                            if (!childFile.getName().contains("-")) {
+                            if (!childFile.getName().matches(LOG_DIR_DATE_PATTERN)) {
                                 continue;
                             }
 
@@ -63,9 +65,10 @@ public class JobLogFileCleanThread {
                             Date logFileCreateDate = null;
                             try {
                                 SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+                                simpleDateFormat.setLenient(false);
                                 logFileCreateDate = simpleDateFormat.parse(childFile.getName());
                             } catch (ParseException e) {
-                                log.error(e.getMessage(), e);
+                                log.debug("skip invalid log date directory: {}", childFile.getName());
                             }
                             if (logFileCreateDate == null) {
                                 continue;

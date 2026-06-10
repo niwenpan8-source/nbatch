@@ -43,12 +43,20 @@
         </nav>
     </header>
 
-    <div class="content-wrapper" >
+    <div class="content-wrapper">
         <section class="content">
-            <pre style="font-size:12px;position:relative;" >
-                <div id="logConsole"></div>
-                <li class="fa fa-refresh fa-spin" style="font-size: 20px;float: left;" id="logConsoleRunning" ></li>
-            </pre>
+            <div class="box">
+                <div class="box-header with-border">
+                    <h3 class="box-title">${I18n.joblog_rolling_log}</h3>
+                    <div class="box-tools pull-right">
+                        <a class="btn btn-primary btn-sm" href="javascript:window.location.reload();"><i class="fa fa-refresh"></i> ${I18n.joblog_rolling_log_refresh}</a>
+                    </div>
+                </div>
+                <div class="box-body">
+                    <div id="logConsole" style="font-size:12px;white-space: pre-wrap; word-break: break-word;"></div>
+                    <li class="fa fa-refresh fa-spin" style="font-size: 20px;display:none;" id="logConsoleRunning"></li>
+                </div>
+            </div>
         </section>
     </div>
 

@@ -6,15 +6,18 @@ import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.nbatch.job.admin.core.domain.po.JobWorkRunPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkNodePo;
 import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkRunNodePo;
-import com.nbatch.job.admin.mapper.*;
+import com.nbatch.job.admin.core.domain.po.JobWorkRunPo;
+import com.nbatch.job.admin.mapper.IJobWorkMapper;
+import com.nbatch.job.admin.mapper.IJobWorkNodeMapper;
+import com.nbatch.job.admin.mapper.IJobLockMapper;
+import com.nbatch.job.admin.mapper.IJobWorkRunMapper;
+import com.nbatch.job.admin.mapper.IJobWorkRunNodeMapper;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.enums.FlowRunStatusEnum;
-import com.nbatch.job.core.enums.FlowStatusEnum;
 import com.nbatch.job.core.enums.WorkTypeEnum;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -33,7 +36,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RunWorkHelper {
 
+    private static final String RUN_WORK_INIT_LOCK_PREFIX = "run_work_init_lock:";
+
     private final IJobWorkMapper jobWorkMapper;
+
+    private final IJobLockMapper jobLockMapper;
 
     private final IJobWorkRunMapper jobRunWorkMapper;
 
@@ -43,21 +50,31 @@ public class RunWorkHelper {
 
     /**
      * 初始化运行作业
+     *
      * @param workId 作业id
      */
     @Transactional(rollbackFor = Exception.class)
     public ReturnT<String> initRunWork(String workId) {
+        if (workId == null || workId.trim().isEmpty()) {
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "作业ID不能为空.");
+        }
+        // 锁的生命周期是initRunWork，因为有Transactional注解所以发方法执行完毕后会
+        lockRunWorkInit(workId);
 
         JobWorkPo jobWorkPo = jobWorkMapper.selectById(workId);
-        List<JobWorkRunPo> jobRunWorkList = jobRunWorkMapper
+        if (jobWorkPo == null) {
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "作业不存在.");
+        }
+        // 看是否有没有完成运行中作业
+        List<JobWorkRunPo> notCompleteJobRunWorkList = jobRunWorkMapper
                 .selectList(Wrappers.lambdaQuery(JobWorkRunPo.class)
                         .eq(JobWorkRunPo::getWorkId, jobWorkPo.getWorkId())
                         .orderByDesc(JobWorkRunPo::getCreateTime));
         JobWorkRunPo jobRunWorkPo = null;
-        if (CollUtil.isEmpty(jobRunWorkList)) {
+        if (CollUtil.isEmpty(notCompleteJobRunWorkList)) {
             jobRunWorkPo = initRunWork(jobWorkPo.getWorkId(), jobWorkPo.getWorkType(), DateUtil.parseDate(DateUtil.today()));
         } else {
-            JobWorkRunPo lastJobRunWorkPo = jobRunWorkList.get(0);
+            JobWorkRunPo lastJobRunWorkPo = notCompleteJobRunWorkList.get(0);
             // 如果运行状态为待执行或者进行中，则不处理
             if (lastJobRunWorkPo.getRunWorkStatus() == FlowRunStatusEnum.COMPLETE.getCode()) {
                 // 当jobRunWorkPo.getTurnDate()为空时currentTurnDate为空，
@@ -89,8 +106,15 @@ public class RunWorkHelper {
         return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_SUCCESS, "job work started successfully.");
     }
 
+    private void lockRunWorkInit(String workId) {
+        String lockName = RUN_WORK_INIT_LOCK_PREFIX.concat(workId);
+        jobLockMapper.insertIgnore(lockName);
+        jobLockMapper.lockByName(lockName);
+    }
+
     /**
      * 初始化运行作业
+     *
      * @param workId 作业id
      */
     private JobWorkRunPo initRunWork(String workId, Integer workType, Date turnDate) {
@@ -158,13 +182,12 @@ public class RunWorkHelper {
                     .eq(JobWorkRunNodePo::getRunWorkId, jobRunWorkPo.getRunWorkId()));
 
             if (CollUtil.isNotEmpty(jobWorkRunNodePos)) {
-                DateTime offsetTurnDate = jobRunWorkPo.getTurnDate() == null ? null : DateUtil.offset(jobRunWorkPo.getTurnDate(), DateField.DAY_OF_MONTH, 1);
                 long count = jobWorkRunNodePos.stream()
                         .filter(x -> {
                             boolean flag = x.getNodeRunStatus() == FlowRunStatusEnum.COMPLETE.getCode();
                             // 这里由于当作业类型为顺序类型时翻牌时间为空，不判断翻牌时间
                             if (flag && x.getTurnDate() != null) {
-                                flag = DateUtil.compare(x.getTurnDate(), offsetTurnDate) == 0;
+                                flag = DateUtil.compare(x.getTurnDate(), jobRunWorkPo.getTurnDate()) == 0;
                             }
                             return flag;
                         })
@@ -174,36 +197,13 @@ public class RunWorkHelper {
                             .setRunWorkStatus(FlowRunStatusEnum.COMPLETE.getCode())
                             .setWorkId(jobRunWorkPo.getWorkId())
                             .setRunWorkId(jobRunWorkPo.getRunWorkId());
-                    if (offsetTurnDate != null) {
-                        updateJobWork.setTurnDate(offsetTurnDate);
-                    }
+//                    if (offsetTurnDate != null) {
+//                        updateJobWork.setTurnDate(offsetTurnDate);
+//                    }
                     jobRunWorkMapper.updateById(updateJobWork);
                 }
             }
         }
-    }
-
-    /**
-     * 作业异常停止
-     * 需要将作业状态改为异常，然后将运行作业状态改为失败
-     *
-     * @param workRunId 运行作业id
-     */
-    public void exceptionStopWork(String workRunId) {
-        JobWorkRunPo jobWorkRunPo = jobRunWorkMapper.selectById(workRunId);
-        if (jobWorkRunPo == null) {
-            return;
-        }
-        JobWorkRunPo updateWorkRunPo = new JobWorkRunPo();
-        updateWorkRunPo.setRunWorkId(workRunId);
-        updateWorkRunPo.setRunWorkStatus(FlowRunStatusEnum.EXCEPTION.getCode());
-
-        JobWorkPo updateWorkPo = new JobWorkPo();
-        updateWorkPo.setWorkId(jobWorkRunPo.getWorkId());
-        updateWorkPo.setWorkStatus(FlowStatusEnum.EXCEPTION.getCode());
-
-        jobWorkMapper.updateById(updateWorkPo);
-        jobRunWorkMapper.updateById(updateWorkRunPo);
     }
 
 }

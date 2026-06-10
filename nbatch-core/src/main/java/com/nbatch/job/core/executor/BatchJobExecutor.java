@@ -9,9 +9,11 @@ import com.nbatch.job.core.handler.IJobHandler;
 import com.nbatch.job.core.handler.annotation.BatchJob;
 import com.nbatch.job.core.handler.impl.MethodJobHandler;
 import com.nbatch.job.core.log.JobFileAppender;
+import com.nbatch.job.core.log.RunNodeEventDataPath;
 import com.nbatch.job.core.server.EmbedServer;
 import com.nbatch.job.core.thread.JobLogFileCleanThread;
 import com.nbatch.job.core.thread.JobThread;
+import com.nbatch.job.core.thread.RunNodeLogEventLog;
 import com.nbatch.job.core.thread.RunNodeLogDetailCallbackThread;
 import com.nbatch.job.core.thread.TriggerCallbackThread;
 import com.nbatch.job.core.util.IpUtil;
@@ -52,6 +54,8 @@ public class BatchJobExecutor {
     @Setter
     private String logPath;
     @Setter
+    private String dataPath;
+    @Setter
     private int logRetentionDays;
 
 
@@ -61,11 +65,17 @@ public class BatchJobExecutor {
         // init logpath
         JobFileAppender.initLogPath(logPath);
 
+        // init data path
+        RunNodeEventDataPath.initDataPath(dataPath);
+
         // init invoker, admin-client
         initAdminBizList(adminAddresses, accessToken, timeout);
 
         // init JobLogFileCleanThread
         JobLogFileCleanThread.getInstance().start(logRetentionDays);
+
+        // init run node event log
+        RunNodeLogEventLog.getInstance().start();
 
         // init TriggerCallbackThread
         TriggerCallbackThread.getInstance().start();

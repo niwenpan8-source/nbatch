@@ -194,6 +194,10 @@ public class JobThread extends Thread{
 					}
 				}
 			} catch (Throwable e) {
+				if (e instanceof InterruptedException && triggerParam == null) {
+					Thread.currentThread().interrupt();
+					break;
+				}
 				if (toStop) {
 					BatchJobHelper.log("<br>----------- JobThread toStop, stopReason:" + stopReason);
 				}

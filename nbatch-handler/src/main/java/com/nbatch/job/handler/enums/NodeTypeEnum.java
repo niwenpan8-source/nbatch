@@ -14,6 +14,7 @@ public enum NodeTypeEnum {
 
     NODE_TYPE_SCRIPT("script", "脚本", 1),
     NODE_TYPE_STORE_PROCEDURE("store_procedure", "存储过程", 1),
+    NODE_TYPE_STORE_PROCEDURE_RETURN_STR("store_procedure_return_str", "存储过程返回字符串", 1),
     NODE_TYPE_EXECUTE_SQL("execute_sql", "执行sql", 1),
     NODE_TYPE_FILE_TO_DB("file_to_db", "文件导入到数据库", 1),
     NODE_TYPE_DB_TO_FILE("db_to_file", "数据库导出到文件", 1),

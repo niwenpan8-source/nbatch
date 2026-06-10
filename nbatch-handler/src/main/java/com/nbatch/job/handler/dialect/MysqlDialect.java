@@ -44,9 +44,15 @@ public class MysqlDialect implements BaseDialect {
     }
 
     @Override
-    public void executeFunction(Connection connection, String sql, JSONObject paramObj) throws Exception {
+    public void executeStoreProcedure(Connection connection, String sql, JSONObject paramObj) throws Exception {
         log.info("执行 function paramObj sql：{}", sql);
         SpecialSqlUtil.executeStoreProcedure(connection, sql, paramObj);
+    }
+
+    @Override
+    public String executeStoreProcedureReturnStr(Connection connection, String sql, JSONObject paramObj) throws Exception {
+        log.info("执行 function paramObj sql：{}", sql);
+        return SpecialSqlUtil.executeStoreProcedureReturnStr(connection, sql, paramObj);
     }
 
     @Override

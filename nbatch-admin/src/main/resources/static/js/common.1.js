@@ -28,12 +28,108 @@ var dataTableI18n = {
 function getLayerArea(width, height) {
     var viewportWidth = $(window).width();
     var viewportHeight = $(window).height();
-    var resolvedWidth = Math.min(width, Math.max(320, viewportWidth - 32));
-    var resolvedHeight = Math.min(height, Math.max(320, viewportHeight - 32));
+    var resolvedWidth = Math.min(width, Math.max(320, viewportWidth - 64));
+    var resolvedHeight = Math.min(height, Math.max(320, viewportHeight - 64));
+    return [resolvedWidth + 'px', resolvedHeight + 'px'];
+}
+
+function fitCronPopovers() {
+    $('.cron-gen-popover:visible').each(function () {
+        var $popover = $(this);
+        var $button = $('[aria-describedby="' + $popover.attr('id') + '"]');
+        if (!$button.length || !$button.is(':visible')) {
+            $popover.hide();
+            return;
+        }
+        var $modalBody = $button.closest('.modal-body');
+        var boundaryLeft = 12;
+        var boundaryRight = $(window).width() - 12;
+        var boundaryTop = 12;
+        if ($modalBody.length) {
+            var modalOffset = $modalBody.offset();
+            boundaryLeft = modalOffset.left + 12;
+            boundaryRight = modalOffset.left + $modalBody.outerWidth() - 24;
+            boundaryTop = modalOffset.top + 12;
+        }
+        var availableWidth = Math.max(280, boundaryRight - boundaryLeft);
+        var popoverWidth = Math.min(420, availableWidth);
+        var buttonOffset = $button.offset();
+        if (!buttonOffset) {
+            return;
+        }
+        var left = Math.min(buttonOffset.left + $button.outerWidth() - popoverWidth, boundaryRight - popoverWidth);
+        left = Math.max(boundaryLeft, left);
+        var top = buttonOffset.top + $button.outerHeight() + 10;
+        if ($modalBody.length) {
+            top = Math.max(boundaryTop, Math.min(top, boundaryTop + $modalBody.outerHeight() - 80));
+        }
+        $popover.css({width: popoverWidth, maxWidth: popoverWidth, left: left, top: top, display: 'block'});
+        $popover.find('.arrow').css({left: Math.max(24, Math.min(popoverWidth - 24, buttonOffset.left + ($button.outerWidth() / 2) - left))});
+    });
+}
+
+function hideCronPopovers() {
+    $('.cron-gen-trigger').popover('hide');
+    $('.cron-gen-popover').remove();
+}
+
+function ensureModalCloseButtons() {
+    $('.modal-header').each(function () {
+        var $header = $(this);
+        if ($header.find('.close').length) {
+            return;
+        }
+        $header.append('<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
+    });
+}
+
+function syncModalStructure() {
+    $('.modal').each(function () {
+        var $modal = $(this);
+        var $content = $modal.find('.modal-content').first();
+        if (!$content.length) {
+            return;
+        }
+        var $header = $content.children('.modal-header').first();
+        var $body = $content.children('.modal-body').first();
+        var $footer = $content.children('.modal-footer').first();
+        if ($header.length) {
+            ensureModalCloseButtons();
+        }
+        if ($body.length) {
+            $body.addClass('modal-body-scroll');
+        }
+        if ($footer.length) {
+            $footer.addClass('modal-footer-fixed');
+        }
+    });
+}
+
+function getModalArea(width, height) {
+    var viewportWidth = $(window).width();
+    var viewportHeight = $(window).height();
+    var resolvedWidth = Math.min(width, Math.max(360, viewportWidth - 48));
+    var resolvedHeight = Math.min(height, Math.max(360, viewportHeight - 48));
     return [resolvedWidth + 'px', resolvedHeight + 'px'];
 }
 
 $(function(){
+
+    $(document).on('show.bs.dropdown', '.box-body .dropdown, .box-body .btn-group', function () {
+        $(this).closest('.box-body').addClass('dropdown-open');
+    });
+
+    $(document).on('hidden.bs.dropdown', '.box-body .dropdown, .box-body .btn-group', function () {
+        $(this).closest('.box-body').removeClass('dropdown-open');
+    });
+
+    $(document).on('shown.bs.popover', fitCronPopovers);
+    $(document).on('hidden.bs.modal', hideCronPopovers);
+    $(document).on('shown.bs.modal', syncModalStructure);
+    $(window).on('resize', fitCronPopovers);
+    $(document).on('scroll', '.modal-body, .layui-layer-content', fitCronPopovers);
+    ensureModalCloseButtons();
+    syncModalStructure();
 
 	// logout
 	$("#logoutBtn").click(function(){

@@ -7,6 +7,8 @@ import com.nbatch.job.core.biz.model.IdleBeatParam;
 import com.nbatch.job.core.biz.model.KillParam;
 import com.nbatch.job.core.biz.model.LogParam;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.biz.model.RunNodeLogAckParam;
+import com.nbatch.job.core.biz.model.RunNodeLogPullParam;
 import com.nbatch.job.core.biz.model.TriggerParam;
 import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.thread.ExecutorRegistryThread;
@@ -200,6 +202,12 @@ public class EmbedServer {
                     case "/log":
                         LogParam logParam = GsonTool.fromJson(requestData, LogParam.class);
                         return executorBiz.log(logParam);
+                    case "/pullRunNodeLog":
+                        RunNodeLogPullParam pullParam = GsonTool.fromJson(requestData, RunNodeLogPullParam.class);
+                        return executorBiz.pullRunNodeLog(pullParam);
+                    case "/ackRunNodeLog":
+                        RunNodeLogAckParam ackParam = GsonTool.fromJson(requestData, RunNodeLogAckParam.class);
+                        return executorBiz.ackRunNodeLog(ackParam);
                     default:
                         return new ReturnT<String>(HandleCodeConstant.HANDLE_CODE_FAIL, "invalid request, uri-mapping(" + uri + ") not found.");
                 }

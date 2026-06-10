@@ -41,6 +41,11 @@ public class ExecuteWorkParam {
     private String jobLogId;
 
     /**
+     * 执行器地址
+     */
+    private String executorAddress;
+
+    /**
      * 作业翻牌时间
      */
     private Date turnDate;

@@ -252,6 +252,7 @@ public class NbatchSampleJob {
     public void handleComputation() throws Exception {
         log.warn("execute handleComputation.");
         BatchJobHelper.log("execute handleComputation.");
+
     }
 
 

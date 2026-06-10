@@ -7,6 +7,9 @@ import com.nbatch.job.core.biz.model.KillParam;
 import com.nbatch.job.core.biz.model.LogParam;
 import com.nbatch.job.core.biz.model.LogResult;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.biz.model.RunNodeLogAckParam;
+import com.nbatch.job.core.biz.model.RunNodeLogPullParam;
+import com.nbatch.job.core.biz.model.RunNodeLogPullResult;
 import com.nbatch.job.core.biz.model.TriggerParam;
 import com.nbatch.job.core.util.JobRemotingUtil;
 
@@ -59,6 +62,16 @@ public class ExecutorBizClient implements ExecutorBiz {
     @Override
     public ReturnT<LogResult> log(LogParam logParam) {
         return JobRemotingUtil.postBody(addressUrl + "log", accessToken, timeout, logParam, LogResult.class);
+    }
+
+    @Override
+    public ReturnT<RunNodeLogPullResult> pullRunNodeLog(RunNodeLogPullParam pullParam) {
+        return JobRemotingUtil.postBody(addressUrl + "pullRunNodeLog", accessToken, timeout, pullParam, RunNodeLogPullResult.class);
+    }
+
+    @Override
+    public ReturnT<String> ackRunNodeLog(RunNodeLogAckParam ackParam) {
+        return JobRemotingUtil.postBody(addressUrl + "ackRunNodeLog", accessToken, timeout, ackParam, String.class);
     }
 
 }

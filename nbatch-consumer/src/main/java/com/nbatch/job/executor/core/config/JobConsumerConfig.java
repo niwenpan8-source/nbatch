@@ -39,6 +39,9 @@ public class JobConsumerConfig {
     @Value("${nbatch.job.executor.logpath}")
     private String logPath;
 
+    @Value("${nbatch.job.executor.datapath:}")
+    private String dataPath;
+
     @Value("${nbatch.job.executor.logretentiondays}")
     private int logRetentionDays;
 
@@ -55,6 +58,7 @@ public class JobConsumerConfig {
         jobSpringExecutor.setAccessToken(accessToken);
         jobSpringExecutor.setTimeout(timeout);
         jobSpringExecutor.setLogPath(logPath);
+        jobSpringExecutor.setDataPath(dataPath);
         jobSpringExecutor.setLogRetentionDays(logRetentionDays);
 
         return jobSpringExecutor;

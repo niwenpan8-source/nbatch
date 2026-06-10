@@ -16,38 +16,85 @@
     <!-- Theme style -->
     <link rel="stylesheet" href="${request.contextPath}/static/adminlte/dist/css/AdminLTE.min.css">
     <!-- Skin -->
-    <link rel="stylesheet" href="${request.contextPath}/static/adminlte/dist/css/skins/skin-blue.min.css">
+    <link rel="stylesheet" href="${request.contextPath}/static/adminlte/dist/css/skins/_all-skins.min.css">
     <style>
+        html, body {min-height: 100%; background: #f3f6fb; color: #1f2937;}
+        .content-wrapper {background: linear-gradient(180deg, #f8fafc 0, #f3f6fb 100%);}
+        .content-header {padding: 18px 20px 0;}
+        .content-header h1 {margin: 0; color: #111827; font-size: 24px; font-weight: 700; letter-spacing: -.02em;}
+        .content {padding: 18px 20px 28px;}
         .content .row + .row {margin-top: 12px;}
-        .box .box-body {overflow-x: auto;}
+        .content .input-group {width: 100%;}
+        .box {border: 1px solid #e5e7eb; border-radius: 14px; box-shadow: 0 8px 24px rgba(15, 23, 42, .08); overflow: hidden; background: #fff;}
+        .box-header {padding: 18px 20px 0;}
+        .box-title {font-size: 16px; font-weight: 600; color: #111827;}
+        .box .box-body {padding: 20px; overflow-x: auto; overflow-y: visible;}
+        .box .box-body.dropdown-open {padding-bottom: 180px;}
+        .table {margin-bottom: 0; table-layout: auto;}
+        .table > thead > tr > th {background: #f8fafc; color: #374151; font-weight: 600; white-space: nowrap;}
         .table > thead > tr > th, .table > tbody > tr > td {vertical-align: middle;}
-        .table-action-cell {width: 180px; min-width: 160px; white-space: normal;}
+        .table > tbody > tr > td {word-break: break-word;}
+        .table .label {display: inline-block; min-width: 48px; padding: 4px 7px;}
+        .table-action-cell {width: 220px; min-width: 180px; white-space: normal;}
         .table-action-cell .btn {margin: 0 4px 6px 0;}
+        .table-action-buttons {display: flex; flex-wrap: wrap; gap: 6px; align-items: center;}
+        .table-action-buttons .btn {margin: 0;}
+        .table .dropdown-menu {z-index: 2147483647;}
+        .table td .btn-group, .table td .dropdown {position: relative;}
         .dataTables_wrapper .row {margin-left: 0; margin-right: 0;}
-        .modal-dialog {margin-top: 7vh;}
-        .modal-content, .layui-layer {border: 0; border-radius: 8px; box-shadow: 0 14px 40px rgba(15, 23, 42, .22); overflow: hidden;}
+        .dataTables_wrapper .dataTables_info {padding-top: 12px; color: #6b7280;}
+        .dataTables_wrapper .dataTables_paginate {padding-top: 8px;}
+        .modal-dialog {margin: 5vh auto 20px;}
+        .modal-content {border: 0; border-radius: 16px; box-shadow: 0 18px 48px rgba(15, 23, 42, .22); overflow: hidden; display: flex; flex-direction: column; max-height: calc(100vh - 40px);}
+        .layui-layer {border: 0; border-radius: 16px; box-shadow: 0 18px 48px rgba(15, 23, 42, .22); overflow: visible;}
         .modal-header, .layui-layer-title {background: #f8fafc; border-bottom: 1px solid #e5e7eb; color: #1f2937; font-weight: 600;}
-        .modal-header {padding: 14px 18px;}
+        .modal-header {position: relative; padding: 16px 56px 16px 20px; flex: 0 0 auto;}
+        .modal-header .close {position: absolute; right: 14px; top: 12px; width: 32px; height: 32px; line-height: 30px; border-radius: 16px; color: #64748b; opacity: .9;}
+        .modal-header .close:hover {background: rgba(15, 23, 42, .06); color: #111827; opacity: 1;}
         .modal-title {font-size: 16px; font-weight: 600;}
-        .modal-body {padding: 18px 20px; max-height: 70vh; overflow-y: auto;}
-        body > .modal-body {max-height: none; min-height: 100vh; overflow: visible;}
-        .modal-footer, .layui-layer-btn {background: #fff; border-top: 1px solid #edf2f7; padding: 12px 18px;}
-        .layui-layer-title {height: 46px; line-height: 46px; padding: 0 80px 0 18px; font-size: 15px;}
+        .modal-body {padding: 20px 22px; overflow-y: auto; overflow-x: hidden; flex: 1 1 auto;}
+        .modal-footer, .layui-layer-btn {background: #fff; border-top: 1px solid #edf2f7; padding: 14px 18px; flex: 0 0 auto;}
+        .layui-layer-title {height: 48px; line-height: 48px; padding: 0 80px 0 18px; font-size: 15px;}
         .layui-layer-setwin {top: 13px; right: 14px;}
-        .layui-layer-iframe .layui-layer-content {background: #fff;}
+        .layui-layer-iframe .layui-layer-content {background: #fff; overflow: hidden; border-radius: 0 0 16px 16px;}
+        .layui-layer-page .layui-layer-content {overflow: visible;}
+        .layui-layer-content .modal-body {overflow-x: hidden;}
         .layui-layer-btn {text-align: right;}
         .layui-layer-btn .layui-layer-btn0 {border-color: #3c8dbc; background-color: #3c8dbc;}
         .form-horizontal .form-group {margin-bottom: 14px;}
-        .form-horizontal .control-label {color: #374151; font-weight: 500;}
+        .form-horizontal .row, .form-horizontal .form-group {margin-left: 0; margin-right: 0;}
+        .form-horizontal [class^="col-sm-"], .form-horizontal [class*=" col-sm-"] {padding-left: 12px; padding-right: 12px;}
+        .form-horizontal .control-label {color: #374151; font-weight: 500; padding-top: 7px; word-break: break-word;}
+        .form-horizontal .form-section-title, .form-horizontal p[style*="border-bottom"] {padding-bottom: 7px; margin-top: 6px !important; color: #6b7280 !important; font-weight: 600;}
         .form-control {border-radius: 4px; box-shadow: none;}
         .form-control:focus {border-color: #3c8dbc; box-shadow: 0 0 0 2px rgba(60, 141, 188, .12);}
+        textarea.form-control {resize: vertical;}
+        body > .modal-body {max-height: none; min-height: 100vh; overflow-y: auto; overflow-x: hidden; padding: 20px; background: #f3f6fb;}
+        body > .modal-body > form {background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; box-shadow: 0 10px 30px rgba(15, 23, 42, .08); padding: 22px 22px 8px;}
+        body > .modal-body > form > hr {margin: 18px -22px 14px; border-top-color: #edf2f7;}
+        body > .modal-body > form > .form-group:last-child {position: sticky; bottom: -20px; z-index: 3; margin: 12px -22px -8px; padding: 14px 22px; background: #fff; border-top: 1px solid #edf2f7; border-radius: 0 0 16px 16px;}
+        .cronGen, .cronGen-panel, .cronGen-popover, .popover {z-index: 2147483647 !important;}
+        .cron-gen-popover {max-width: calc(100vw - 48px) !important; margin: 0; border-radius: 6px; box-shadow: 0 10px 30px rgba(15, 23, 42, .22);}
+        .cron-gen-popover .popover-content {max-height: 56vh; overflow-y: auto; overflow-x: hidden; padding: 14px 16px;}
+        .cron-gen-popover #CronGenMainDiv {width: 100%; min-width: 0;}
+        .cron-gen-popover #CronGenTabs {display: flex; flex-wrap: wrap; border-bottom: 1px solid #ddd;}
+        .cron-gen-popover #CronGenTabs > li > a {padding: 8px 12px;}
+        .cron-gen-popover .tab-content {overflow-x: hidden;}
+        .cron-gen-popover .line, .cron-gen-popover .imp {white-space: normal; line-height: 1.9;}
+        .cron-gen-popover input[type="checkbox"], .cron-gen-popover input[type="radio"] {margin-right: 3px; vertical-align: middle;}
+        .cron-gen-popover textarea#runTime {width: 100% !important; min-height: 88px;}
+        .cron-gen-trigger {min-width: 42px;}
         @media (max-width: 767px) {
+            .content {padding: 14px 14px 20px;}
+            .content-header {padding: 14px 14px 0;}
             .content .row > [class^="col-xs-"], .content .row > [class*=" col-xs-"] {width: 100%; margin-bottom: 8px;}
-            .table-action-cell {min-width: 180px;}
+            .table-action-cell {min-width: 200px;}
             .modal-dialog {width: auto; margin: 10px;}
-            .modal-body {max-height: 76vh; padding: 14px;}
+            .modal-content {max-height: calc(100vh - 20px);}
+            .modal-body {padding: 16px;}
             body > .modal-body {max-height: none;}
             .form-horizontal .control-label {text-align: left; padding-top: 0;}
+            .form-horizontal [class^="col-sm-"], .form-horizontal [class*=" col-sm-"] {padding-left: 0; padding-right: 0;}
         }
     </style>
 

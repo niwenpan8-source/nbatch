@@ -6,6 +6,9 @@ import com.nbatch.job.core.biz.model.KillParam;
 import com.nbatch.job.core.biz.model.LogParam;
 import com.nbatch.job.core.biz.model.LogResult;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.biz.model.RunNodeLogAckParam;
+import com.nbatch.job.core.biz.model.RunNodeLogPullParam;
+import com.nbatch.job.core.biz.model.RunNodeLogPullResult;
 import com.nbatch.job.core.biz.model.TriggerParam;
 
 /**
@@ -47,5 +50,15 @@ public interface ExecutorBiz {
      * @param logParam 日志参数
      */
     ReturnT<LogResult> log(LogParam logParam);
+
+    /**
+     * 拉取运行节点本地事件日志。
+     */
+    ReturnT<RunNodeLogPullResult> pullRunNodeLog(RunNodeLogPullParam pullParam);
+
+    /**
+     * 确认运行节点本地事件日志。
+     */
+    ReturnT<String> ackRunNodeLog(RunNodeLogAckParam ackParam);
 
 }

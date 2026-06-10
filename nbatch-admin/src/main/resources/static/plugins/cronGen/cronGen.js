@@ -4,13 +4,16 @@
     var displayElement;
     $.fn.extend({
         cronGen: function (options) {
+            $('.cron-gen-trigger').popover('hide');
+            this.prev('.cron-gen-input-group').remove();
+            this.show();
             if (options == null) {
               options = {};
             }
             options = $.extend({}, $.fn.cronGen.defaultOptions, options);
             //create top menu
-            var cronContainer = $("<div/>", { id: "CronContainer", style: "display:none;width:300px;height:300px;" });
-            var mainDiv = $("<div/>", { id: "CronGenMainDiv", style: "width:410px;height:420px;" });
+            var cronContainer = $("<div/>", { id: "CronContainer", style: "display:none;" });
+            var mainDiv = $("<div/>", { id: "CronGenMainDiv" });
             var topMenu = $("<ul/>", { "class": "nav nav-tabs", id: "CronGenTabs" });
             $('<li/>', { 'class': 'active' }).html($('<a id="SecondlyTab" href="#Secondly">秒</a>')).appendTo(topMenu);
             $('<li/>').html($('<a id="MinutesTab" href="#Minutes">分钟</a>')).appendTo(topMenu);
@@ -332,12 +335,12 @@
             that.hide();
 
             // Replace the input with an input group
-            var $g = $("<div>").addClass("input-group");
+            var $g = $("<div>").addClass("input-group cron-gen-input-group");
             // Add an input
             var $i = $("<input>", { type: 'text', placeholder: 'cron表达式...', name: 'cronGen_display' }).addClass("form-control").val($(that).val());
             $i.appendTo($g);
             // Add the button
-            var $b = $("<button class=\"btn btn-default\"><i class=\"fa fa-edit\"></i></button>");
+            var $b = $("<button type=\"button\" class=\"btn btn-default cron-gen-trigger\"><i class=\"fa fa-edit\"></i></button>");
             // Put button inside span
             var $s = $("<span>").addClass("input-group-btn");
             $b.appendTo($s);
@@ -348,20 +351,10 @@
             inputElement = that;
             displayElement = $i;
 
-            $b.popover({
-                html: true,
-                content: function () {
-                    return $(cronContainer).html();
-                },
-                template: '<div class="popover" style="max-width:500px !important; width:425px;left:-341.656px;"><div class="arrow"></div><div class="popover-inner"><h3 class="popover-title"></h3><div class="popover-content"><p></p></div></div></div>',
-                sanitize:false,
-                placement: options.direction
-
-            }).on('click', function (e) {
-                if (inputElement.val().trim() !== '') {
+            function initCronPanel() {
+                if ($.trim(inputElement.val()) !== '') {
                     refreshRunTime();
                 }
-                e.preventDefault();
 
                 //fillDataOfMinutesAndHoursSelectOptions();
                 //fillDayWeekInMonth();
@@ -373,20 +366,63 @@
                 //绑定指定事件
                 $.fn.cronGen.tools.initChangeEvent();
 
-
-                $('#CronGenTabs a').click(function (e) {
+                $('#CronGenTabs a').off('click.cronGen').on('click.cronGen', function (e) {
                     e.preventDefault();
                     $(this).tab('show');
                     //generate();
                 });
-                $("#CronGenMainDiv select,input").change(function (e) {
+                $("#CronGenMainDiv select,input").off('change.cronGen').on('change.cronGen', function (e) {
                     generate();
                     refreshRunTime();
                 });
-                $("#CronGenMainDiv input").focus(function (e) {
+                $("#CronGenMainDiv input").off('focus.cronGen').on('focus.cronGen', function (e) {
                     generate();
                 });
                 //generate();
+            }
+
+            $b.popover({
+                html: true,
+                trigger: 'manual',
+                container: 'body',
+                content: function () {
+                    return $(cronContainer).html();
+                },
+                template: '<div class="popover cron-gen-popover"><div class="arrow"></div><div class="popover-inner"><h3 class="popover-title"></h3><div class="popover-content"><p></p></div></div></div>',
+                sanitize:false,
+                placement: options.direction
+
+            }).on('shown.bs.popover', function () {
+                var popover = $b.data('bs.popover');
+                var $tip = popover && popover.tip ? popover.tip() : $();
+                $tip.off('click.cronGen').on('click.cronGen', function (e) {
+                    e.stopPropagation();
+                });
+                if (typeof fitCronPopovers === 'function') {
+                    fitCronPopovers();
+                } else {
+                    positionCronPopover($b);
+                }
+            }).on('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                inputElement = that;
+                displayElement = $i;
+                var popover = $b.data('bs.popover');
+                var $tip = popover && popover.tip ? popover.tip() : $();
+                var visible = $tip.hasClass('in');
+                $('.cron-gen-trigger').not($b).popover('hide');
+                if (visible) {
+                    $b.popover('hide');
+                    return;
+                }
+                $b.popover('show');
+                initCronPanel();
+            });
+            $(document).off('click.cronGen').on('click.cronGen', function (e) {
+                if (!$(e.target).closest('.cron-gen-popover, .cron-gen-trigger').length) {
+                    $('.cron-gen-trigger').popover('hide');
+                }
             });
             return;
         }
@@ -655,6 +691,35 @@
         });
     };
 
+    var positionCronPopover = function ($button) {
+        var $popover = $button.data('bs.popover').tip();
+        var $modalBody = $button.closest('.modal-body');
+        var boundaryLeft = 12;
+        var boundaryRight = $(window).width() - 12;
+        var boundaryTop = 12;
+        if ($modalBody.length) {
+            var modalOffset = $modalBody.offset();
+            boundaryLeft = modalOffset.left + 12;
+            boundaryRight = modalOffset.left + $modalBody.outerWidth() - 24;
+            boundaryTop = modalOffset.top + 12;
+        }
+        var popoverWidth = Math.min(420, Math.max(320, boundaryRight - boundaryLeft));
+        var buttonOffset = $button.offset();
+        var left = Math.min(buttonOffset.left + $button.outerWidth() - popoverWidth, boundaryRight - popoverWidth);
+        left = Math.max(boundaryLeft, left);
+        var top = buttonOffset.top + $button.outerHeight() + 10;
+        if ($modalBody.length) {
+            top = Math.max(boundaryTop, Math.min(top, boundaryTop + $modalBody.outerHeight() - 80));
+        }
+        $popover.css({
+            width: popoverWidth,
+            maxWidth: popoverWidth,
+            left: left,
+            top: top
+        });
+        $popover.find('.arrow').css({left: Math.max(24, Math.min(popoverWidth - 24, buttonOffset.left + ($button.outerWidth() / 2) - left))});
+    };
+
 })(jQuery);
 
 (function($) {
@@ -908,7 +973,7 @@
         },
         initObj : function(strVal, strid){
             var ary = null;
-            var objRadio = $("input[name='" + strid + "'");
+            var objRadio = $("input[name='" + strid + "']");
             if (strVal == "*") {
                 objRadio.eq(0).attr("checked", "checked");
             } else if (strVal.split('-').length > 1) {
@@ -934,7 +999,7 @@
         },
         initDay : function(strVal) {
             var ary = null;
-            var objRadio = $("input[name='day'");
+            var objRadio = $("input[name='day']");
             if (strVal == "*") {
                 objRadio.eq(0).attr("checked", "checked");
             } else if (strVal == "?") {
@@ -966,7 +1031,7 @@
         },
         initMonth : function(strVal) {
             var ary = null;
-            var objRadio = $("input[name='month'");
+            var objRadio = $("input[name='month']");
             if (strVal == "*") {
                 objRadio.eq(0).attr("checked", "checked");
             } else if (strVal == "?") {
@@ -994,7 +1059,7 @@
         },
         initWeek : function(strVal) {
             var ary = null;
-            var objRadio = $("input[name='week'");
+            var objRadio = $("input[name='week']");
             if (strVal == "*") {
                 objRadio.eq(0).attr("checked", "checked");
             } else if (strVal == "?") {
@@ -1024,7 +1089,7 @@
         },
         initYear : function(strVal) {
             var ary = null;
-            var objRadio = $("input[name='year'");
+            var objRadio = $("input[name='year']");
             if (strVal == "*") {
                 objRadio.eq(1).attr("checked", "checked");
             } else if (strVal.split('-').length > 1) {
@@ -1038,6 +1103,9 @@
             //获取参数中表达式的值
             if (cronExpress) {
                 var regs = cronExpress.split(' ');
+                if (regs.length < 6) {
+                    return;
+                }
                 $("#secondHidden").val(regs[0]);
                 $("#minHidden").val(regs[1]);
                 $("#hourHidden").val(regs[2]);
@@ -1053,7 +1121,7 @@
                 $.fn.cronGen.tools.initWeek(regs[5]);
 
                 if (regs.length > 6) {
-                    $("input[name=yearHidden]").val(regs[6]);
+                    $("#yearHidden").val(regs[6]);
                     $.fn.cronGen.tools.initYear(regs[6]);
                 }
             }

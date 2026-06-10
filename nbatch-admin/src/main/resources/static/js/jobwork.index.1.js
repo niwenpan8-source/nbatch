@@ -78,7 +78,7 @@ $(function () {
                         var rerunLatestBtn = row.runWorkId
                             ? '<button type="button" class="btn btn-warning btn-xs rerun-latest">一键重跑</button>'
                             : '';
-                        return '<div data-work-id="' + escapeHtml(row.workId) + '">' +
+                        return '<div class="table-action-buttons" data-work-id="' + escapeHtml(row.workId) + '">' +
                             '<button type="button" class="btn btn-primary btn-xs update">' + I18n.system_opt_edit + '</button>' +
                             '<button type="button" class="btn btn-danger btn-xs delete">' + I18n.system_opt_del + '</button>' +
                             rerunLatestBtn +
@@ -137,8 +137,9 @@ $(function () {
         var url = base_url + "/work/addModel";
         layer.open({
             type: 2,
-            area: getLayerArea(760, 460),
+            area: getModalArea(860, 560),
             title: I18n.jobinfo_field_add,
+            closeBtn: 1,
             shade: 0.6,
             shadeClose: false,
             maxmin: true,
@@ -187,8 +188,9 @@ $(function () {
         var url = base_url + "/work/updateModel?workId=" + id;
         layer.open({
             type: 2,
-            area: getLayerArea(760, 460),
+            area: getModalArea(860, 560),
             title: I18n.jobinfo_field_update,
+            closeBtn: 1,
             shade: 0.6,
             shadeClose: false,
             maxmin: true,
@@ -237,8 +239,9 @@ $(function () {
         var url = base_url + "/work/editModel?workId=" + id;
         layer.open({
             type: 2,
-            area: getLayerArea(1180, 760),
+            area: getModalArea(1180, 760),
             title: '设置节点依赖关系',
+            closeBtn: 1,
             shade: 0.6,
             shadeClose: false,
             maxmin: true,

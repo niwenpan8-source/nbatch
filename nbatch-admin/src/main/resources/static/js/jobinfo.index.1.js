@@ -353,14 +353,14 @@ $(function() {
 	$(".add").click(function(){
 
 		// init-cronGen
-        $("#addModal .form input[name='schedule_conf_CRON']").show().siblings().remove();
+        $("#addModal .form input[name='schedule_conf_CRON']").prev('.cron-gen-input-group').remove().end().show();
         $("#addModal .form input[name='schedule_conf_CRON']").cronGen({});
 
 		// 》init scheduleType
-		$("#updateModal .form select[name=scheduleType]").change();
+		$("#addModal .form select[name=scheduleType]").change();
 
 		// 》init glueType
-		$("#updateModal .form select[name=glueType]").change();
+		$("#addModal .form select[name=glueType]").change();
 
 		$('#addModal').modal({backdrop: false, keyboard: false}).modal('show');
 	});
@@ -458,6 +458,7 @@ $(function() {
 		}
 	});
 	$("#addModal").on('hide.bs.modal', function () {
+        $('.cron-gen-trigger').popover('hide');
         addModalValidate.resetForm();
 		$("#addModal .form")[0].reset();
 		$("#addModal .form .form-group").removeClass("has-error");
@@ -543,7 +544,7 @@ $(function() {
 		$("#updateModal .form select[name=glueType]").change();
 
 		// 》init-cronGen
-		$("#updateModal .form input[name='schedule_conf_CRON']").show().siblings().remove();
+		$("#updateModal .form input[name='schedule_conf_CRON']").prev('.cron-gen-input-group').remove().end().show();
 		$("#updateModal .form input[name='schedule_conf_CRON']").cronGen({});
 
 		// fill advanced
@@ -643,6 +644,7 @@ $(function() {
 		}
 	});
 	$("#updateModal").on('hide.bs.modal', function () {
+        $('.cron-gen-trigger').popover('hide');
         updateModalValidate.resetForm();
         $("#updateModal .form")[0].reset();
         $("#updateModal .form .form-group").removeClass("has-error");
@@ -699,7 +701,7 @@ $(function() {
 		$("#addModal .form select[name=glueType]").change();
 
 		// 》init-cronGen
-		$("#addModal .form input[name='schedule_conf_CRON']").show().siblings().remove();
+		$("#addModal .form input[name='schedule_conf_CRON']").prev('.cron-gen-input-group').remove().end().show();
 		$("#addModal .form input[name='schedule_conf_CRON']").cronGen({});
 
 		// fill advanced

@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * @author Mr.ni 2019-05-21
+ * @author Mr.ni 2026-06-09
  */
 @Slf4j
 public class JobScheduleHelper {

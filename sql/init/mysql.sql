@@ -463,6 +463,7 @@ CREATE TABLE `nbatch_job_work_run_node_log` (
   `run_node_id` varchar(32) NOT NULL COMMENT '运行作业节点id',
   `handle_code` int NOT NULL COMMENT '执行状态',
   `handle_msg` text COMMENT '执行信息',
+  `executor_address` varchar(255) DEFAULT NULL COMMENT '执行器地址',
   `create_time` datetime DEFAULT NULL COMMENT '执行-时间',
   `call_back_time` datetime DEFAULT NULL COMMENT '执行-时间',
   PRIMARY KEY (`node_log_id`)
@@ -473,11 +474,6 @@ CREATE TABLE `nbatch_job_work_run_node_log` (
 -- Dumping data for table `nbatch_job_work_run_node_log`
 --
 
-LOCK TABLES `nbatch_job_work_run_node_log` WRITE;
-/*!40000 ALTER TABLE `nbatch_job_work_run_node_log` DISABLE KEYS */;
-INSERT INTO `nbatch_job_work_run_node_log` VALUES ('2062466010562805762','1991745845269688321','2062465995090018304','2001537294454599681','2062465995094212612',500,'系统优雅关闭，任务停止','2026-06-04 17:26:30','2026-06-04 17:26:33'),('2062466125004390402','1991745845269688321','2062465995090018304','2001537294454599681','2062465995094212612',503,'系统优雅关闭，任务停止','2026-06-04 17:26:59','2026-06-04 17:27:15'),('2062466197658124290','1991745845269688321','2062465995090018304','2001537294454599681','2062465995094212612',500,'job remoting timeout(Connection refused: connect), for url : http://192.168.10.225:9999/run','2026-06-04 17:27:17','2026-06-04 17:27:19'),('2062466529591148546','1991745845269688321','2062465995090018304','2001537294454599681','2062465995094212612',503,'系统优雅关闭，任务停止','2026-06-04 17:28:34','2026-06-04 17:28:44'),('2062466618921435138','1991745845269688321','2062465995090018304','2001537294454599681','2062465995094212612',500,'job remoting timeout(Connection refused: connect), for url : http://192.168.10.225:9999/run','2026-06-04 17:30:32','2026-06-04 17:30:37');
-/*!40000 ALTER TABLE `nbatch_job_work_run_node_log` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Table structure for table `nbatch_job_work_run_node_log_detail`

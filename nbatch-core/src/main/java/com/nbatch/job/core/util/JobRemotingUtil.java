@@ -1,5 +1,6 @@
 package com.nbatch.job.core.util;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.constant.HandleCodeConstant;
@@ -133,9 +134,9 @@ public class JobRemotingUtil {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             if (e instanceof ConnectException) {
-                return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_TIMEOUT, "job remoting timeout("+ e.getMessage() +"), for url : " + url);
+                return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_TIMEOUT, "job remoting timeout("+ ExceptionUtil.getRootCauseMessage(e) +"), for url : " + url);
             }
-            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "job remoting error("+ e.getMessage() +"), for url : " + url);
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "job remoting error("+ ExceptionUtil.getRootCauseMessage(e) +"), for url : " + url);
         } finally {
             try {
                 if (bufferedReader != null) {

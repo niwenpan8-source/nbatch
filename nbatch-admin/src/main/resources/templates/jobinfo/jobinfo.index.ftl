@@ -23,49 +23,58 @@
 		
 		<!-- Main content -->
 	    <section class="content">
-	    
-	    	<div class="row">
-	    		<div class="col-xs-3">
-	              	<div class="input-group">
-	                	<span class="input-group-addon">${I18n.jobinfo_field_jobgroup}</span>
-                		<select class="form-control" id="jobGroup" >
-                			<#list JobGroupList as group>
-                				<option value="${group.id}" <#if jobGroup==group.id>selected</#if> >${group.title}</option>
-                			</#list>
-	                  	</select>
-	              	</div>
-	            </div>
-                <div class="col-xs-1">
-                    <div class="input-group">
-                        <select class="form-control" id="triggerStatus" >
-                            <option value="-1" >${I18n.system_all}</option>
-                            <option value="0" >${I18n.jobinfo_opt_stop}</option>
-                            <option value="1" >${I18n.jobinfo_opt_start}</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-xs-2">
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="jobDesc" placeholder="${I18n.system_please_input}${I18n.jobinfo_field_jobdesc}" >
-                    </div>
-                </div>
-                <div class="col-xs-2">
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="executorHandler" placeholder="${I18n.system_please_input}JobHandler" >
-                    </div>
-                </div>
-                <div class="col-xs-2">
-                    <div class="input-group">
-                        <input type="text" class="form-control" id="author" placeholder="${I18n.system_please_input}${I18n.jobinfo_field_author}" >
-                    </div>
-                </div>
-	            <div class="col-xs-1">
-	            	<button class="btn btn-block btn-info" id="searchBtn">${I18n.system_search}</button>
-	            </div>
-	            <div class="col-xs-1">
-	            	<button class="btn btn-block btn-success add" type="button">${I18n.jobinfo_field_add}</button>
-	            </div>
-          	</div>
+			<div class="row">
+				<div class="col-xs-12">
+					<div class="box">
+						<div class="box-header with-border">
+							<h3 class="box-title">${I18n.jobinfo_name}</h3>
+							<div class="box-tools pull-right">
+								<button class="btn btn-success add" type="button">${I18n.jobinfo_field_add}</button>
+							</div>
+						</div>
+						<div class="box-body">
+							<div class="row">
+								<div class="col-xs-12 col-md-3">
+		              				<div class="input-group">
+		                				<span class="input-group-addon">${I18n.jobinfo_field_jobgroup}</span>
+	                					<select class="form-control" id="jobGroup" >
+	                						<#list JobGroupList as group>
+	                							<option value="${group.id}" <#if jobGroup==group.id>selected</#if> >${group.title}</option>
+	                						</#list>
+		                   			</select>
+		               				</div>
+		            			</div>
+								<div class="col-xs-12 col-md-2">
+		                    		<div class="input-group">
+	                        			<select class="form-control" id="triggerStatus" >
+	                            		<option value="-1" >${I18n.system_all}</option>
+	                            		<option value="0" >${I18n.jobinfo_opt_stop}</option>
+	                            		<option value="1" >${I18n.jobinfo_opt_start}</option>
+	                        			</select>
+	                    			</div>
+	                			</div>
+	                			<div class="col-xs-12 col-md-2">
+	                    		<div class="input-group">
+	                        			<input type="text" class="form-control" id="jobDesc" placeholder="${I18n.system_please_input}${I18n.jobinfo_field_jobdesc}" >
+	                    			</div>
+	                			</div>
+	                			<div class="col-xs-12 col-md-2">
+	                    		<div class="input-group">
+	                        			<input type="text" class="form-control" id="executorHandler" placeholder="${I18n.system_please_input}JobHandler" >
+	                    			</div>
+	                			</div>
+	                			<div class="col-xs-12 col-md-2">
+	                    		<div class="input-group">
+	                        			<input type="text" class="form-control" id="author" placeholder="${I18n.system_please_input}${I18n.jobinfo_field_author}" >
+	                    			</div>
+	                			</div>
+	                			<div class="col-xs-12 col-md-1">
+	            				<button class="btn btn-block btn-info" id="searchBtn">${I18n.system_search}</button>
+	            			</div>
+	           			</div>
+					</div>
+				</div>
+			</div>
 	    	
 			<div class="row">
 				<div class="col-xs-12">
