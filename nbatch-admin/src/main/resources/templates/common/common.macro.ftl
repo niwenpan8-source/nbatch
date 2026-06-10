@@ -37,10 +37,18 @@
         .table .label {display: inline-block; min-width: 48px; padding: 4px 7px;}
         .table-action-cell {width: 220px; min-width: 180px; white-space: normal;}
         .table-action-cell .btn {margin: 0 4px 6px 0;}
+        .table-action-cell .btn-group .btn {margin: 0;}
+        .table-action-cell .btn-group .dropdown-toggle {padding-left: 10px; padding-right: 10px;}
         .table-action-buttons {display: flex; flex-wrap: wrap; gap: 6px; align-items: center;}
         .table-action-buttons .btn {margin: 0;}
         .table .dropdown-menu {z-index: 2147483647;}
         .table td .btn-group, .table td .dropdown {position: relative;}
+        .box-header.with-border {padding-bottom: 14px;}
+        .box-header .box-tools .btn {min-width: 82px; border-radius: 4px; font-weight: 500;}
+        .box-body #searchBtn {min-width: 82px; height: 34px; border: 0; border-radius: 4px; background: #2563eb; font-weight: 500; box-shadow: 0 6px 14px rgba(37, 99, 235, .22);}
+        .box-body #searchBtn:hover, .box-body #searchBtn:focus {background: #1d4ed8; box-shadow: 0 8px 18px rgba(37, 99, 235, .28);}
+        .box-body #searchBtn:active {background: #1e40af; box-shadow: none;}
+        .box-body .input-group-addon {background: #f8fafc; border-color: #dbe3ef; color: #475569; font-weight: 500;}
         .dataTables_wrapper .row {margin-left: 0; margin-right: 0;}
         .dataTables_wrapper .dataTables_info {padding-top: 12px; color: #6b7280;}
         .dataTables_wrapper .dataTables_paginate {padding-top: 8px;}

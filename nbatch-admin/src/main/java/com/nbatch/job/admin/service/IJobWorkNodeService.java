@@ -14,6 +14,7 @@ import com.nbatch.job.admin.core.domain.vo.JobWorkNodeTypeVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeLogVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeVo;
+import com.nbatch.job.core.biz.model.ReturnT;
 
 import java.util.List;
 import java.util.Map;
@@ -84,5 +85,10 @@ public interface IJobWorkNodeService {
      * 获取作业节点
      */
     JobWorkNodePo getWorkNode(String workNodeId);
+
+    /**
+     * 重跑节点及其后继节点
+     */
+    ReturnT<String> rerunNode(String runNodeId);
 
 }

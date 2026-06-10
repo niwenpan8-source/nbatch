@@ -126,6 +126,12 @@ public class JobWorkNodeController {
         return "worknode/worknode.view.log.detail";
     }
 
+    @RequestMapping("/rerun")
+    @ResponseBody
+    public ReturnT<String> rerunNode(String runNodeId) {
+        return jobWorkNodeService.rerunNode(runNodeId);
+    }
+
     @ResponseBody
     @PostMapping("/logPageList")
     public ReturnT<IPage<JobWorkRunNodeLogVo>> logPageList(JobWorkNodeLogPageParam param) {

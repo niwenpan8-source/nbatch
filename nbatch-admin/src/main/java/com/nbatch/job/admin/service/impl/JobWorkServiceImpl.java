@@ -73,7 +73,7 @@ public class JobWorkServiceImpl implements IJobWorkService {
             if (jobRunWorkPo != null) {
                 jobWorkVo.setRunWorkId(jobRunWorkPo.getRunWorkId());
                 if (jobRunWorkPo.getTurnDate() != null) {
-                    jobWorkVo.setTurnDate(DateUtil.formatDate(jobRunWorkPo.getTurnDate()));
+                    jobWorkVo.setTurnDate(DateUtil.formatDateTime(jobRunWorkPo.getTurnDate()));
                 }
                 if (jobRunWorkPo.getCreateTime() != null) {
                     jobWorkVo.setRunWorkCreateTime(DateUtil.formatDateTime(jobRunWorkPo.getCreateTime()));
@@ -176,21 +176,27 @@ public class JobWorkServiceImpl implements IJobWorkService {
             return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "运行作业不存在");
         }
         if (oldRunWorkPo.getRunWorkStatus() != null
-                && oldRunWorkPo.getRunWorkStatus() != FlowRunStatusEnum.RUNNING.getCode()) {
-            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "只有进行中的运行作业可以恢复重跑");
+                && oldRunWorkPo.getRunWorkStatus() != FlowRunStatusEnum.RUNNING.getCode()
+                && oldRunWorkPo.getRunWorkStatus() != FlowRunStatusEnum.EXCEPTION.getCode()) {
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "只有进行中或异常的运行作业可以恢复重跑");
         }
 
-        // 只回滚运行中的节点，避免已完成或已失败节点被误重置。
-        JobWorkRunNodePo updateRunNodePo = new JobWorkRunNodePo();
-        updateRunNodePo.setNodeRunStatus(FlowRunStatusEnum.WAIT.getCode());
-        jobWorkRunNodeMapper.update(updateRunNodePo, Wrappers.lambdaQuery(JobWorkRunNodePo.class)
+        // 恢复重跑只处理异常/卡住的节点，已完成节点保持完成状态，避免退化成整批重跑。
+        int resetCount = jobWorkRunNodeMapper.update(null, Wrappers.lambdaUpdate(JobWorkRunNodePo.class)
+                .set(JobWorkRunNodePo::getNodeRunStatus, FlowRunStatusEnum.WAIT.getCode())
+                .set(JobWorkRunNodePo::getStartTime, null)
+                .set(JobWorkRunNodePo::getEndTime, null)
                 .eq(JobWorkRunNodePo::getRunWorkId, runWorkId)
-                .eq(JobWorkRunNodePo::getNodeRunStatus, FlowRunStatusEnum.RUNNING.getCode()));
+                .in(JobWorkRunNodePo::getNodeRunStatus,
+                        FlowRunStatusEnum.EXCEPTION.getCode(),
+                        FlowRunStatusEnum.RUNNING.getCode()));
+        if (resetCount <= 0) {
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "当前运行作业没有异常或失败节点可恢复");
+        }
 
-        JobWorkRunPo updateRunWorkPo = new JobWorkRunPo();
-        updateRunWorkPo.setRunWorkId(runWorkId);
-        updateRunWorkPo.setRunWorkStatus(FlowRunStatusEnum.WAIT.getCode());
-        jobRunWorkMapper.updateById(updateRunWorkPo);
+        jobRunWorkMapper.update(null, Wrappers.lambdaUpdate(JobWorkRunPo.class)
+                .set(JobWorkRunPo::getRunWorkStatus, FlowRunStatusEnum.WAIT.getCode())
+                .eq(JobWorkRunPo::getRunWorkId, runWorkId));
         return ReturnT.SUCCESS;
     }
 
@@ -210,17 +216,18 @@ public class JobWorkServiceImpl implements IJobWorkService {
             return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "暂无运行作业记录");
         }
 
-        // 运行作业先回到待执行，后续调度线程会重新扫描并推动失败节点继续执行。
+        // 一键重跑重置最新运行批次的所有节点，让该作业完整重新执行。
         jobRunWorkMapper.update(null, Wrappers.lambdaUpdate(JobWorkRunPo.class)
                 .set(JobWorkRunPo::getRunWorkStatus, FlowRunStatusEnum.WAIT.getCode())
                 .eq(JobWorkRunPo::getRunWorkId, latestRunWorkPo.getRunWorkId()));
 
-        // 仅重置失败节点，并同步翻牌日期，保证节点执行批次与运行作业保持一致。
         jobWorkRunNodeMapper.update(null, Wrappers.lambdaUpdate(JobWorkRunNodePo.class)
                 .set(JobWorkRunNodePo::getNodeRunStatus, FlowRunStatusEnum.WAIT.getCode())
                 .set(JobWorkRunNodePo::getTurnDate, latestRunWorkPo.getTurnDate())
+                .set(JobWorkRunNodePo::getStartTime, null)
+                .set(JobWorkRunNodePo::getEndTime, null)
                 .eq(JobWorkRunNodePo::getRunWorkId, latestRunWorkPo.getRunWorkId())
-                .eq(JobWorkRunNodePo::getNodeRunStatus, FlowRunStatusEnum.EXCEPTION.getCode()));
+                .ne(JobWorkRunNodePo::getNodeRunStatus, FlowRunStatusEnum.WAIT.getCode()));
 
         return ReturnT.SUCCESS;
     }

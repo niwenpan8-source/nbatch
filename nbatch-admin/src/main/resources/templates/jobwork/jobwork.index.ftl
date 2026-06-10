@@ -28,22 +28,33 @@
         <!-- Main content -->
         <section class="content">
             <div class="row">
-                <div class="col-xs-3">
-                    <div class="input-group">
-                        <span class="input-group-addon">${I18n.job_work_field_status}</span>
-                        <select class="form-control" id="workStatus">
-                            <option value="">全部</option>
-                            <#list workStatusEnum as status>
-                                <option value="${status.code}">${status.value}</option>
-                            </#list>
-                        </select>
+                <div class="col-xs-12">
+                    <div class="box">
+                        <div class="box-header with-border">
+                            <h3 class="box-title">批次流程管理</h3>
+                            <div class="box-tools pull-right">
+                                <button class="btn btn-success add" type="button">${I18n.jobinfo_field_add}</button>
+                            </div>
+                        </div>
+                        <div class="box-body">
+                            <div class="row">
+                                <div class="col-xs-12 col-md-3">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">${I18n.job_work_field_status}</span>
+                                        <select class="form-control" id="workStatus">
+                                            <option value="">全部</option>
+                                            <#list workStatusEnum as status>
+                                                <option value="${status.code}">${status.value}</option>
+                                            </#list>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-xs-12 col-md-1">
+                                    <button class="btn btn-block btn-info" id="searchBtn">${I18n.system_search}</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="col-xs-1">
-                    <button class="btn btn-block btn-info" id="searchBtn">${I18n.system_search}</button>
-                </div>
-                <div class="col-xs-1">
-                    <button class="btn btn-block btn-success add" type="button">${I18n.jobinfo_field_add}</button>
                 </div>
             </div>
             <div class="row">

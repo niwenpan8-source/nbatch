@@ -28,6 +28,17 @@ $(function () {
         return escapeHtml(value || '-');
     }
 
+    function dateTimeOrDash(value) {
+        if (!value) {
+            return '-';
+        }
+        var parsed = moment(value, [moment.ISO_8601, 'YYYY-MM-DD HH:mm:ss', 'YYYY-MM-DD'], true);
+        if (parsed.isValid()) {
+            return parsed.format('YYYY-MM-DD HH:mm:ss');
+        }
+        return escapeHtml(String(value).replace('T', ' ').substring(0, 19));
+    }
+
     // init date tables
     var jobWorkTable = $("#job_work_list").dataTable({
         "deferRender": true,
@@ -61,30 +72,37 @@ $(function () {
             {"data": 'version', "width": '70px', "render": function (data) { return escapeHtml(data == null ? 0 : data); }},
             {"data": 'runWorkId', "width": '180px', "render": function (data) { return textOrDash(data); }},
             {"data": 'runWorkStatusName', "width": '90px', "render": function (data, type, row) { return row.runWorkId ? statusLabel(row.runWorkStatus, data) : '-'; }},
-            {"data": 'turnDate', "width": '110px', "render": function (data) { return textOrDash(data); }},
-            {"data": 'runWorkCreateTime', "width": '160px', "render": function (data) { return textOrDash(data); }},
+            {"data": 'turnDate', "width": '160px', "render": function (data) { return dateTimeOrDash(data); }},
+            {"data": 'runWorkCreateTime', "width": '160px', "render": function (data) { return dateTimeOrDash(data); }},
             {
                 "data": I18n.system_opt,
-                "width": '220px',
+                "width": '120px',
                 "className": 'table-action-cell',
                 "render": function (data, type, row) {
                     return function () {
                         tableData['key' + row.workId] = row;
                         var recoverBtn = '';
-                        if (row.runWorkId && row.runWorkStatus === 1) {
-                            recoverBtn = '<button type="button" class="btn btn-warning btn-xs recover" data-run-work-id="' + escapeHtml(row.runWorkId) + '">恢复重跑</button>';
+                        if (row.runWorkId && (row.runWorkStatus === 1 || row.runWorkStatus === 3)) {
+                            recoverBtn = '<li><a href="javascript:void(0);" class="recover" data-run-work-id="' + escapeHtml(row.runWorkId) + '">恢复重跑</a></li>\n';
                         }
                         // Latest-run rerun is only meaningful when the workflow has at least one run record.
                         var rerunLatestBtn = row.runWorkId
-                            ? '<button type="button" class="btn btn-warning btn-xs rerun-latest">一键重跑</button>'
+                            ? '<li><a href="javascript:void(0);" class="rerun-latest">一键重跑</a></li>\n'
                             : '';
-                        return '<div class="table-action-buttons" data-work-id="' + escapeHtml(row.workId) + '">' +
-                            '<button type="button" class="btn btn-primary btn-xs update">' + I18n.system_opt_edit + '</button>' +
-                            '<button type="button" class="btn btn-danger btn-xs delete">' + I18n.system_opt_del + '</button>' +
+                        return '<div class="btn-group">\n' +
+                            '     <button type="button" class="btn btn-primary btn-sm">' + I18n.system_opt + '</button>\n' +
+                            '     <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown">\n' +
+                            '       <span class="caret"></span>\n' +
+                            '       <span class="sr-only">Toggle Dropdown</span>\n' +
+                            '     </button>\n' +
+                            '     <ul class="dropdown-menu" role="menu" data-work-id="' + escapeHtml(row.workId) + '">\n' +
+                            '       <li><a href="javascript:void(0);" class="update">' + I18n.system_opt_edit + '</a></li>\n' +
+                            '       <li><a href="javascript:void(0);" class="delete">' + I18n.system_opt_del + '</a></li>\n' +
                             rerunLatestBtn +
-                            '<button type="button" class="btn btn-info btn-xs edit">依赖关系</button>' +
+                            '       <li><a href="javascript:void(0);" class="edit">依赖关系</a></li>\n' +
                             recoverBtn +
-                            '</div>';
+                            '     </ul>\n' +
+                            '   </div>';
                     };
                 }
             }
@@ -103,7 +121,7 @@ $(function () {
     // job operate
     $("#job_work_list").on('click', '.delete', function () {
         var url = base_url + "/work/delete";
-        var id = $(this).closest('[data-work-id]').attr("data-work-id");
+        var id = $(this).closest('ul').attr("data-work-id");
         var typeName = I18n.system_opt_del;
 
         layer.confirm(I18n.system_ok + typeName + '?', {
@@ -184,7 +202,7 @@ $(function () {
 
     // update
     $("#job_work_list").on('click', '.update',function() {
-        var id = $(this).closest('[data-work-id]').attr("data-work-id");
+        var id = $(this).closest('ul').attr("data-work-id");
         var url = base_url + "/work/updateModel?workId=" + id;
         layer.open({
             type: 2,
@@ -235,7 +253,7 @@ $(function () {
 
     // relation edit
     $("#job_work_list").on('click', '.edit',function() {
-        var id = $(this).closest('[data-work-id]').attr("data-work-id");
+        var id = $(this).closest('ul').attr("data-work-id");
         var url = base_url + "/work/editModel?workId=" + id;
         layer.open({
             type: 2,
@@ -250,10 +268,10 @@ $(function () {
         });
     });
 
-    // Rerun the latest run work and only reset failed nodes on the server side.
+    // Rerun the latest run work from the beginning.
     $("#job_work_list").on('click', '.rerun-latest', function () {
-        var workId = $(this).closest('[data-work-id]').attr('data-work-id');
-        layer.confirm('确认将该流程最新运行作业置为待执行，并重跑失败节点？', {
+        var workId = $(this).closest('ul').attr('data-work-id');
+        layer.confirm('确认完整重跑该流程最新一次运行作业？所有节点都会重新执行。', {
             icon: 3,
             title: I18n.system_tips,
             btn: [I18n.system_ok, I18n.system_cancel]
@@ -279,10 +297,10 @@ $(function () {
         });
     });
 
-    // recover run work
+    // recover only failed/exception nodes in a run work
     $("#job_work_list").on('click', '.recover', function () {
         var runWorkId = $(this).attr('data-run-work-id');
-        layer.confirm('确认将该运行作业恢复为待执行并重跑？', {
+        layer.confirm('确认只恢复该运行作业中异常或失败的节点，并继续重跑？已完成节点不会重跑。', {
             icon: 3,
             title: I18n.system_tips,
             btn: [I18n.system_ok, I18n.system_cancel]

@@ -62,10 +62,17 @@ $(function() {
 	                		return function(){
 								// html
                                 tableData['key'+row.id] = row;
-								var html = '<p id="'+ row.id +'" >'+
-									'<button class="btn btn-warning btn-xs update" type="button">'+ I18n.system_opt_edit +'</button>  '+
-									'<button class="btn btn-danger btn-xs delete" type="button">'+ I18n.system_opt_del +'</button>  '+
-									'</p>';
+								var html = '<div class="btn-group">\n' +
+									'     <button type="button" class="btn btn-primary btn-sm">'+ I18n.system_opt +'</button>\n' +
+									'     <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown">\n' +
+									'       <span class="caret"></span>\n' +
+									'       <span class="sr-only">Toggle Dropdown</span>\n' +
+									'     </button>\n' +
+									'     <ul class="dropdown-menu" role="menu" data-user-id="'+ row.id +'">\n' +
+									'       <li><a href="javascript:void(0);" class="update">'+ I18n.system_opt_edit +'</a></li>\n' +
+									'       <li><a href="javascript:void(0);" class="delete">'+ I18n.system_opt_del +'</a></li>\n' +
+									'     </ul>\n' +
+									'   </div>';
 
 	                			return html;
 							};
@@ -85,7 +92,7 @@ $(function() {
 	
 	// job operate
 	$("#user_list").on('click', '.delete',function() {
-		var id = $(this).parent('p').attr("id");
+		var id = $(this).closest('ul').attr("data-user-id");
 
 		layer.confirm( I18n.system_ok + I18n.system_opt_del + '?', {
 			icon: 3,
@@ -223,7 +230,7 @@ $(function() {
 	// update
 	$("#user_list").on('click', '.update',function() {
 
-        var id = $(this).parent('p').attr("id");
+        var id = $(this).closest('ul').attr("data-user-id");
         var row = tableData['key'+id];
 
 		// base data
