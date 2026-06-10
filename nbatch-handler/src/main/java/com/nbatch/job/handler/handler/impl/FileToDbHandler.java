@@ -18,13 +18,13 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 
-import static com.nbatch.job.handler.constant.JobHandlerConstant.FILE_TYPE_SUFFIX_CSV;
+import static com.nbatch.job.core.enums.NodeTypeEnum.NODE_TYPE_FILE_TO_DB;
 import static com.nbatch.job.handler.constant.JobHandlerConstant.TODAY_TABLE_SUFFIX;
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.FILE_TO_DB_FAIL;
-import static com.nbatch.job.core.enums.NodeTypeEnum.NODE_TYPE_FILE_TO_DB;
 
 /**
- * @description: 文件导入数据库处理
+ * 文件导入数据库处理
+ *
  * @author: Mr.ni
  * @date: 2025/11/19
  */
@@ -44,7 +44,7 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
     @Override
     public void execute(ExecuteNodeParam nodeParam) throws Exception {
         ExecuteFileToDbParam param = nodeParam.getExecuteFileToDbParam();
-        String tempPath = handlerPropertiesConstant.getTempPath();
+        String fileToDbPath = handlerPropertiesConstant.getTempPath();
         JSONObject replaceObj;
         if (StrUtil.isBlank(param.getFileName())) {
             replaceObj = JSONUtil.parseObj(param.getFileNameParam());
@@ -52,18 +52,16 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
             replaceObj = new JSONObject();
         }
         replaceObj.putOpt("date", nodeParam.getTurnDate());
-        String finishGenerateFileName = NbatchFileUtil.generateFileName(param.getFileName(), replaceObj);
-        // 文件导入到数据库压缩文件名称
-        String fileImportCompressDbPath = tempPath + File.separator + finishGenerateFileName;
-        log.info("文件导入数据库压缩文件名称：{}", fileImportCompressDbPath);
-        if (!FileUtil.exist(fileImportCompressDbPath)) {
+        String importFileName = NbatchFileUtil.generateFileName(param.getFileName(), replaceObj);
+        // 文件导入到数据库文件名称
+        String importDbFilePath = fileToDbPath + File.separator + importFileName;
+        log.info("文件导入文件名称：{}", importDbFilePath);
+        if (!FileUtil.exist(importDbFilePath)) {
             throw new HandlerException(FILE_TO_DB_FAIL.getCode(),
-                    StrUtil.format("文件不存在:{}", fileImportCompressDbPath));
+                    StrUtil.format("文件不存在:{}", importDbFilePath));
         }
         // 文件导入到数据库解压文件名称
-        String fileImportDbPath = tempPath + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_CSV;
-        NbatchFileUtil.unGzipFile(fileImportCompressDbPath, fileImportDbPath);
-        setFilePath(param, finishGenerateFileName, nodeParam.getDbType());
+        setFilePath(param, importFileName);
         BaseDialect dialect = dialectHelper.getDialect(nodeParam.getDbType());
         // 导入的逻辑首先将数据导入到中间表，然后进行数据校验
         String importTableName = param.getImportTableName();
@@ -77,19 +75,18 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
         } else {
             importDbCount = handleUpdateTable(importTableName, importTodayTableName, param, dialect, nodeParam.getDbType());
         }
-        int totalLines = FileUtil.getTotalLines(new File(fileImportDbPath));
-        FileUtil.del(fileImportDbPath);
+        int totalLines = FileUtil.getTotalLines(new File(importDbFilePath));
         NbatchFileUtil.checkImportDataNum(totalLines, importDbCount);
     }
 
     /**
      * 设置文件路径
      */
-    private void setFilePath(ExecuteFileToDbParam param, String finishGenerateFileName, String dbType) {
+    private void setFilePath(ExecuteFileToDbParam param, String finishGenerateFileName) {
         String dbExportFilePath = handlerPropertiesConstant.getTempPath()
-                + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_CSV;
+                + File.separator + finishGenerateFileName;
         String remoteDbExportFilePath = handlerPropertiesConstant.getRemoteTempPath()
-                + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_CSV;
+                + File.separator + finishGenerateFileName;
         param.setFilePath(dbExportFilePath);
         param.setRemoteFilePath(remoteDbExportFilePath);
     }
@@ -172,7 +169,6 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
         return importDbCount;
 
     }
-
 
 
 }

@@ -15,10 +15,9 @@ import lombok.RequiredArgsConstructor;
 
 import java.io.File;
 
-import static com.nbatch.job.handler.constant.JobHandlerConstant.FILE_TYPE_SUFFIX_CSV;
+import static com.nbatch.job.core.enums.NodeTypeEnum.NODE_TYPE_DB_TO_FILE;
 import static com.nbatch.job.handler.constant.JobHandlerConstant.FILE_TYPE_SUFFIX_EXECUTE;
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_UPDATE_SQL_FAIL;
-import static com.nbatch.job.core.enums.NodeTypeEnum.NODE_TYPE_DB_TO_FILE;
 
 /**
  * @description: 文件导入数据库处理
@@ -40,7 +39,8 @@ public class DbToFileHandler implements JobNodeHandlerAdapter {
     @Override
     public void execute(ExecuteNodeParam nodeParam) throws Exception {
         ExecuteDbToFileParam param = nodeParam.getExecuteDbToFileParam();
-        String tempPath = handlerPropertiesConstant.getTempPath();
+        // 数据库导入到文件操作文件夹
+        String dbToFilePath = handlerPropertiesConstant.getTempPath();
         JSONObject replaceObj;
         if (StrUtil.isBlank(param.getFileName())) {
             replaceObj = JSONUtil.parseObj(param.getFileNameParam());
@@ -49,28 +49,20 @@ public class DbToFileHandler implements JobNodeHandlerAdapter {
         }
         replaceObj.putOpt("date", nodeParam.getTurnDate());
         String finishGenerateFileName = NbatchFileUtil.generateFileName(param.getFileName(), replaceObj);
-        // 数据库导出文件名称
-        String dbExportFilePath = tempPath + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_CSV;
-        // 最终生成文件名称
-        String finishGenerateFilePath = tempPath + File.separator + finishGenerateFileName;
+
         // 生成最终文件的中间文件
-        String executeFinishGenerateFilePath = finishGenerateFilePath + FILE_TYPE_SUFFIX_EXECUTE;
-        if (FileUtil.exist(dbExportFilePath)) {
-            FileUtil.del(dbExportFilePath);
-        }
+        String executeFinishGenerateFileName = finishGenerateFileName + FILE_TYPE_SUFFIX_EXECUTE;
+
         // 创建文件
         //FileUtil.touch(dbExportFilePath);
-        setFilePath(param, finishGenerateFileName);
+        setFilePath(param, executeFinishGenerateFileName);
         // 导出相关文件
         boolean flag = dialectHelper.getDialect(nodeParam.getDbType())
                 .dbToFile(dialectHelper.getConnection(nodeParam.getDbType()), param);
 
-        // 将数据库导出文件进行压缩
-        NbatchFileUtil.gzipFile(dbExportFilePath, executeFinishGenerateFilePath);
-        File file = new File(executeFinishGenerateFilePath);
+        File file = new File(dbToFilePath, executeFinishGenerateFileName);
         // 将压缩文件进行重命名
-        FileUtil.rename(file, finishGenerateFilePath, true);
-        FileUtil.del(dbExportFilePath);
+        FileUtil.rename(file, dbToFilePath + File.separator + finishGenerateFileName, true);
         if (!flag) {
             throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "数据库导出文件失败");
         }
@@ -79,11 +71,11 @@ public class DbToFileHandler implements JobNodeHandlerAdapter {
     /**
      * 对于正在导出的文件
      */
-    private void setFilePath(ExecuteDbToFileParam param, String finishGenerateFileName) {
+    private void setFilePath(ExecuteDbToFileParam param, String executeFinishGenerateFilePath) {
         String dbExportFilePath = handlerPropertiesConstant.getTempPath()
-                + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_EXECUTE;
+                + File.separator + executeFinishGenerateFilePath;
         String remoteDbExportFilePath = handlerPropertiesConstant.getRemoteTempPath()
-                + File.separator + finishGenerateFileName + FILE_TYPE_SUFFIX_EXECUTE;
+                + File.separator + executeFinishGenerateFilePath;
         param.setFilePath(dbExportFilePath);
         param.setRemoteFilePath(remoteDbExportFilePath);
     }
