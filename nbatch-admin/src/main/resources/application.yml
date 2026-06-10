@@ -14,6 +14,8 @@ management:
 
 ### resources
 spring:
+  config:
+    import: optional:file:.env[.properties]
   mvc:
     servlet:
       load-on-startup: 0
@@ -34,10 +36,10 @@ spring:
   ### xxl-job, datasource
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:mysql://localhost:3306/batch_dev?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true
-    username: root
-    password: ni141516
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${NBATCH_ADMIN_DATASOURCE_URL:jdbc:mysql://localhost:3306/batch_dev?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true}
+    username: ${NBATCH_ADMIN_DATASOURCE_USERNAME:root}
+    password: ${NBATCH_ADMIN_DATASOURCE_PASSWORD:}
+    driver-class-name: ${NBATCH_ADMIN_DATASOURCE_DRIVER:com.mysql.cj.jdbc.Driver}
     hikari:
       # 连接池名称
       pool-name: HikariCP
@@ -58,11 +60,11 @@ spring:
       # 连接验证超时时间（毫秒），1秒内完成连接有效性检查
       validation-timeout: 5000
   mail:
-    host: smtp.qq.com
-    port: 25
-    username: xxx@qq.com
-    from: xxx@qq.com
-    password: xxx
+    host: ${NBATCH_MAIL_HOST:smtp.qq.com}
+    port: ${NBATCH_MAIL_PORT:25}
+    username: ${NBATCH_MAIL_USERNAME:}
+    from: ${NBATCH_MAIL_FROM:${NBATCH_MAIL_USERNAME:}}
+    password: ${NBATCH_MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
@@ -98,12 +100,12 @@ mybatis-plus:
 
 xxl:
   job:
-    accessToken: default_token
-    timeout: 3
-    i18n: zh_CN
+    accessToken: ${NBATCH_ACCESS_TOKEN:default_token}
+    timeout: ${NBATCH_ADMIN_TIMEOUT:3}
+    i18n: ${NBATCH_ADMIN_I18N:zh_CN}
     triggerpool:
       fast:
         max: 200
       slow:
         max: 100
-    logretentiondays: 30
+    logretentiondays: ${NBATCH_ADMIN_LOG_RETENTION_DAYS:30}

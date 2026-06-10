@@ -9,6 +9,8 @@ logging:
     org.apache.ibatis: DEBUG
     com.dmap: DEBUG
 spring:
+  config:
+    import: optional:file:.env[.properties]
   datasource:
     dynamic:
       # 配置默认数据库,及没有注解指定时走的数据库
@@ -18,10 +20,10 @@ spring:
       lazy:  true
       datasource:
         gauss:
-          url: jdbc:opengauss://192.168.10.196:4432/imds_nyyh_guangdong?currentSchema=public&serverTimezone=Asia/Shanghai
-          username: fmdsuser
-          password: Bankfund@123@
-          driver-class-name: org.opengauss.Driver
+          url: ${NBATCH_GAUSS_DATASOURCE_URL:jdbc:opengauss://localhost:5432/postgres?currentSchema=public&serverTimezone=Asia/Shanghai}
+          username: ${NBATCH_GAUSS_DATASOURCE_USERNAME:}
+          password: ${NBATCH_GAUSS_DATASOURCE_PASSWORD:}
+          driver-class-name: ${NBATCH_GAUSS_DATASOURCE_DRIVER:org.opengauss.Driver}
           hikari:
             min-idle: 1
             max-pool-size: 1
@@ -32,10 +34,10 @@ spring:
             connection-test-query: SELECT 1
             validation-timeout: 1000
         clickhouse:
-          url: jdbc:clickhouse://192.168.10.196:8123/nyyh_guangdong?compress=0
-          username: default
-          password: bankfund
-          driver-class-name: com.clickhouse.jdbc.ClickHouseDriver
+          url: ${NBATCH_CLICKHOUSE_DATASOURCE_URL:jdbc:clickhouse://localhost:8123/default?compress=0}
+          username: ${NBATCH_CLICKHOUSE_DATASOURCE_USERNAME:default}
+          password: ${NBATCH_CLICKHOUSE_DATASOURCE_PASSWORD:}
+          driver-class-name: ${NBATCH_CLICKHOUSE_DATASOURCE_DRIVER:com.clickhouse.jdbc.ClickHouseDriver}
           hikari:
             min-idle: 1
             max-pool-size: 1
@@ -46,10 +48,10 @@ spring:
             connection-test-query: SELECT 1
             validation-timeout: 1000
         gbase:
-          url: jdbc:gbase://192.168.10.160:5258/ppms_zgyh_guangdong_dev
-          username: dmapuser
-          password: bankfund
-          driver-class-name: com.gbase.jdbc.Driver
+          url: ${NBATCH_GBASE_DATASOURCE_URL:jdbc:gbase://localhost:5258/default}
+          username: ${NBATCH_GBASE_DATASOURCE_USERNAME:}
+          password: ${NBATCH_GBASE_DATASOURCE_PASSWORD:}
+          driver-class-name: ${NBATCH_GBASE_DATASOURCE_DRIVER:com.gbase.jdbc.Driver}
           hikari:
             min-idle: 1
             max-pool-size: 1
@@ -65,18 +67,18 @@ spring:
 nbatch:
   job:
     admin:
-      addresses: http://192.168.10.225:8095/nbatch
-      accessToken: default_token
-      timeout: 3
+      addresses: ${NBATCH_ADMIN_ADDRESSES:http://localhost:8095/nbatch}
+      accessToken: ${NBATCH_ACCESS_TOKEN:default_token}
+      timeout: ${NBATCH_CONSUMER_ADMIN_TIMEOUT:3}
     executor:
-      appName: nbatch-consumer
-      address:
-      ip:
-      port: 9999
-      logpath: /log/nbatch/jobhandler
-      datapath: /data/nbatch/jobhandler
-      logretentiondays: 30
+      appName: ${NBATCH_EXECUTOR_APP_NAME:nbatch-consumer}
+      address: ${NBATCH_EXECUTOR_ADDRESS:}
+      ip: ${NBATCH_EXECUTOR_IP:}
+      port: ${NBATCH_EXECUTOR_PORT:9999}
+      logpath: ${NBATCH_EXECUTOR_LOG_PATH:/log/nbatch/jobhandler}
+      datapath: ${NBATCH_EXECUTOR_DATA_PATH:/data/nbatch/jobhandler}
+      logretentiondays: ${NBATCH_EXECUTOR_LOG_RETENTION_DAYS:30}
     file:
-      tempPath: C:\disk\project\work\2025\nbatch\file\temp
-      remoteTempPath: ftpC:\disk\project\work\2025\nbatch\file\temp
+      tempPath: ${NBATCH_FILE_TEMP_PATH:./file/temp}
+      remoteTempPath: ${NBATCH_FILE_REMOTE_TEMP_PATH:./file/temp}
 
