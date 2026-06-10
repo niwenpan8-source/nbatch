@@ -7,7 +7,7 @@ import com.nbatch.job.handler.handler.BeanHandlerContext;
 import com.nbatch.job.handler.handler.JobNodeHandlerAdapter;
 import lombok.RequiredArgsConstructor;
 
-import static com.nbatch.job.handler.enums.NodeTypeEnum.NODE_TYPE_BEAN;
+import static com.nbatch.job.core.enums.NodeTypeEnum.NODE_TYPE_BEAN;
 
 /**
  * @description: 方法 job 作业节点 处理

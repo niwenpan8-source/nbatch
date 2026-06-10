@@ -6,7 +6,7 @@ import com.nbatch.job.handler.handler.JobNodeHandlerAdapter;
 import com.nbatch.job.handler.helper.DialectHelper;
 import lombok.RequiredArgsConstructor;
 
-import static com.nbatch.job.handler.enums.NodeTypeEnum.NODE_TYPE_EXECUTE_SQL;
+import static com.nbatch.job.core.enums.NodeTypeEnum.NODE_TYPE_EXECUTE_SQL;
 
 /**
  * @description: 执行sql

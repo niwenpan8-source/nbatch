@@ -15,7 +15,7 @@ import java.io.File;
 
 import static cn.hutool.core.date.DatePattern.PURE_DATETIME_FORMAT;
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.SCRIPT_FAIL;
-import static com.nbatch.job.handler.enums.NodeTypeEnum.NODE_TYPE_SCRIPT;
+import static com.nbatch.job.core.enums.NodeTypeEnum.NODE_TYPE_SCRIPT;
 
 /**
  * @description: 脚本处理

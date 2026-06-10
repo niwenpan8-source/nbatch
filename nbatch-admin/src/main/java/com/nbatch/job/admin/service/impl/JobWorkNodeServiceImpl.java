@@ -23,7 +23,7 @@ import com.nbatch.job.admin.core.domain.vo.JobWorkNodeRelationVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeLogVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeVo;
-import com.nbatch.job.admin.core.enums.NodeTypeEnum;
+import com.nbatch.job.core.enums.NodeTypeEnum;
 import com.nbatch.job.admin.mapper.IJobWorkExportFileMapper;
 import com.nbatch.job.admin.mapper.IJobWorkImportFileMapper;
 import com.nbatch.job.admin.mapper.IJobWorkMapper;
@@ -102,7 +102,7 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
                 .collect(Collectors.toMap(JobWorkRunNodePo::getNodeId, x -> x, (old, value) -> old));
         page.convert(jobWorkNodePo -> {
             JobWorkRunNodeVo jobWorkNodeVo = BeanUtil.toBean(jobWorkNodePo, JobWorkRunNodeVo.class);
-            jobWorkNodeVo.setNodeTypeName(NodeTypeEnum.getValue(jobWorkNodePo.getNodeType()));
+            jobWorkNodeVo.setNodeTypeName(NodeTypeEnum.getValueByCode(jobWorkNodePo.getNodeType()));
             jobWorkNodeVo.setWorkName(finalWorkMap.get(jobWorkNodePo.getWorkId()));
             JobWorkRunNodePo runNodePo = runNodeMap.get(jobWorkNodePo.getNodeId());
             fillRunNodeInfo(jobWorkNodeVo, runNodePo);

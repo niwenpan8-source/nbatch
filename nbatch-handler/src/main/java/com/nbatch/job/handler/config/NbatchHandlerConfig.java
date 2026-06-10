@@ -17,7 +17,7 @@ import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.nbatch.job.handler.enums.NodeTypeEnum.*;
+import static com.nbatch.job.core.enums.NodeTypeEnum.*;
 
 /**
  * @description: 配置类

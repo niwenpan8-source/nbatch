@@ -11,7 +11,7 @@ import com.nbatch.job.admin.core.domain.vo.JobWorkNodeVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeLogVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeVo;
 import com.nbatch.job.admin.core.enums.DbTypeEnum;
-import com.nbatch.job.admin.core.enums.NodeTypeEnum;
+import com.nbatch.job.core.enums.NodeTypeEnum;
 import com.nbatch.job.admin.service.IJobWorkNodeService;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.constant.HandleCodeConstant;

@@ -4,7 +4,6 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.annotation.DbType;
 import com.nbatch.job.core.biz.model.ExecuteDbToFileParam;
 import com.nbatch.job.core.biz.model.ExecuteNodeParam;
 import com.nbatch.job.handler.constant.JobHandlerPropertiesConstant;
@@ -19,8 +18,7 @@ import java.io.File;
 import static com.nbatch.job.handler.constant.JobHandlerConstant.FILE_TYPE_SUFFIX_CSV;
 import static com.nbatch.job.handler.constant.JobHandlerConstant.FILE_TYPE_SUFFIX_EXECUTE;
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_UPDATE_SQL_FAIL;
-import static com.nbatch.job.handler.enums.NodeTypeEnum.NODE_TYPE_DB_TO_FILE;
-import static com.nbatch.job.handler.enums.NodeTypeEnum.NODE_TYPE_FILE_TO_DB;
+import static com.nbatch.job.core.enums.NodeTypeEnum.NODE_TYPE_DB_TO_FILE;
 
 /**
  * @description: 文件导入数据库处理

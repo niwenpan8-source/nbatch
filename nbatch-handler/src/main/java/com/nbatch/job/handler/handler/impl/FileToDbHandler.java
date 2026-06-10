@@ -2,11 +2,9 @@ package com.nbatch.job.handler.handler.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.annotation.DbType;
 import com.nbatch.job.core.biz.model.ExecuteFileToDbParam;
 import com.nbatch.job.core.biz.model.ExecuteNodeParam;
 import com.nbatch.job.handler.constant.JobHandlerPropertiesConstant;
@@ -19,12 +17,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
-import java.util.List;
 
 import static com.nbatch.job.handler.constant.JobHandlerConstant.FILE_TYPE_SUFFIX_CSV;
 import static com.nbatch.job.handler.constant.JobHandlerConstant.TODAY_TABLE_SUFFIX;
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.FILE_TO_DB_FAIL;
-import static com.nbatch.job.handler.enums.NodeTypeEnum.NODE_TYPE_FILE_TO_DB;
+import static com.nbatch.job.core.enums.NodeTypeEnum.NODE_TYPE_FILE_TO_DB;
 
 /**
  * @description: 文件导入数据库处理

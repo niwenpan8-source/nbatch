@@ -7,17 +7,15 @@ import com.nbatch.job.core.biz.model.ExecuteWorkParam;
 import com.nbatch.job.core.context.BatchJobHelper;
 import com.nbatch.job.core.enums.FlowRunStatusEnum;
 import com.nbatch.job.core.handler.IJobHandlerHolder;
-import com.nbatch.job.handler.enums.NodeTypeEnum;
+import com.nbatch.job.core.enums.NodeTypeEnum;
 import com.nbatch.job.handler.exception.HandlerException;
 import com.nbatch.job.handler.thread.BatchRunnable;
 import com.nbatch.job.handler.thread.BatchThreadPoolExecutor;
 import com.nbatch.job.handler.utils.BatchThreadPoolUtil;
 import lombok.RequiredArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 

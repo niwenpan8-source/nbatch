@@ -9,7 +9,7 @@ import com.nbatch.job.handler.handler.JobNodeHandlerAdapter;
 import com.nbatch.job.handler.helper.DialectHelper;
 import lombok.RequiredArgsConstructor;
 
-import static com.nbatch.job.handler.enums.NodeTypeEnum.NODE_TYPE_STORE_PROCEDURE;
+import static com.nbatch.job.core.enums.NodeTypeEnum.NODE_TYPE_STORE_PROCEDURE;
 
 /**
  * @description: 存储过程
