@@ -8,3 +8,6 @@ target/
 .env
 .env.*
 !.env.example
+data/
+file/
+log/
