@@ -53,6 +53,13 @@ public class JobWorkVo {
 
     private Integer version;
 
+    /**
+     * 初始化翻牌日期
+     */
+    private Date initTurnDate;
+
+    private String initTurnDateText;
+
     private Date createTime;
 
     private Date updateTime;

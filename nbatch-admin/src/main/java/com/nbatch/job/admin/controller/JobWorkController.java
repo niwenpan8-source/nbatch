@@ -54,6 +54,12 @@ public class JobWorkController {
         return jobWorkService.pageList(param);
     }
 
+    @ResponseBody
+    @PostMapping("/detail")
+    public ReturnT<Map<String, Object>> detail(String workId) {
+        return jobWorkService.detail(workId);
+    }
+
     @RequestMapping("/delete")
     @ResponseBody
     public ReturnT<String> delete(String id) {
@@ -77,6 +83,15 @@ public class JobWorkController {
     @ResponseBody
     public ReturnT<String> rerunLatestRunWork(String workId) {
         return jobWorkService.rerunLatestRunWork(workId);
+    }
+
+    /**
+     * 按初始化翻牌日期重跑指定流程。
+     */
+    @RequestMapping("/rerunFromInitTurnDate")
+    @ResponseBody
+    public ReturnT<String> rerunFromInitTurnDate(String workId) {
+        return jobWorkService.rerunFromInitTurnDate(workId);
     }
 
     @RequestMapping("/addModel")

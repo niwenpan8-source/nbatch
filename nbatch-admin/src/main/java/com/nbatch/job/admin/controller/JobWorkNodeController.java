@@ -55,6 +55,12 @@ public class JobWorkNodeController {
         return jobWorkNodeService.pageList(param);
     }
 
+    @ResponseBody
+    @PostMapping("/detail")
+    public ReturnT<Map<String, Object>> detail(String nodeId) {
+        return jobWorkNodeService.detail(nodeId);
+    }
+
     @RequestMapping("/delete")
     @ResponseBody
     public ReturnT<String> delete(String id) {
@@ -130,6 +136,12 @@ public class JobWorkNodeController {
     @ResponseBody
     public ReturnT<String> rerunNode(String runNodeId) {
         return jobWorkNodeService.rerunNode(runNodeId);
+    }
+
+    @RequestMapping("/rerunFromInitTurnDate")
+    @ResponseBody
+    public ReturnT<String> rerunNodeFromInitTurnDate(String runNodeId) {
+        return jobWorkNodeService.rerunNodeFromInitTurnDate(runNodeId);
     }
 
     @ResponseBody

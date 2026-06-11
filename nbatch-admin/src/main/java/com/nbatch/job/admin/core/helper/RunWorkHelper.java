@@ -72,7 +72,10 @@ public class RunWorkHelper {
                         .orderByDesc(JobWorkRunPo::getCreateTime));
         JobWorkRunPo jobRunWorkPo = null;
         if (CollUtil.isEmpty(notCompleteJobRunWorkList)) {
-            jobRunWorkPo = initRunWork(jobWorkPo.getWorkId(), jobWorkPo.getWorkType(), DateUtil.parseDate(DateUtil.today()));
+            Date initTurnDate = jobWorkPo.getInitTurnDate() == null
+                    ? DateUtil.parseDate(DateUtil.today())
+                    : DateUtil.parseDate(DateUtil.formatDate(jobWorkPo.getInitTurnDate()));
+            jobRunWorkPo = initRunWork(jobWorkPo.getWorkId(), jobWorkPo.getWorkType(), initTurnDate);
         } else {
             JobWorkRunPo lastJobRunWorkPo = notCompleteJobRunWorkList.get(0);
             // 如果运行状态为待执行或者进行中，则不处理

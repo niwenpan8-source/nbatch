@@ -58,10 +58,10 @@
                        value="<#if model?? && model.cronExpression??>${model.cronExpression}</#if>">
             </div>
 
-            <label class="col-sm-2 control-label">${I18n.job_work_field_turn_time}</label>
+            <label class="col-sm-2 control-label">初始化翻牌日期</label>
             <div class="col-sm-4">
-                <input type="text" class="form-control" id="turnTime" name="turnTime" placeholder="yyyy-MM-dd"
-                       value="<#if model?? && model.turnTime??>${model.turnTime?string('yyyy-MM-dd')}</#if>">
+                <input type="text" class="form-control" id="initTurnDate" name="initTurnDate" placeholder="yyyy-MM-dd"
+                       value="<#if model?? && model.initTurnDate??>${model.initTurnDate?string('yyyy-MM-dd')}</#if>">
             </div>
         </div>
 
@@ -94,7 +94,8 @@
         var laydate = layui.laydate;
         // 渲染
         laydate.render({
-            elem: '#turnTime'
+            elem: '#initTurnDate',
+            max: 0
         });
     });
 

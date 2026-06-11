@@ -56,4 +56,9 @@ public class JobWorkPo extends Model<JobWorkPo> {
 	 */
 	private Integer version;
 
+	/**
+	 * 初始化翻牌日期
+	 */
+	private Date initTurnDate;
+
 }

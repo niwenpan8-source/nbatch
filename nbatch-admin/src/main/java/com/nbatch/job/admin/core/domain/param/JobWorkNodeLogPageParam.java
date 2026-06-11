@@ -6,8 +6,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
-
 /**
  * @description: 作业节点表
  * @author: Mr.ni
@@ -25,8 +23,8 @@ public class JobWorkNodeLogPageParam extends BaseModel<JobWorkNodePageParam> {
 
     private String runNodeId;
 
-    private Date startTime;
+    private String startTime;
 
-    private Date endTime;
+    private String endTime;
 
 }
