@@ -15,4 +15,6 @@ public class JobWorkPageParam extends BaseModel<JobWorkPageParam> {
 
     private Integer workStatus;
 
+    private String workName;
+
 }

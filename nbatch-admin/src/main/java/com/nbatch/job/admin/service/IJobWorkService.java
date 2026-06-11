@@ -42,6 +42,11 @@ public interface IJobWorkService {
     JobWorkVo getModel(String id);
 
     /**
+     * 获取作业详情和运行历史
+     */
+    ReturnT<Map<String, Object>> detail(String workId);
+
+    /**
      * 删除
      */
     int delete(String id);
@@ -55,4 +60,9 @@ public interface IJobWorkService {
      * 重跑最新运行作业
      */
     ReturnT<String> rerunLatestRunWork(String workId);
+
+    /**
+     * 按初始化翻牌日期重跑
+     */
+    ReturnT<String> rerunFromInitTurnDate(String workId);
 }

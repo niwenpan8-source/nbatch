@@ -243,6 +243,7 @@ CREATE TABLE `nbatch_job_work` (
   `work_type` tinyint NOT NULL DEFAULT '0' COMMENT '作业类型 => 0:翻牌类型，1：顺序类型',
   `work_status` tinyint NOT NULL DEFAULT '0' COMMENT '作业状态：0=停用、1=启用',
   `version` int DEFAULT '0' COMMENT '流程版本号',
+  `init_turn_date` date DEFAULT NULL COMMENT '初始化翻牌日期',
   PRIMARY KEY (`work_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='作业表';
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -253,7 +254,7 @@ CREATE TABLE `nbatch_job_work` (
 
 LOCK TABLES `nbatch_job_work` WRITE;
 /*!40000 ALTER TABLE `nbatch_job_work` DISABLE KEYS */;
-INSERT INTO `nbatch_job_work` VALUES ('1991745845269688321','测试作业','用于测试',0,2,0),('2001905454051495938','测试-lua脚本作业','测试-lua脚本作业',0,1,0),('2011630712279064578','将gauss数据库中的数据迁移到clickhouse数据库','用于测试',0,1,0),('2042786427320209409','测试执行存储过程','用于测试',0,0,0);
+INSERT INTO `nbatch_job_work` VALUES ('1991745845269688321','测试作业','用于测试',0,2,0,NULL),('2001905454051495938','测试-lua脚本作业','测试-lua脚本作业',0,1,0,NULL),('2011630712279064578','将gauss数据库中的数据迁移到clickhouse数据库','用于测试',0,1,0,NULL),('2042786427320209409','测试执行存储过程','用于测试',0,0,0,NULL);
 /*!40000 ALTER TABLE `nbatch_job_work` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -489,6 +490,7 @@ CREATE TABLE `nbatch_job_work_run_node_log_detail` (
   `node_id` varchar(32) NOT NULL COMMENT '作业节点id',
   `run_node_id` varchar(32) NOT NULL COMMENT '运行作业节点id',
   `handle_msg` text COMMENT '执行信息',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   `execute_time` datetime DEFAULT NULL COMMENT '执行-时间',
   `call_back_time` datetime DEFAULT NULL COMMENT '执行-时间',
   PRIMARY KEY (`detail_log_id`)

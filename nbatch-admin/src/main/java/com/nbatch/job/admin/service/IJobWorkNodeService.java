@@ -47,6 +47,11 @@ public interface IJobWorkNodeService {
     JobWorkNodeVo getModel(String id);
 
     /**
+     * 获取节点详情和运行历史
+     */
+    ReturnT<Map<String, Object>> detail(String nodeId);
+
+    /**
      * 删除
      */
     int delete(String id);
@@ -90,5 +95,10 @@ public interface IJobWorkNodeService {
      * 重跑节点及其后继节点
      */
     ReturnT<String> rerunNode(String runNodeId);
+
+    /**
+     * 按初始化翻牌日期重跑节点及其后继节点
+     */
+    ReturnT<String> rerunNodeFromInitTurnDate(String runNodeId);
 
 }

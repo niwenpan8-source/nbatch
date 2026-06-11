@@ -10,6 +10,8 @@
         .layui-card {border-radius: 12px; box-shadow: 0 8px 24px rgba(15, 23, 42, .08); overflow: hidden;}
         .layui-card-header {font-weight: 600;}
         .log-toolbar {margin-bottom: 12px; color: #4b5563;}
+        .log-filter {display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px;}
+        .log-filter .layui-input {width: 260px; height: 30px;}
     </style>
 </head>
 <body>
@@ -22,7 +24,12 @@
             <div class="layui-row layui-col-space10 log-toolbar">
                 <div class="layui-col-md3">节点：${workNode.nodeName}</div>
                 <div class="layui-col-md4">节点ID：${workNode.nodeId}</div>
-                <div class="layui-col-md2"><button class="layui-btn layui-btn-normal layui-btn-sm" id="searchLogBtn">刷新</button></div>
+                <div class="layui-col-md5 log-filter">
+                    <label>创建时间：</label>
+                    <input type="text" class="layui-input" id="createTimeRange" placeholder="开始日期 - 结束日期">
+                    <button class="layui-btn layui-btn-normal layui-btn-sm" id="searchLogBtn">查询</button>
+                    <button class="layui-btn layui-btn-primary layui-btn-sm" id="resetLogBtn">重置</button>
+                </div>
             </div>
             <table class="layui-table" id="work_node_log_list" lay-filter="work_node_log_list"></table>
         </div>
@@ -33,18 +40,43 @@
 <script src="${request.contextPath}/static/plugins/layui/layui.js"></script>
 
 <script>
-    layui.use(['table'], function(){
+    layui.use(['table', 'laydate'], function(){
         var table = layui.table;
+        var laydate = layui.laydate;
         var $ = layui.$;
         var base_url = '${request.contextPath}';
         var workId = $('#workId').val();
         var nodeId = $('#nodeId').val();
 
+        function escapeHtml(value) {
+            if (value === null || value === undefined) {
+                return '';
+            }
+            return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function shortText(value) {
+            var text = value || '';
+            var escaped = escapeHtml(text);
+            if (text.length <= 120) {
+                return '<span>' + escaped + '</span>';
+            }
+            return '<span>' + escapeHtml(text.substring(0, 120)) + '...</span> ' +
+                '<a href="javascript:void(0);" class="show-full-log" data-log="' + escaped + '">详情</a>';
+        }
+
+        function logWhere() {
+            var range = $('#createTimeRange').val().split(' - ');
+            return {nodeId: nodeId, workId: workId, startTime: range[0] || '', endTime: range[1] || ''};
+        }
+
+        laydate.render({elem: '#createTimeRange', type: 'date', range: true});
+
         table.render({
             elem: '#work_node_log_list',
             url: base_url + '/node/logPageList',
             method: 'post',
-            where: {nodeId: nodeId, workId: workId},
+            where: logWhere(),
             request: {pageName: 'start', limitName: 'length'},
             parseData: function(res){
                 var content = res && res.content ? res.content : {};
@@ -59,7 +91,7 @@
                 {field: 'runWorkId', title: '运行作业ID', width: 180},
                 {field: 'runNodeId', title: '运行节点ID', width: 180},
                 {field: 'handleCode', title: '执行状态', width: 100},
-                {field: 'handleMsg', title: '执行信息', minWidth: 260},
+                {field: 'handleMsg', title: '执行信息', minWidth: 260, templet: function(row) { return shortText(row.handleMsg); }},
                 {field: 'createTime', title: '创建时间', width: 170},
                 {field: 'callBackTime', title: '回调时间', width: 170}
             ]],
@@ -70,7 +102,14 @@
         });
 
         $('#searchLogBtn').on('click', function(){
-            table.reload('work_node_log_list', {where: {nodeId: nodeId, workId: workId}});
+            table.reload('work_node_log_list', {where: logWhere(), page: {curr: 1}});
+        });
+        $('#resetLogBtn').on('click', function(){
+            $('#createTimeRange').val('');
+            $('#searchLogBtn').click();
+        });
+        $(document).on('click', '.show-full-log', function(){
+            layer.open({type: 1, title: '日志详情', area: ['860px', '560px'], content: '<pre style="white-space:pre-wrap;word-break:break-word;padding:16px;max-height:500px;overflow:auto;">' + $(this).attr('data-log') + '</pre>'});
         });
     });
 </script>

@@ -23,5 +23,10 @@ public class JobWorkNodePageParam extends BaseModel<JobWorkNodePageParam> {
      */
     private String workId;
 
+    /**
+     * 节点名称
+     */
+    private String nodeName;
+
 
 }

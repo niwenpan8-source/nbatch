@@ -50,6 +50,12 @@ public class JobWorkParam {
 
     private Integer version;
 
+    /**
+     * 初始化翻牌日期
+     */
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private Date initTurnDate;
+
     private Date createTime;
 
     private Date updateTime;

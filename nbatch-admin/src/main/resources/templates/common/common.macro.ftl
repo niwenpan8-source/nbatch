@@ -31,17 +31,19 @@
         .box .box-body {padding: 20px; overflow-x: auto; overflow-y: visible;}
         .box .box-body.dropdown-open {padding-bottom: 180px;}
         .table {margin-bottom: 0; table-layout: auto;}
+        .table-responsive-wrap {width: 100%; overflow-x: auto; overflow-y: visible;}
+        .table-fixed-wide {table-layout: fixed;}
         .table > thead > tr > th {background: #f8fafc; color: #374151; font-weight: 600; white-space: nowrap;}
         .table > thead > tr > th, .table > tbody > tr > td {vertical-align: middle;}
         .table > tbody > tr > td {word-break: break-word;}
         .table .label {display: inline-block; min-width: 48px; padding: 4px 7px;}
-        .table-action-cell {width: 220px; min-width: 180px; white-space: normal;}
+        .table-action-cell {width: 120px; min-width: 110px; white-space: nowrap; text-align: left;}
         .table-action-cell .btn {margin: 0 4px 6px 0;}
         .table-action-cell .btn-group .btn {margin: 0;}
         .table-action-cell .btn-group .dropdown-toggle {padding-left: 10px; padding-right: 10px;}
         .table-action-buttons {display: flex; flex-wrap: wrap; gap: 6px; align-items: center;}
         .table-action-buttons .btn {margin: 0;}
-        .table .dropdown-menu {z-index: 2147483647;}
+        .table .dropdown-menu {z-index: 2147483647; min-width: 128px;}
         .table td .btn-group, .table td .dropdown {position: relative;}
         .box-header.with-border {padding-bottom: 14px;}
         .box-header .box-tools .btn {min-width: 82px; border-radius: 4px; font-weight: 500;}
