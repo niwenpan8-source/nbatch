@@ -8,7 +8,6 @@ import com.nbatch.job.admin.core.complete.JobCompleter;
 import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
 import com.nbatch.job.admin.core.domain.po.JobRegistryPo;
-import com.nbatch.job.admin.core.helper.RunNodeHelper.NodeStatusContext;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.ReturnT;
@@ -24,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.nbatch.job.core.enums.CallbackTypeEnum.LOG_CALLBACK;
-import static com.nbatch.job.core.enums.CallbackTypeEnum.NODE_STATUS_CALLBACK;
 
 /**
  * job lose-monitor instance
@@ -166,8 +164,6 @@ public class JobCompleteHelper {
     private ReturnT<String> callback(HandleCallbackParam handleCallbackParam) {
         if (StrUtil.equals(handleCallbackParam.getCallBackType(), LOG_CALLBACK.getValue())) {
             return logCallback(handleCallbackParam);
-        } else if (StrUtil.equals(handleCallbackParam.getCallBackType(), NODE_STATUS_CALLBACK.getValue())) {
-            return nodeStatusCallback(handleCallbackParam);
         }
         return ReturnT.SUCCESS;
     }
@@ -201,28 +197,6 @@ public class JobCompleteHelper {
         logInfo.setHandleCode(handleCallbackParam.getLogCallBackParam().getHandleCode());
         logInfo.setHandleMsg(handleMsg.toString());
         JobCompleter.updateHandleInfoAndFinish(logInfo);
-        return ReturnT.SUCCESS;
-    }
-
-    /**
-     * 节点状态回调
-     */
-    private ReturnT<String> nodeStatusCallback(HandleCallbackParam handleCallbackParam) {
-        log.info(">>>>>>>>>>> job, node status callback, handleCallbackParam: {}", handleCallbackParam);
-        HandleCallbackParam.NodeStatusCallbackParam nodeStatusCallbackParam
-                = handleCallbackParam.getNodeStatusCallbackParam();
-        if (nodeStatusCallbackParam.getHandleCode() == HandleCodeConstant.HANDLE_CODE_SUCCESS) {
-            JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                    .handleNodeStatus(NodeStatusContext.complete(nodeStatusCallbackParam.getRunNodeId(),
-                            nodeStatusCallbackParam.getRunWorkId(), nodeStatusCallbackParam.getWorkType()));
-        } else {
-            JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                    .handleNodeStatus(NodeStatusContext.retryFail(nodeStatusCallbackParam.getRunNodeId()));
-        }
-        JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                .updateCallBackRunNodeLog(nodeStatusCallbackParam.getNodeLogId()
-                        , nodeStatusCallbackParam.getHandleCode()
-                        , nodeStatusCallbackParam.getHandleMsg());
         return ReturnT.SUCCESS;
     }
 

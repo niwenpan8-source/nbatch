@@ -19,6 +19,8 @@ $(function () {
             labelClass = 'label-info';
         } else if (status === 3) {
             labelClass = 'label-danger';
+        } else if (status === 4) {
+            labelClass = 'label-warning';
         }
         return '<small class="label ' + labelClass + '">' + escapeHtml(text || '-') + '</small>';
     }
@@ -65,13 +67,14 @@ $(function () {
                 '<td>' + dateTimeOrDash(item.createTime) + '</td>' +
                 '<td>' + escapeHtml(item.nodeCount == null ? 0 : item.nodeCount) + '</td>' +
                 '<td>' + escapeHtml(item.completeCount == null ? 0 : item.completeCount) + '</td>' +
+                '<td>' + escapeHtml(item.dispatchedCount == null ? 0 : item.dispatchedCount) + '</td>' +
                 '<td>' + escapeHtml(item.runningCount == null ? 0 : item.runningCount) + '</td>' +
                 '<td>' + escapeHtml(item.exceptionCount == null ? 0 : item.exceptionCount) + '</td>' +
                 '<td>' + escapeHtml(item.waitCount == null ? 0 : item.waitCount) + '</td>' +
                 '</tr>';
         }).join('');
         if (!runRows) {
-            runRows = '<tr><td colspan="10" class="text-center">暂无运行记录</td></tr>';
+            runRows = '<tr><td colspan="11" class="text-center">暂无运行记录</td></tr>';
         }
         return '<div class="work-detail-panel">' +
             detailItem('作业ID', textOrDash(data.workId), 'run-info-id') +
@@ -85,7 +88,7 @@ $(function () {
             '</div>' +
             '<div class="detail-section-title">运行历史</div>' +
             '<table class="table table-bordered table-striped detail-history-table"><thead><tr>' +
-            '<th>#</th><th>运行ID</th><th>翻牌日期</th><th>状态</th><th>创建时间</th><th>节点数</th><th>完成</th><th>运行中</th><th>异常</th><th>待执行</th>' +
+            '<th>#</th><th>运行ID</th><th>翻牌日期</th><th>状态</th><th>创建时间</th><th>节点数</th><th>完成</th><th>已下发</th><th>运行中</th><th>异常</th><th>待执行</th>' +
             '</tr></thead><tbody>' + runRows + '</tbody></table>';
     }
 
@@ -155,7 +158,7 @@ $(function () {
                     return function () {
                         tableData['key' + row.workId] = row;
                         var recoverBtn = '';
-                        if (row.runWorkId && (row.runWorkStatus === 1 || row.runWorkStatus === 3)) {
+                        if (row.runWorkId && (row.runWorkStatus === 1 || row.runWorkStatus === 3 || row.runWorkStatus === 4)) {
                             recoverBtn = '<li><a href="javascript:void(0);" class="recover" data-run-work-id="' + escapeHtml(row.runWorkId) + '">恢复重跑</a></li>';
                         }
                         // Latest-run rerun is only meaningful when the workflow has at least one run record.

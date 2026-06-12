@@ -28,5 +28,10 @@ public class JobWorkNodePageParam extends BaseModel<JobWorkNodePageParam> {
      */
     private String nodeName;
 
+    /**
+     * 最新运行节点状态
+     */
+    private Integer nodeRunStatus;
+
 
 }

@@ -28,8 +28,6 @@ public class HandleCallbackParam implements Serializable {
 
     private LogCallBackParam logCallBackParam = new LogCallBackParam();
 
-    private NodeStatusCallbackParam nodeStatusCallbackParam = new NodeStatusCallbackParam();
-
     /**
      * 日志回调参数
      */
@@ -49,54 +47,6 @@ public class HandleCallbackParam implements Serializable {
 
         /**
          * 处理信息
-         */
-        private String handleMsg;
-
-    }
-
-    /**
-     * 节点状态回调参数
-     */
-    @Data
-    @Accessors(chain = true)
-    public static class NodeStatusCallbackParam {
-
-        /**
-         * 运行作业id
-         */
-        private String workId;
-        private String runWorkId;
-
-        /**
-         * 节点id
-         */
-        private String nodeId;
-        private String runNodeId;
-
-        /**
-         * 节点日志id
-         */
-        private String nodeLogId;
-
-        /**
-         * 作业类型 => 0:翻牌类型，1：顺序类型
-         */
-        private Integer workType;
-
-        /**
-         * 处理时间
-         */
-        private long handleTime;
-
-        /**
-         * 任务执行状态
-         * 1: 成功
-         * 0: 失败
-         */
-        private int handleCode;
-
-        /**
-         * 任务执行信息
          */
         private String handleMsg;
 

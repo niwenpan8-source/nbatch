@@ -15,6 +15,7 @@ import com.nbatch.job.core.enums.NodeTypeEnum;
 import com.nbatch.job.admin.service.IJobWorkNodeService;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.constant.HandleCodeConstant;
+import com.nbatch.job.core.enums.FlowRunStatusEnum;
 import com.nbatch.job.core.enums.ScriptTypeEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -46,6 +47,7 @@ public class JobWorkNodeController {
         List<JobWorkPo> allEnableWorkList = jobWorkNodeService.getAllWorkList();
         model.addAttribute("allEnableWorkList", allEnableWorkList);
         model.addAttribute("nodeTypeEnum", NodeTypeEnum.values());
+        model.addAttribute("runStatusEnum", FlowRunStatusEnum.values());
         return "worknode/worknode.index";
     }
 

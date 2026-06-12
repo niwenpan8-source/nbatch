@@ -18,7 +18,6 @@ import com.nbatch.job.core.biz.model.ExecuteWorkParam;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.TriggerParam;
 import com.nbatch.job.core.constant.HandleCodeConstant;
-import com.nbatch.job.core.enums.FlowStatusEnum;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
@@ -135,22 +134,19 @@ public class JobWorkRunNodeHelper {
                 RUN_WORK_ID_CACHE.put(executeWorkParam.getRunWorkId(), context);
                 executeWorkParam.setExecutorAddress(address);
 
-                JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                        .handleNodeStatus(NodeStatusContext.runStatus(triggerParam.getExecuteWorkParam(), FlowStatusEnum.START.getCode()));
                 ReturnT<String> runResult = executorBiz.run(triggerParam);
 
                 // 如果存在网络问题，则将运行作业标记为异常
-                if (runResult.getCode() >= HandleCodeConstant.HANDLE_CODE_FAIL) {
-                    for (ExecuteNodeParam executeNodeParam : executeWorkParam.getExecuteNodeParamList()) {
-                        // 如果说网络异常可以将该节点标记为异常
-                        JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                                .updateCallBackRunNodeLog(executeNodeParam.getNodeLogId()
-                                        , HandleCodeConstant.HANDLE_CODE_FAIL
-                                        , runResult.getMsg());
-                    }
-                    if (runResult.getCode() >= HandleCodeConstant.HANDLE_CODE_TIMEOUT) {
+                if (runResult == null || runResult.getCode() >= HandleCodeConstant.HANDLE_CODE_FAIL) {
+                    String handleMsg = runResult == null ? "运行节点下发失败" : runResult.getMsg();
+                    JobAdminConfig.getAdminConfig().getRunNodeHelper()
+                            .markRunNodesDispatchFailed(executeWorkParam, handleMsg);
+                    if (runResult == null || runResult.getCode() >= HandleCodeConstant.HANDLE_CODE_TIMEOUT) {
                         RUN_WORK_ID_CACHE.remove(jobRunWorkPo.getRunWorkId());
                     }
+                } else {
+                    JobAdminConfig.getAdminConfig().getRunNodeHelper()
+                            .handleNodeStatus(NodeStatusContext.dispatched(executeWorkParam));
                 }
             }
         } catch (Exception e) {

@@ -19,6 +19,8 @@ public enum FlowRunStatusEnum {
     COMPLETE(2, "执行完毕"),
 
     EXCEPTION(3, "执行异常"),
+
+    DISPATCHED(4, "已下发"),
     ;
 
     /**

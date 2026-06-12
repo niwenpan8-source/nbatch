@@ -170,7 +170,10 @@ public class RunWorkHelper {
      */
     public List<JobWorkRunPo> getAllNeedRunWorkList() {
         return jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkRunPo.class)
-                .in(JobWorkRunPo::getRunWorkStatus, FlowRunStatusEnum.WAIT.getCode(), FlowRunStatusEnum.RUNNING.getCode())
+                .in(JobWorkRunPo::getRunWorkStatus,
+                        FlowRunStatusEnum.WAIT.getCode(),
+                        FlowRunStatusEnum.DISPATCHED.getCode(),
+                        FlowRunStatusEnum.RUNNING.getCode())
                 .orderByAsc(JobWorkRunPo::getCreateTime));
     }
 
@@ -179,7 +182,10 @@ public class RunWorkHelper {
      */
     public void updateWorkTurnDate() {
         List<JobWorkRunPo> jobRunWorkList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkRunPo.class)
-                .in(JobWorkRunPo::getRunWorkStatus, FlowRunStatusEnum.RUNNING.getCode(), FlowRunStatusEnum.WAIT.getCode()));
+                .in(JobWorkRunPo::getRunWorkStatus,
+                        FlowRunStatusEnum.RUNNING.getCode(),
+                        FlowRunStatusEnum.DISPATCHED.getCode(),
+                        FlowRunStatusEnum.WAIT.getCode()));
         for (JobWorkRunPo jobRunWorkPo : jobRunWorkList) {
             List<JobWorkRunNodePo> jobWorkRunNodePos = jobWorkRunNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
                     .eq(JobWorkRunNodePo::getRunWorkId, jobRunWorkPo.getRunWorkId()));

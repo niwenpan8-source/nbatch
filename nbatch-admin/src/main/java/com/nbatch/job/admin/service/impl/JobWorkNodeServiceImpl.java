@@ -50,6 +50,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -97,10 +98,12 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
      */
     @Override
     public Map<String, Object> pageList(JobWorkNodePageParam param) {
+        Set<String> runStatusNodeIdSet = getLatestRunStatusNodeIdSet(param.getNodeRunStatus());
         Page<JobWorkNodePo> page = jobWorkNodeMapper.selectPage(new Page<>((param.getStart() / param.getLength()) + 1, param.getLength()),
                 Wrappers.lambdaQuery(JobWorkNodePo.class)
                         .eq(StrUtil.isNotBlank(param.getWorkId()), JobWorkNodePo::getWorkId, param.getWorkId())
                         .eq(StrUtil.isNotBlank(param.getNodeType()), JobWorkNodePo::getNodeType, param.getNodeType())
+                        .in(param.getNodeRunStatus() != null, JobWorkNodePo::getNodeId, runStatusNodeIdSet)
                         .like(StrUtil.isNotBlank(param.getNodeName()), JobWorkNodePo::getNodeName, param.getNodeName()));
 
         List<JobWorkPo> jobWorkPos = jobWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkPo.class));
@@ -134,6 +137,27 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
         // 分页列表
         maps.put("data", page.getRecords());
         return maps;
+    }
+
+    private Set<String> getLatestRunStatusNodeIdSet(Integer nodeRunStatus) {
+        if (nodeRunStatus == null) {
+            return Collections.emptySet();
+        }
+        List<JobWorkRunNodePo> runNodeList = jobWorkRunNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
+                .orderByDesc(JobWorkRunNodePo::getCreateTime));
+        if (CollUtil.isEmpty(runNodeList)) {
+            return Collections.singleton("__none__");
+        }
+        Map<String, JobWorkRunNodePo> latestRunNodeMap = new LinkedHashMap<>();
+        for (JobWorkRunNodePo runNodePo : runNodeList) {
+            latestRunNodeMap.putIfAbsent(runNodePo.getNodeId(), runNodePo);
+        }
+        Set<String> nodeIdSet = latestRunNodeMap.values().stream()
+                .filter(runNodePo -> runNodePo.getNodeRunStatus() != null
+                        && runNodePo.getNodeRunStatus().equals(nodeRunStatus))
+                .map(JobWorkRunNodePo::getNodeId)
+                .collect(Collectors.toSet());
+        return nodeIdSet.isEmpty() ? Collections.singleton("__none__") : nodeIdSet;
     }
 
     /**

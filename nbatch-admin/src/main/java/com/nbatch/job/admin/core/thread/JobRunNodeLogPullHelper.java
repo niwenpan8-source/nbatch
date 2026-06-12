@@ -160,7 +160,7 @@ public class JobRunNodeLogPullHelper {
             return;
         }
         JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                .updateRunNodeLogHandle(eventParam.getNodeLogId(), 0, "运行节点执行中");
+                .markRunNodeStarted(eventParam, "运行节点执行中");
     }
 
     /**

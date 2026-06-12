@@ -19,6 +19,8 @@ $(function () {
             labelClass = 'label-info';
         } else if (status === 3) {
             labelClass = 'label-danger';
+        } else if (status === 4) {
+            labelClass = 'label-warning';
         }
         return '<small class="label ' + labelClass + '">' + escapeHtml(text || '-') + '</small>';
     }
@@ -178,6 +180,7 @@ $(function () {
                 obj.nodeName = $('#nodeName').val();
                 obj.nodeType = $('#nodeType').val();
                 obj.workId = $('#workId').val();
+                obj.nodeRunStatus = $('#nodeRunStatus').val();
                 obj.start = d.start;
                 obj.length = d.length;
                 return obj;

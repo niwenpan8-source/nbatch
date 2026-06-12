@@ -211,6 +211,7 @@ public class JobWorkServiceImpl implements IJobWorkService {
             item.put("createTime", runWorkPo.getCreateTime() == null ? null : DateUtil.formatDateTime(runWorkPo.getCreateTime()));
             item.put("nodeCount", nodeList.size());
             item.put("completeCount", countNodeStatus(nodeList, FlowRunStatusEnum.COMPLETE.getCode()));
+            item.put("dispatchedCount", countNodeStatus(nodeList, FlowRunStatusEnum.DISPATCHED.getCode()));
             item.put("runningCount", countNodeStatus(nodeList, FlowRunStatusEnum.RUNNING.getCode()));
             item.put("exceptionCount", countNodeStatus(nodeList, FlowRunStatusEnum.EXCEPTION.getCode()));
             item.put("waitCount", countNodeStatus(nodeList, FlowRunStatusEnum.WAIT.getCode()));
@@ -253,8 +254,9 @@ public class JobWorkServiceImpl implements IJobWorkService {
         }
         if (oldRunWorkPo.getRunWorkStatus() != null
                 && oldRunWorkPo.getRunWorkStatus() != FlowRunStatusEnum.RUNNING.getCode()
+                && oldRunWorkPo.getRunWorkStatus() != FlowRunStatusEnum.DISPATCHED.getCode()
                 && oldRunWorkPo.getRunWorkStatus() != FlowRunStatusEnum.EXCEPTION.getCode()) {
-            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "只有进行中或异常的运行作业可以恢复重跑");
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "只有已下发、进行中或异常的运行作业可以恢复重跑");
         }
 
         // 恢复重跑只处理异常/卡住的节点，已完成节点保持完成状态，避免退化成整批重跑。
@@ -265,6 +267,7 @@ public class JobWorkServiceImpl implements IJobWorkService {
                 .eq(JobWorkRunNodePo::getRunWorkId, runWorkId)
                 .in(JobWorkRunNodePo::getNodeRunStatus,
                         FlowRunStatusEnum.EXCEPTION.getCode(),
+                        FlowRunStatusEnum.DISPATCHED.getCode(),
                         FlowRunStatusEnum.RUNNING.getCode()));
         if (resetCount <= 0) {
             return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "当前运行作业没有异常或失败节点可恢复");

@@ -115,6 +115,6 @@
 <script src="${request.contextPath}/static/adminlte/bower_components/moment/moment.min.js"></script>
 <#-- cronGen -->
 <script src="${request.contextPath}/static/plugins/cronGen/cronGen<#if I18n.admin_i18n?default('')?length gt 0 >_${I18n.admin_i18n}</#if>.js"></script>
-<script src="${request.contextPath}/static/js/jobwork.index.1.js?v=20260611"></script>
+<script src="${request.contextPath}/static/js/jobwork.index.1.js?v=20260612"></script>
 </body>
 </html>

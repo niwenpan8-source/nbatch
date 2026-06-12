@@ -65,13 +65,13 @@
                         </div>
                         <div class="box-body">
                             <div class="row">
-                                <div class="col-xs-12 col-md-3">
+                                <div class="col-xs-12 col-md-2">
                                     <div class="input-group">
                                         <span class="input-group-addon">节点名称</span>
                                         <input type="text" class="form-control" id="nodeName" placeholder="请输入节点名称">
                                     </div>
                                 </div>
-                                <div class="col-xs-12 col-md-3">
+                                <div class="col-xs-12 col-md-2">
                                     <div class="input-group">
                                         <span class="input-group-addon">${I18n.job_work_node_field_type}</span>
                                         <select class="form-control" id="nodeType">
@@ -89,6 +89,17 @@
                                             <option value="">--请选择--</option>
                                             <#list allEnableWorkList as type>
                                                 <option value="${type.workId}">${type.workName}</option>
+                                            </#list>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-xs-12 col-md-2">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">运行状态</span>
+                                        <select class="form-control" id="nodeRunStatus">
+                                            <option value="">--请选择--</option>
+                                            <#list runStatusEnum as status>
+                                                <option value="${status.code}">${status.value}</option>
                                             </#list>
                                         </select>
                                     </div>
@@ -142,6 +153,6 @@
 <script src="${request.contextPath}/static/adminlte/bower_components/moment/moment.min.js"></script>
 <#-- cronGen -->
 <script src="${request.contextPath}/static/plugins/cronGen/cronGen<#if I18n.admin_i18n?default('')?length gt 0 >_${I18n.admin_i18n}</#if>.js"></script>
-<script src="${request.contextPath}/static/js/worknode.index.1.js?v=20260611"></script>
+<script src="${request.contextPath}/static/js/worknode.index.1.js?v=2026061201"></script>
 </body>
 </html>
