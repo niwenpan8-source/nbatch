@@ -18,7 +18,7 @@ public class RunNodeEventDataPath {
 
     public static void initDataPath(String dataPath) {
         if (StrUtil.isNotBlank(dataPath)) {
-            dataBasePath = buildPath(dataPath);
+            dataBasePath = dataPath;
         }
         File dataPathDir = new File(dataBasePath);
         if (!dataPathDir.exists()) {
@@ -27,11 +27,4 @@ public class RunNodeEventDataPath {
         dataBasePath = dataPathDir.getPath();
     }
 
-    private static String buildPath(String dataPath) {
-        File file = new File(dataPath);
-        if (file.isAbsolute()) {
-            return dataPath;
-        }
-        return System.getProperty("user.dir").concat(dataPath);
-    }
 }

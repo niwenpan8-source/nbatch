@@ -42,7 +42,6 @@ public class JobFileAppender {
 	@Getter
 	private static String glueSrcPath = logBasePath.concat("/gluesource");
 	public static void initLogPath(String logPath){
-		logPath = System.getProperty("user.dir") + logPath;
 		// init
 		if (StrUtil.isNotBlank(logPath)) {
 			logBasePath = logPath;
