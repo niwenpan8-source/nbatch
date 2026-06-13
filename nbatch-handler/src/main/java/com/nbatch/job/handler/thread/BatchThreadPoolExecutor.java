@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.nbatch.job.core.enums.RunNodeLogEventTypeEnum.FAIL;
 import static com.nbatch.job.core.enums.RunNodeLogEventTypeEnum.STARTED;
+import static com.nbatch.job.core.enums.RunNodeLogEventTypeEnum.STOPPED;
 import static com.nbatch.job.core.enums.RunNodeLogEventTypeEnum.SUCCESS;
 
 /**
@@ -52,12 +53,14 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
         if (r instanceof BatchRunnable) {
             BatchRunnable batchRunnable = (BatchRunnable) r;
             currentRunningTaskList.add(batchRunnable);
+            if (!batchRunnable.isStopRequested()) {
+                appendRunNodeEvent(batchRunnable, STARTED.getValue(), 0, "运行节点已接收");
+            }
         }
     }
 
 
     public boolean executeBatch(BatchRunnable runnable) {
-        appendRunNodeEvent(runnable, STARTED.getValue(), 0, "运行节点已接收");
         try {
             this.execute(runnable);
         } catch (Exception e) {
@@ -84,17 +87,54 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
             log.error("execute Runnable error, hashCode:{}", r.hashCode(), t);
             if (r instanceof BatchRunnable) {
                 BatchRunnable batchRunnable = (BatchRunnable) r;
-                appendRunNodeEvent(batchRunnable, FAIL.getValue(), HandleCodeConstant.HANDLE_CODE_FAIL, ExceptionUtil.getRootCauseMessage(t));
+                if (batchRunnable.isStopRequested()) {
+                    appendRunNodeEvent(batchRunnable, STOPPED.getValue(), HandleCodeConstant.HANDLE_CODE_FAIL, "运行节点已停止");
+                } else {
+                    appendRunNodeEvent(batchRunnable, FAIL.getValue(), HandleCodeConstant.HANDLE_CODE_FAIL, ExceptionUtil.getRootCauseMessage(t));
+                }
+                RunNodeStopRegistry.clear(batchRunnable.getNodeLogId());
             }
         } else {
             if (r instanceof BatchRunnable) {
                 BatchRunnable batchRunnable = (BatchRunnable) r;
-                appendRunNodeEvent(batchRunnable, SUCCESS.getValue(), HandleCodeConstant.HANDLE_CODE_SUCCESS, "执行成功");
+                if (batchRunnable.isStopRequested()) {
+                    appendRunNodeEvent(batchRunnable, STOPPED.getValue(), HandleCodeConstant.HANDLE_CODE_FAIL, "运行节点已停止");
+                } else {
+                    appendRunNodeEvent(batchRunnable, SUCCESS.getValue(), HandleCodeConstant.HANDLE_CODE_SUCCESS, "执行成功");
+                }
+                RunNodeStopRegistry.clear(batchRunnable.getNodeLogId());
             }
         }
 
         currentRunningTaskList.remove(r);
         super.afterExecute(r, t);
+    }
+
+    public int stopRunNodes(List<String> nodeLogIdList) {
+        if (CollUtil.isEmpty(nodeLogIdList)) {
+            return 0;
+        }
+        RunNodeStopRegistry.requestStop(nodeLogIdList);
+        int stopCount = 0;
+        for (Runnable runnable : this.getQueue()) {
+            if (runnable instanceof BatchRunnable) {
+                BatchRunnable batchRunnable = (BatchRunnable) runnable;
+                if (nodeLogIdList.contains(batchRunnable.getNodeLogId()) && this.getQueue().remove(runnable)) {
+                    batchRunnable.requestStop();
+                    appendRunNodeEvent(batchRunnable, STOPPED.getValue(), HandleCodeConstant.HANDLE_CODE_FAIL, "运行节点已停止");
+                    batchRunnable.runStop();
+                    RunNodeStopRegistry.clear(batchRunnable.getNodeLogId());
+                    stopCount++;
+                }
+            }
+        }
+        for (BatchRunnable batchRunnable : currentRunningTaskList) {
+            if (nodeLogIdList.contains(batchRunnable.getNodeLogId())) {
+                batchRunnable.requestStop();
+                stopCount++;
+            }
+        }
+        return stopCount;
     }
 
     /**

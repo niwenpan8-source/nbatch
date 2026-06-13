@@ -10,9 +10,8 @@ import com.nbatch.job.admin.core.domain.po.JobInfoPo;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkRunPo;
 import com.nbatch.job.admin.core.enums.ExecutorRouteStrategyEnum;
+import com.nbatch.job.admin.core.executor.ExecutorBizProxy;
 import com.nbatch.job.admin.core.helper.RunNodeHelper.NodeStatusContext;
-import com.nbatch.job.admin.core.scheduler.JobScheduler;
-import com.nbatch.job.core.biz.ExecutorBiz;
 import com.nbatch.job.core.biz.model.ExecuteNodeParam;
 import com.nbatch.job.core.biz.model.ExecuteWorkParam;
 import com.nbatch.job.core.biz.model.ReturnT;
@@ -126,15 +125,11 @@ public class JobWorkRunNodeHelper {
                     continue;
                 }
 
-                ExecutorBiz executorBiz = JobScheduler.getExecutorBiz(address);
-                if (executorBiz == null) {
-                    continue;
-                }
                 context.setAddress(address).setUpdateTime(System.currentTimeMillis());
                 RUN_WORK_ID_CACHE.put(executeWorkParam.getRunWorkId(), context);
                 executeWorkParam.setExecutorAddress(address);
 
-                ReturnT<String> runResult = executorBiz.run(triggerParam);
+                ReturnT<String> runResult = ExecutorBizProxy.run(address, triggerParam);
 
                 // 如果存在网络问题，则将运行作业标记为异常
                 if (runResult == null || runResult.getCode() >= HandleCodeConstant.HANDLE_CODE_FAIL) {
@@ -312,17 +307,8 @@ public class JobWorkRunNodeHelper {
      * 判断节点是否存活
      */
     private boolean isExecutorAlive(String address) {
-        try {
-            ExecutorBiz executorBiz = JobScheduler.getExecutorBiz(address);
-            if (executorBiz == null) {
-                return false;
-            }
-            ReturnT<String> beatResult = executorBiz.beat();
-            return beatResult != null && beatResult.getCode() == HandleCodeConstant.HANDLE_CODE_SUCCESS;
-        } catch (Exception e) {
-            log.warn("executor address:{} beat failed", address, e);
-            return false;
-        }
+        ReturnT<String> beatResult = ExecutorBizProxy.beat(address);
+        return beatResult != null && beatResult.getCode() == HandleCodeConstant.HANDLE_CODE_SUCCESS;
     }
 
     /**

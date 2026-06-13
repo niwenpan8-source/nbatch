@@ -20,7 +20,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.SYSTEM_ERROR;
-
 /**
  * @description: job handler 容器
  * @author: Mr.ni
@@ -116,6 +115,12 @@ public class JobHandlerHolder implements IJobHandlerHolder {
                 } finally {
                     latch.countDown();
                 }
+            }
+
+            @Override
+            public void runStop() {
+                nodeParam.setNodeRunStatus(FlowRunStatusEnum.STOPPED.getCode());
+                latch.countDown();
             }
         };
 

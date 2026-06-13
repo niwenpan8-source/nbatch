@@ -5,6 +5,7 @@ import com.nbatch.job.core.util.SpringUtil;
 import com.nbatch.job.handler.constant.JobHandlerPropertiesConstant;
 import com.nbatch.job.handler.handler.JobNodeHandlerAdapter;
 import com.nbatch.job.handler.handler.JobHandlerHolder;
+import com.nbatch.job.handler.handler.RunNodeStopHandlerImpl;
 import com.nbatch.job.handler.handler.impl.*;
 import com.nbatch.job.handler.helper.DialectHelper;
 import com.nbatch.job.handler.utils.BatchThreadPoolUtil;
@@ -82,6 +83,11 @@ public class NbatchHandlerConfig {
     @Bean(name = "jobHandlerHolder")
     public JobHandlerHolder jobHandlerHolder(Map<String, JobNodeHandlerAdapter> jobHandlerAdapterMap) {
         return new JobHandlerHolder(jobHandlerAdapterMap);
+    }
+
+    @Bean
+    public RunNodeStopHandlerImpl runNodeStopHandler() {
+        return new RunNodeStopHandlerImpl();
     }
 
 

@@ -21,6 +21,10 @@ $(function () {
             labelClass = 'label-danger';
         } else if (status === 4) {
             labelClass = 'label-warning';
+        } else if (status === 5) {
+            labelClass = 'label-primary';
+        } else if (status === 6) {
+            labelClass = 'label-default';
         }
         return '<small class="label ' + labelClass + '">' + escapeHtml(text || '-') + '</small>';
     }
@@ -67,14 +71,16 @@ $(function () {
                 '<td>' + dateTimeOrDash(item.createTime) + '</td>' +
                 '<td>' + escapeHtml(item.nodeCount == null ? 0 : item.nodeCount) + '</td>' +
                 '<td>' + escapeHtml(item.completeCount == null ? 0 : item.completeCount) + '</td>' +
+                '<td>' + escapeHtml(item.skippedCount == null ? 0 : item.skippedCount) + '</td>' +
                 '<td>' + escapeHtml(item.dispatchedCount == null ? 0 : item.dispatchedCount) + '</td>' +
                 '<td>' + escapeHtml(item.runningCount == null ? 0 : item.runningCount) + '</td>' +
                 '<td>' + escapeHtml(item.exceptionCount == null ? 0 : item.exceptionCount) + '</td>' +
+                '<td>' + escapeHtml(item.stoppedCount == null ? 0 : item.stoppedCount) + '</td>' +
                 '<td>' + escapeHtml(item.waitCount == null ? 0 : item.waitCount) + '</td>' +
                 '</tr>';
         }).join('');
         if (!runRows) {
-            runRows = '<tr><td colspan="11" class="text-center">暂无运行记录</td></tr>';
+            runRows = '<tr><td colspan="13" class="text-center">暂无运行记录</td></tr>';
         }
         return '<div class="work-detail-panel">' +
             detailItem('作业ID', textOrDash(data.workId), 'run-info-id') +
@@ -88,7 +94,7 @@ $(function () {
             '</div>' +
             '<div class="detail-section-title">运行历史</div>' +
             '<table class="table table-bordered table-striped detail-history-table"><thead><tr>' +
-            '<th>#</th><th>运行ID</th><th>翻牌日期</th><th>状态</th><th>创建时间</th><th>节点数</th><th>完成</th><th>已下发</th><th>运行中</th><th>异常</th><th>待执行</th>' +
+            '<th>#</th><th>运行ID</th><th>翻牌日期</th><th>状态</th><th>创建时间</th><th>节点数</th><th>完成</th><th>跳过</th><th>已下发</th><th>运行中</th><th>异常</th><th>停止</th><th>待执行</th>' +
             '</tr></thead><tbody>' + runRows + '</tbody></table>';
     }
 
@@ -158,8 +164,12 @@ $(function () {
                     return function () {
                         tableData['key' + row.workId] = row;
                         var recoverBtn = '';
-                        if (row.runWorkId && (row.runWorkStatus === 1 || row.runWorkStatus === 3 || row.runWorkStatus === 4)) {
+                        if (row.runWorkId && (row.runWorkStatus === 1 || row.runWorkStatus === 3 || row.runWorkStatus === 4 || row.runWorkStatus === 6)) {
                             recoverBtn = '<li><a href="javascript:void(0);" class="recover" data-run-work-id="' + escapeHtml(row.runWorkId) + '">恢复重跑</a></li>';
+                        }
+                        var stopBtn = '';
+                        if (row.runWorkId && (row.runWorkStatus === 0 || row.runWorkStatus === 1 || row.runWorkStatus === 4)) {
+                            stopBtn = '<li><a href="javascript:void(0);" class="stop-latest">停止作业</a></li>';
                         }
                         // Latest-run rerun is only meaningful when the workflow has at least one run record.
                         var rerunLatestBtn = row.runWorkId
@@ -178,6 +188,7 @@ $(function () {
                             '<li><a href="javascript:void(0);" class="delete">' + I18n.system_opt_del + '</a></li>' +
                             rerunLatestBtn +
                             rerunInitBtn +
+                            stopBtn +
                             '<li><a href="javascript:void(0);" class="edit">依赖关系</a></li>' +
                             recoverBtn +
                             '</ul></div>';
@@ -382,6 +393,35 @@ $(function () {
         });
     });
 
+    // Stop the latest run work.
+    $("#job_work_list").on('click', '.stop-latest', function () {
+        var workId = $(this).closest('[data-work-id]').attr('data-work-id');
+        layer.confirm('确认停止该流程最新一次运行作业？未完成节点将标记为已停止。', {
+            icon: 3,
+            title: I18n.system_tips,
+            btn: [I18n.system_ok, I18n.system_cancel]
+        }, function (index) {
+            layer.close(index);
+            $.ajax({
+                type: 'POST',
+                url: base_url + '/work/stopLatestRunWork',
+                data: {workId: workId},
+                dataType: 'json',
+                success: function (data) {
+                    if (data.code === 200) {
+                        layer.msg('停止成功', {icon: 1});
+                        jobWorkTable.fnDraw(false);
+                    } else {
+                        layer.msg(data.msg || '停止失败', {icon: 2});
+                    }
+                },
+                error: function () {
+                    layer.msg(I18n.system_fail, {icon: 2});
+                }
+            });
+        });
+    });
+
     // Rerun from init turn date and remove later run records.
     $("#job_work_list").on('click', '.rerun-init-turn', function () {
         var workId = $(this).closest('[data-work-id]').attr('data-work-id');
@@ -414,7 +454,7 @@ $(function () {
     // recover only failed/exception nodes in a run work
     $("#job_work_list").on('click', '.recover', function () {
         var runWorkId = $(this).attr('data-run-work-id');
-        layer.confirm('确认只恢复该运行作业中异常或失败的节点，并继续重跑？已完成节点不会重跑。', {
+        layer.confirm('确认只恢复该运行作业中异常、停止或卡住的节点，并继续重跑？已完成和已跳过节点不会重跑。', {
             icon: 3,
             title: I18n.system_tips,
             btn: [I18n.system_ok, I18n.system_cancel]

@@ -1,9 +1,8 @@
 package com.nbatch.job.admin.core.route.strategy;
 
-import com.nbatch.job.admin.core.scheduler.JobScheduler;
+import com.nbatch.job.admin.core.executor.ExecutorBizProxy;
 import com.nbatch.job.admin.core.route.ExecutorRouter;
 import com.nbatch.job.admin.core.util.I18nUtil;
-import com.nbatch.job.core.biz.ExecutorBiz;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.TriggerParam;
 import com.nbatch.job.core.constant.HandleCodeConstant;
@@ -25,15 +24,7 @@ public class ExecutorRouteFailover extends ExecutorRouter {
         StringBuilder beatResultBuilder = new StringBuilder();
         for (String address : addressList) {
             // beat
-            ReturnT<String> beatResult;
-            try {
-                ExecutorBiz executorBiz = JobScheduler.getExecutorBiz(address);
-                assert executorBiz != null;
-                beatResult = executorBiz.beat();
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-                beatResult = new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "" + e);
-            }
+            ReturnT<String> beatResult = ExecutorBizProxy.beat(address);
             beatResultBuilder.append((beatResultBuilder.length() > 0) ? "<br><br>" : "")
                     .append(I18nUtil.getString("jobconf_beat"))
                     .append("：")

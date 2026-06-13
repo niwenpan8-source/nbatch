@@ -11,12 +11,11 @@ import com.nbatch.job.admin.core.domain.po.JobGroupPo;
 import com.nbatch.job.admin.core.domain.po.JobInfoPo;
 import com.nbatch.job.admin.core.domain.po.JobLogPo;
 import com.nbatch.job.admin.core.exception.JobException;
-import com.nbatch.job.admin.core.scheduler.JobScheduler;
+import com.nbatch.job.admin.core.executor.ExecutorBizProxy;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.admin.mapper.IJobGroupMapper;
 import com.nbatch.job.admin.mapper.IJobInfoMapper;
 import com.nbatch.job.admin.mapper.IJobLogMapper;
-import com.nbatch.job.core.biz.ExecutorBiz;
 import com.nbatch.job.core.biz.model.KillParam;
 import com.nbatch.job.core.biz.model.LogParam;
 import com.nbatch.job.core.biz.model.LogResult;
@@ -159,16 +158,14 @@ public class JobLogController {
     public ReturnT<LogResult> logDetailCat(String logId, int fromLineNum) {
         try {
             // valid
-            // todo, need to improve performance
             JobLogPo jobLog = jobLogMapper.selectById(logId);
             if (jobLog == null) {
                 return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, I18nUtil.getString("joblog_logid_unvalid"));
             }
 
             // log cat
-            ExecutorBiz executorBiz = JobScheduler.getExecutorBiz(jobLog.getExecutorAddress());
-            assert executorBiz != null;
-            ReturnT<LogResult> logResult = executorBiz.log(new LogParam(jobLog.getTriggerTime().getTime(), logId, fromLineNum));
+            ReturnT<LogResult> logResult = ExecutorBizProxy.log(jobLog.getExecutorAddress(),
+                    new LogParam(jobLog.getTriggerTime().getTime(), logId, fromLineNum));
 
             // is end
             if (logResult.getContent() != null && logResult.getContent().getFromLineNum() > logResult.getContent().getToLineNum()) {
@@ -207,9 +204,7 @@ public class JobLogController {
         // request of kill
         ReturnT<String> runResult;
         try {
-            ExecutorBiz executorBiz = JobScheduler.getExecutorBiz(logInfo.getExecutorAddress());
-            assert executorBiz != null;
-            runResult = executorBiz.kill(new KillParam(jobInfo.getId()));
+            runResult = ExecutorBizProxy.kill(logInfo.getExecutorAddress(), new KillParam(jobInfo.getId()));
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             runResult = new ReturnT<>(500, e.getMessage());

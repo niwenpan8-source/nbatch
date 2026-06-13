@@ -12,7 +12,8 @@ public enum RunNodeLogEventTypeEnum {
 
     STARTED("STARTED"),
     SUCCESS("SUCCESS"),
-    FAIL("FAIL");
+    FAIL("FAIL"),
+    STOPPED("STOPPED");
 
     private final String value;
 }

@@ -16,6 +16,7 @@ import com.nbatch.job.admin.core.domain.po.JobWorkRunNodeLogDetailPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkRunNodeLogPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkVo;
+import com.nbatch.job.admin.core.executor.ExecutorBizProxy;
 import com.nbatch.job.admin.mapper.IJobWorkRunNodeLogDetailMapper;
 import com.nbatch.job.admin.mapper.IJobWorkRunNodeLogMapper;
 import com.nbatch.job.admin.mapper.IJobWorkRunNodeMapper;
@@ -24,18 +25,17 @@ import com.nbatch.job.admin.mapper.IJobWorkMapper;
 import com.nbatch.job.admin.mapper.IJobWorkNodeMapper;
 import com.nbatch.job.admin.service.IJobWorkService;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.biz.model.StopRunNodeParam;
 import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.enums.FlowRunStatusEnum;
 import com.nbatch.job.core.enums.FlowStatusEnum;
 import com.nbatch.job.core.enums.WorkTypeEnum;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
  * @date: 2025/11/13
  */
 @Service
+@Slf4j
 public class JobWorkServiceImpl implements IJobWorkService {
 
     @Resource
@@ -211,9 +212,11 @@ public class JobWorkServiceImpl implements IJobWorkService {
             item.put("createTime", runWorkPo.getCreateTime() == null ? null : DateUtil.formatDateTime(runWorkPo.getCreateTime()));
             item.put("nodeCount", nodeList.size());
             item.put("completeCount", countNodeStatus(nodeList, FlowRunStatusEnum.COMPLETE.getCode()));
+            item.put("skippedCount", countNodeStatus(nodeList, FlowRunStatusEnum.SKIPPED.getCode()));
             item.put("dispatchedCount", countNodeStatus(nodeList, FlowRunStatusEnum.DISPATCHED.getCode()));
             item.put("runningCount", countNodeStatus(nodeList, FlowRunStatusEnum.RUNNING.getCode()));
             item.put("exceptionCount", countNodeStatus(nodeList, FlowRunStatusEnum.EXCEPTION.getCode()));
+            item.put("stoppedCount", countNodeStatus(nodeList, FlowRunStatusEnum.STOPPED.getCode()));
             item.put("waitCount", countNodeStatus(nodeList, FlowRunStatusEnum.WAIT.getCode()));
             return item;
         }).collect(Collectors.toList());
@@ -255,8 +258,9 @@ public class JobWorkServiceImpl implements IJobWorkService {
         if (oldRunWorkPo.getRunWorkStatus() != null
                 && oldRunWorkPo.getRunWorkStatus() != FlowRunStatusEnum.RUNNING.getCode()
                 && oldRunWorkPo.getRunWorkStatus() != FlowRunStatusEnum.DISPATCHED.getCode()
+                && oldRunWorkPo.getRunWorkStatus() != FlowRunStatusEnum.STOPPED.getCode()
                 && oldRunWorkPo.getRunWorkStatus() != FlowRunStatusEnum.EXCEPTION.getCode()) {
-            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "只有已下发、进行中或异常的运行作业可以恢复重跑");
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "只有已下发、进行中、已停止或异常的运行作业可以恢复重跑");
         }
 
         // 恢复重跑只处理异常/卡住的节点，已完成节点保持完成状态，避免退化成整批重跑。
@@ -267,6 +271,7 @@ public class JobWorkServiceImpl implements IJobWorkService {
                 .eq(JobWorkRunNodePo::getRunWorkId, runWorkId)
                 .in(JobWorkRunNodePo::getNodeRunStatus,
                         FlowRunStatusEnum.EXCEPTION.getCode(),
+                        FlowRunStatusEnum.STOPPED.getCode(),
                         FlowRunStatusEnum.DISPATCHED.getCode(),
                         FlowRunStatusEnum.RUNNING.getCode()));
         if (resetCount <= 0) {
@@ -281,16 +286,92 @@ public class JobWorkServiceImpl implements IJobWorkService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public ReturnT<String> stopLatestRunWork(String workId) {
+        if (workId == null || workId.trim().isEmpty()) {
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "作业ID不能为空");
+        }
+        JobWorkRunPo latestRunWorkPo = getLatestRunWork(workId);
+        if (latestRunWorkPo == null) {
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "暂无运行作业记录");
+        }
+        if (latestRunWorkPo.getRunWorkStatus() == null
+                || (latestRunWorkPo.getRunWorkStatus() != FlowRunStatusEnum.WAIT.getCode()
+                && latestRunWorkPo.getRunWorkStatus() != FlowRunStatusEnum.DISPATCHED.getCode()
+                && latestRunWorkPo.getRunWorkStatus() != FlowRunStatusEnum.RUNNING.getCode())) {
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "只有待执行、已下发或进行中的运行作业可以停止");
+        }
+
+        List<String> stopRunNodeIdList = jobWorkRunNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
+                        .select(JobWorkRunNodePo::getRunNodeId)
+                        .eq(JobWorkRunNodePo::getRunWorkId, latestRunWorkPo.getRunWorkId())
+                        .in(JobWorkRunNodePo::getNodeRunStatus,
+                                FlowRunStatusEnum.WAIT.getCode(),
+                                FlowRunStatusEnum.DISPATCHED.getCode(),
+                                FlowRunStatusEnum.RUNNING.getCode()))
+                .stream()
+                .map(JobWorkRunNodePo::getRunNodeId)
+                .collect(Collectors.toList());
+
+        jobRunWorkMapper.update(null, Wrappers.lambdaUpdate(JobWorkRunPo.class)
+                .set(JobWorkRunPo::getRunWorkStatus, FlowRunStatusEnum.STOPPED.getCode())
+                .eq(JobWorkRunPo::getRunWorkId, latestRunWorkPo.getRunWorkId()));
+
+        jobWorkRunNodeMapper.update(null, Wrappers.lambdaUpdate(JobWorkRunNodePo.class)
+                .set(JobWorkRunNodePo::getNodeRunStatus, FlowRunStatusEnum.STOPPED.getCode())
+                .set(JobWorkRunNodePo::getEndTime, java.time.LocalDateTime.now())
+                .eq(JobWorkRunNodePo::getRunWorkId, latestRunWorkPo.getRunWorkId())
+                .in(JobWorkRunNodePo::getNodeRunStatus,
+                        FlowRunStatusEnum.WAIT.getCode(),
+                        FlowRunStatusEnum.DISPATCHED.getCode(),
+                        FlowRunStatusEnum.RUNNING.getCode()));
+        sendStopRunNodeCommand(latestRunWorkPo.getRunWorkId(), stopRunNodeIdList);
+        return ReturnT.SUCCESS;
+    }
+
+    private void sendStopRunNodeCommand(String runWorkId, List<String> stopRunNodeIdList) {
+        if (CollUtil.isEmpty(stopRunNodeIdList)) {
+            return;
+        }
+        List<JobWorkRunNodeLogPo> runNodeLogList = jobWorkRunNodeLogMapper.selectList(Wrappers.lambdaQuery(JobWorkRunNodeLogPo.class)
+                .eq(JobWorkRunNodeLogPo::getRunWorkId, runWorkId)
+                .in(JobWorkRunNodeLogPo::getRunNodeId, stopRunNodeIdList)
+                .isNotNull(JobWorkRunNodeLogPo::getExecutorAddress));
+        if (CollUtil.isEmpty(runNodeLogList)) {
+            return;
+        }
+        Map<String, List<JobWorkRunNodeLogPo>> addressRunNodeLogMap = runNodeLogList.stream()
+                .filter(logPo -> StrUtil.isNotBlank(logPo.getExecutorAddress())
+                        && StrUtil.isNotBlank(logPo.getRunNodeId())
+                        && StrUtil.isNotBlank(logPo.getNodeLogId()))
+                .collect(Collectors.groupingBy(JobWorkRunNodeLogPo::getExecutorAddress));
+        for (Map.Entry<String, List<JobWorkRunNodeLogPo>> entry : addressRunNodeLogMap.entrySet()) {
+            try {
+                StopRunNodeParam stopRunNodeParam = new StopRunNodeParam()
+                        .setRunWorkId(runWorkId)
+                        .setRunNodeIdList(entry.getValue().stream()
+                                .map(JobWorkRunNodeLogPo::getRunNodeId)
+                                .collect(Collectors.toList()))
+                        .setNodeLogIdList(entry.getValue().stream()
+                                .map(JobWorkRunNodeLogPo::getNodeLogId)
+                                .collect(Collectors.toList()));
+                ReturnT<String> stopResult = ExecutorBizProxy.stopRunNode(entry.getKey(), stopRunNodeParam);
+                if (stopResult == null || stopResult.getCode() != HandleCodeConstant.HANDLE_CODE_SUCCESS) {
+                    log.warn("runWorkId:{} stop command failed, executor:{}, result:{}", runWorkId, entry.getKey(), stopResult);
+                }
+            } catch (Exception e) {
+                log.warn("runWorkId:{} stop command error, executor:{}", runWorkId, entry.getKey(), e);
+            }
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public ReturnT<String> rerunLatestRunWork(String workId) {
         if (workId == null || workId.trim().isEmpty()) {
             return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "作业ID不能为空");
         }
         // 一键重跑以页面展示的最新运行作业为准，防止重置历史运行批次。
-        JobWorkRunPo latestRunWorkPo = jobRunWorkMapper.selectOne(Wrappers.lambdaQuery(JobWorkRunPo.class)
-                .eq(JobWorkRunPo::getWorkId, workId)
-                .orderByDesc(JobWorkRunPo::getCreateTime)
-                .orderByDesc(JobWorkRunPo::getRunWorkId)
-                .last("LIMIT 1"));
+        JobWorkRunPo latestRunWorkPo = getLatestRunWork(workId);
         if (latestRunWorkPo == null) {
             return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "暂无运行作业记录");
         }
@@ -309,6 +390,14 @@ public class JobWorkServiceImpl implements IJobWorkService {
                 .ne(JobWorkRunNodePo::getNodeRunStatus, FlowRunStatusEnum.WAIT.getCode()));
 
         return ReturnT.SUCCESS;
+    }
+
+    private JobWorkRunPo getLatestRunWork(String workId) {
+        return jobRunWorkMapper.selectOne(Wrappers.lambdaQuery(JobWorkRunPo.class)
+                .eq(JobWorkRunPo::getWorkId, workId)
+                .orderByDesc(JobWorkRunPo::getCreateTime)
+                .orderByDesc(JobWorkRunPo::getRunWorkId)
+                .last("LIMIT 1"));
     }
 
     /**
@@ -354,8 +443,11 @@ public class JobWorkServiceImpl implements IJobWorkService {
         return ReturnT.SUCCESS;
     }
 
-    private java.util.Date resolveInitTurnDate(JobWorkPo jobWorkPo) {
-        java.util.Date initTurnDate = jobWorkPo.getInitTurnDate() == null
+    /**
+     * 解析初始化翻牌日期
+     */
+    private Date resolveInitTurnDate(JobWorkPo jobWorkPo) {
+        Date initTurnDate = jobWorkPo.getInitTurnDate() == null
                 ? DateUtil.parseDate(DateUtil.today())
                 : DateUtil.parseDate(DateUtil.formatDate(jobWorkPo.getInitTurnDate()));
         if (jobWorkPo.getInitTurnDate() == null) {
@@ -368,6 +460,9 @@ public class JobWorkServiceImpl implements IJobWorkService {
         return initTurnDate;
     }
 
+    /**
+     * 初始化翻牌日期重跑
+     */
     private ReturnT<JobWorkRunPo> initRunWorkForTurnDate(JobWorkPo jobWorkPo, java.util.Date turnDate) {
         List<JobWorkNodePo> nodeList = jobWorkNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkNodePo.class)
                 .eq(JobWorkNodePo::getWorkId, jobWorkPo.getWorkId()));

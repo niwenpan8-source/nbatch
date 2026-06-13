@@ -156,7 +156,10 @@ public class RunWorkHelper {
      */
     public void deleteRunWork() {
         List<JobWorkRunPo> jobRunWorkPoList = jobRunWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkRunPo.class)
-                .in(JobWorkRunPo::getRunWorkStatus, FlowRunStatusEnum.COMPLETE.getCode(), FlowRunStatusEnum.EXCEPTION.getCode())
+                .in(JobWorkRunPo::getRunWorkStatus,
+                        FlowRunStatusEnum.COMPLETE.getCode(),
+                        FlowRunStatusEnum.EXCEPTION.getCode(),
+                        FlowRunStatusEnum.STOPPED.getCode())
                 .lt(JobWorkRunPo::getCreateTime, DateUtil.offsetDay(new Date(), -30)));
         for (JobWorkRunPo jobRunWorkPo : jobRunWorkPoList) {
             jobWorkRunNodeMapper.delete(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
@@ -193,7 +196,8 @@ public class RunWorkHelper {
             if (CollUtil.isNotEmpty(jobWorkRunNodePos)) {
                 long count = jobWorkRunNodePos.stream()
                         .filter(x -> {
-                            boolean flag = x.getNodeRunStatus() == FlowRunStatusEnum.COMPLETE.getCode();
+                            boolean flag = x.getNodeRunStatus() == FlowRunStatusEnum.COMPLETE.getCode()
+                                    || x.getNodeRunStatus() == FlowRunStatusEnum.SKIPPED.getCode();
                             // 这里由于当作业类型为顺序类型时翻牌时间为空，不判断翻牌时间
                             if (flag && x.getTurnDate() != null) {
                                 flag = DateUtil.compare(x.getTurnDate(), jobRunWorkPo.getTurnDate()) == 0;

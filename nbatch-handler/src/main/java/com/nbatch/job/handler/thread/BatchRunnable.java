@@ -19,19 +19,63 @@ public abstract class BatchRunnable implements Runnable{
 
     private JSONObject cacheObj;
 
+    private volatile boolean stopRequested;
+
+    private volatile Thread runningThread;
+
+    public BatchRunnable(JSONObject cacheObj) {
+        this.cacheObj = cacheObj;
+    }
+
     public abstract void runBefore();
 
     @Override
     public void run() {
-        runBefore();
+        runningThread = Thread.currentThread();
         try {
-            runBatch();
+            if (isStopRequested()) {
+                runStop();
+                return;
+            }
+            runBefore();
+            if (isStopRequested()) {
+                runStop();
+                return;
+            }
+            try {
+                runBatch();
+            } finally {
+                runAfter();
+            }
         } finally {
-            runAfter();
+            runningThread = null;
         }
     }
 
     public abstract void runBatch();
 
     public abstract void runAfter();
+
+    public void requestStop() {
+        stopRequested = true;
+        Thread thread = runningThread;
+        if (thread != null) {
+            thread.interrupt();
+        }
+    }
+
+    public boolean isStopRequested() {
+        return stopRequested || RunNodeStopRegistry.isStopRequested(getNodeLogId());
+    }
+
+    public String getRunNodeId() {
+        return cacheObj == null ? null : cacheObj.getStr("runNodeId");
+    }
+
+    public String getNodeLogId() {
+        return cacheObj == null ? null : cacheObj.getStr("nodeLogId");
+    }
+
+    public void runStop() {
+    }
 }

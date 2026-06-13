@@ -21,6 +21,10 @@ public enum FlowRunStatusEnum {
     EXCEPTION(3, "执行异常"),
 
     DISPATCHED(4, "已下发"),
+
+    SKIPPED(5, "已跳过"),
+
+    STOPPED(6, "已停止"),
     ;
 
     /**

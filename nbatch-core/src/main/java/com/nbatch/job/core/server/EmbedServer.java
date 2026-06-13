@@ -9,6 +9,7 @@ import com.nbatch.job.core.biz.model.LogParam;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.RunNodeLogAckParam;
 import com.nbatch.job.core.biz.model.RunNodeLogPullParam;
+import com.nbatch.job.core.biz.model.StopRunNodeParam;
 import com.nbatch.job.core.biz.model.TriggerParam;
 import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.thread.ExecutorRegistryThread;
@@ -199,6 +200,9 @@ public class EmbedServer {
                     case "/kill":
                         KillParam killParam = GsonTool.fromJson(requestData, KillParam.class);
                         return executorBiz.kill(killParam);
+                    case "/stopRunNode":
+                        StopRunNodeParam stopRunNodeParam = GsonTool.fromJson(requestData, StopRunNodeParam.class);
+                        return executorBiz.stopRunNode(stopRunNodeParam);
                     case "/log":
                         LogParam logParam = GsonTool.fromJson(requestData, LogParam.class);
                         return executorBiz.log(logParam);

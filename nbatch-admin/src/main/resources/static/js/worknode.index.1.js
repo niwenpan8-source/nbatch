@@ -21,6 +21,10 @@ $(function () {
             labelClass = 'label-danger';
         } else if (status === 4) {
             labelClass = 'label-warning';
+        } else if (status === 5) {
+            labelClass = 'label-primary';
+        } else if (status === 6) {
+            labelClass = 'label-default';
         }
         return '<small class="label ' + labelClass + '">' + escapeHtml(text || '-') + '</small>';
     }

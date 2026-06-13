@@ -8,9 +8,8 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.admin.core.domain.po.JobRegistryPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkRunNodeLogPo;
+import com.nbatch.job.admin.core.executor.ExecutorBizProxy;
 import com.nbatch.job.admin.core.helper.RunNodeHelper.NodeStatusContext;
-import com.nbatch.job.admin.core.scheduler.JobScheduler;
-import com.nbatch.job.core.biz.ExecutorBiz;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.RunNodeLogAckParam;
 import com.nbatch.job.core.biz.model.RunNodeLogEventParam;
@@ -28,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.nbatch.job.core.enums.RunNodeLogEventTypeEnum.FAIL;
 import static com.nbatch.job.core.enums.RunNodeLogEventTypeEnum.STARTED;
+import static com.nbatch.job.core.enums.RunNodeLogEventTypeEnum.STOPPED;
 import static com.nbatch.job.core.enums.RunNodeLogEventTypeEnum.SUCCESS;
 
 /**
@@ -108,14 +108,15 @@ public class JobRunNodeLogPullHelper {
         }
     }
 
+    /**
+     * 拉取执行器运行节点事件日志
+     *
+     * @param address 执行器地址
+     */
     private void pullAddressRunNodeLog(String address) {
-        ExecutorBiz executorBiz = JobScheduler.getExecutorBiz(address);
-        if (executorBiz == null) {
-            return;
-        }
         RunNodeLogPullParam pullParam = new RunNodeLogPullParam();
         pullParam.setMaxSize(PULL_SIZE);
-        ReturnT<RunNodeLogPullResult> pullResult = executorBiz.pullRunNodeLog(pullParam);
+        ReturnT<RunNodeLogPullResult> pullResult = ExecutorBizProxy.pullRunNodeLog(address, pullParam);
         if (pullResult == null || pullResult.getCode() != HandleCodeConstant.HANDLE_CODE_SUCCESS || pullResult.getContent() == null) {
             return;
         }
@@ -131,7 +132,7 @@ public class JobRunNodeLogPullHelper {
         if (ackOffset != null) {
             RunNodeLogAckParam ackParam = new RunNodeLogAckParam();
             ackParam.setOffset(ackOffset);
-            ReturnT<String> ackResult = executorBiz.ackRunNodeLog(ackParam);
+            ReturnT<String> ackResult = ExecutorBizProxy.ackRunNodeLog(address, ackParam);
             log.debug("ack run node event log, address:{}, offset:{}, result:{}", address, ackOffset, ackResult);
         }
     }
@@ -149,6 +150,8 @@ public class JobRunNodeLogPullHelper {
         } else if (SUCCESS.getValue().equals(eventParam.getEventType())
                 || FAIL.getValue().equals(eventParam.getEventType())) {
             handleFinishEvent(eventParam);
+        } else if (STOPPED.getValue().equals(eventParam.getEventType())) {
+            handleStoppedEvent(eventParam);
         }
     }
 
@@ -167,6 +170,9 @@ public class JobRunNodeLogPullHelper {
      * 处理完成事件。
      */
     private void handleFinishEvent(RunNodeLogEventParam eventParam) {
+        if (JobAdminConfig.getAdminConfig().getRunNodeHelper().isRunNodeStopped(eventParam.getRunNodeId())) {
+            return;
+        }
         int handleCode = eventParam.getHandleCode() == null ? HandleCodeConstant.HANDLE_CODE_FAIL : eventParam.getHandleCode();
         if (handleCode == HandleCodeConstant.HANDLE_CODE_SUCCESS) {
             JobAdminConfig.getAdminConfig().getRunNodeHelper()
@@ -178,5 +184,9 @@ public class JobRunNodeLogPullHelper {
         }
         JobAdminConfig.getAdminConfig().getRunNodeHelper()
                 .updateCallBackRunNodeLog(eventParam.getNodeLogId(), handleCode, eventParam.getHandleMsg());
+    }
+
+    private void handleStoppedEvent(RunNodeLogEventParam eventParam) {
+        JobAdminConfig.getAdminConfig().getRunNodeHelper().markRunNodeStopped(eventParam);
     }
 }

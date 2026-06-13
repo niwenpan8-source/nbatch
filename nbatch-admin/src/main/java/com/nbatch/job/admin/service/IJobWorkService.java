@@ -57,6 +57,11 @@ public interface IJobWorkService {
     ReturnT<String> recoverRunWork(String runWorkId);
 
     /**
+     * 停止最新运行作业
+     */
+    ReturnT<String> stopLatestRunWork(String workId);
+
+    /**
      * 重跑最新运行作业
      */
     ReturnT<String> rerunLatestRunWork(String workId);

@@ -77,6 +77,15 @@ public class JobWorkController {
     }
 
     /**
+     * 停止指定流程最近一次运行作业。
+     */
+    @RequestMapping("/stopLatestRunWork")
+    @ResponseBody
+    public ReturnT<String> stopLatestRunWork(String workId) {
+        return jobWorkService.stopLatestRunWork(workId);
+    }
+
+    /**
      * 一键重跑指定流程最近一次运行作业。
      */
     @RequestMapping("/rerunLatestRunWork")

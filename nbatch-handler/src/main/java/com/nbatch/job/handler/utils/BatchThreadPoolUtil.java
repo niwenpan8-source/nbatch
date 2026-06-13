@@ -10,6 +10,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -57,6 +58,14 @@ public class BatchThreadPoolUtil {
 
     public static BatchThreadPoolExecutor getBatchThreadPoolExecutor(String threadPoolKey) {
         return THREAD_POOL_EXECUTOR.get(threadPoolKey);
+    }
+
+    public static int stopRunNodes(List<String> nodeLogIdList) {
+        int stopCount = 0;
+        for (BatchThreadPoolExecutor executor : THREAD_POOL_EXECUTOR.values()) {
+            stopCount += executor.stopRunNodes(nodeLogIdList);
+        }
+        return stopCount;
     }
 
     /**

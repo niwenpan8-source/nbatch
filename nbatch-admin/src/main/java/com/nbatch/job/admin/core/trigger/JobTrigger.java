@@ -10,10 +10,9 @@ import com.nbatch.job.admin.core.domain.po.JobLogPo;
 import com.nbatch.job.admin.core.enums.ExecutorRouteStrategyEnum;
 import com.nbatch.job.admin.core.enums.TriggerTypeEnum;
 import com.nbatch.job.admin.core.exception.JobException;
+import com.nbatch.job.admin.core.executor.ExecutorBizProxy;
 import com.nbatch.job.admin.core.helper.RunNodeHelper.NodeStatusContext;
-import com.nbatch.job.admin.core.scheduler.JobScheduler;
 import com.nbatch.job.admin.core.util.I18nUtil;
-import com.nbatch.job.core.biz.ExecutorBiz;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.TriggerParam;
 import com.nbatch.job.core.constant.HandleCodeConstant;
@@ -218,8 +217,6 @@ public class JobTrigger {
     public static ReturnT<String> runExecutor(TriggerParam triggerParam, String address) {
         ReturnT<String> runResult;
         try {
-            ExecutorBiz executorBiz = JobScheduler.getExecutorBiz(address);
-            assert executorBiz != null;
             // 这一段逻辑需要改为异步的，然后可以进行多次运行
             if (StrUtil.equals(triggerParam.getGlueType(), GlueTypeEnum.WORK.name())) {
                 if (StrUtil.isBlank(triggerParam.getWorkId())) {
@@ -227,7 +224,7 @@ public class JobTrigger {
                 }
                 runResult = handleWorkTypeTaskParam(triggerParam);
             } else {
-                runResult = executorBiz.run(triggerParam);
+                runResult = ExecutorBizProxy.run(address, triggerParam);
             }
 
         } catch (Exception e) {

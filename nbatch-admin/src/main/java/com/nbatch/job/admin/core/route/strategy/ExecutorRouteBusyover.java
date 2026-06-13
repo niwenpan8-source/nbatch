@@ -1,9 +1,8 @@
 package com.nbatch.job.admin.core.route.strategy;
 
-import com.nbatch.job.admin.core.scheduler.JobScheduler;
+import com.nbatch.job.admin.core.executor.ExecutorBizProxy;
 import com.nbatch.job.admin.core.route.ExecutorRouter;
 import com.nbatch.job.admin.core.util.I18nUtil;
-import com.nbatch.job.core.biz.ExecutorBiz;
 import com.nbatch.job.core.biz.model.IdleBeatParam;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.TriggerParam;
@@ -13,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 /**
- * @author Mr.ni
+ * 执行路由策略-忙碌转移
  */
 @Slf4j
 public class ExecutorRouteBusyover extends ExecutorRouter {
@@ -23,15 +22,7 @@ public class ExecutorRouteBusyover extends ExecutorRouter {
         StringBuilder idleBeatResultBuilder = new StringBuilder();
         for (String address : addressList) {
             // beat
-            ReturnT<String> idleBeatResult;
-            try {
-                ExecutorBiz executorBiz = JobScheduler.getExecutorBiz(address);
-                assert executorBiz != null;
-                idleBeatResult = executorBiz.idleBeat(new IdleBeatParam(triggerParam.getJobId()));
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-                idleBeatResult = new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "" + e);
-            }
+            ReturnT<String> idleBeatResult = ExecutorBizProxy.idleBeat(address, new IdleBeatParam(triggerParam.getJobId()));
             idleBeatResultBuilder.append((idleBeatResultBuilder.length() > 0) ? "<br><br>" : "")
                     .append(I18nUtil.getString("jobconf_idleBeat"))
                     .append("：")

@@ -11,6 +11,7 @@ import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.RunNodeLogAckParam;
 import com.nbatch.job.core.biz.model.RunNodeLogPullParam;
 import com.nbatch.job.core.biz.model.RunNodeLogPullResult;
+import com.nbatch.job.core.biz.model.StopRunNodeParam;
 import com.nbatch.job.core.biz.model.TriggerParam;
 import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.enums.ExecutorBlockStrategyEnum;
@@ -18,12 +19,14 @@ import com.nbatch.job.core.executor.BatchJobExecutor;
 import com.nbatch.job.core.glue.GlueFactory;
 import com.nbatch.job.core.glue.GlueTypeEnum;
 import com.nbatch.job.core.handler.IJobHandler;
+import com.nbatch.job.core.handler.RunNodeStopHandler;
 import com.nbatch.job.core.handler.impl.GlueJobHandler;
 import com.nbatch.job.core.handler.impl.ScriptJobHandler;
 import com.nbatch.job.core.handler.impl.WorkJobHandler;
 import com.nbatch.job.core.log.JobFileAppender;
 import com.nbatch.job.core.thread.RunNodeLogEventLog;
 import com.nbatch.job.core.thread.JobThread;
+import com.nbatch.job.core.util.SpringUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Date;
@@ -190,6 +193,17 @@ public class ExecutorBizImpl implements ExecutorBiz {
         }
 
         return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_SUCCESS, "job thread already killed.");
+    }
+
+    @Override
+    public ReturnT<String> stopRunNode(StopRunNodeParam stopRunNodeParam) {
+        try {
+            RunNodeStopHandler stopHandler = SpringUtil.getBean(RunNodeStopHandler.class);
+            return stopHandler.stopRunNode(stopRunNodeParam);
+        } catch (Exception e) {
+            log.warn("run node stop handler not found or stop failed", e);
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, ExceptionUtil.getRootCauseMessage(e));
+        }
     }
 
     @Override

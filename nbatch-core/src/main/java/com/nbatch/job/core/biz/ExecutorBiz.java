@@ -1,19 +1,10 @@
 package com.nbatch.job.core.biz;
 
-import com.nbatch.job.core.biz.model.ExecuteWorkParam;
-import com.nbatch.job.core.biz.model.IdleBeatParam;
-import com.nbatch.job.core.biz.model.KillParam;
-import com.nbatch.job.core.biz.model.LogParam;
-import com.nbatch.job.core.biz.model.LogResult;
-import com.nbatch.job.core.biz.model.ReturnT;
-import com.nbatch.job.core.biz.model.RunNodeLogAckParam;
-import com.nbatch.job.core.biz.model.RunNodeLogPullParam;
-import com.nbatch.job.core.biz.model.RunNodeLogPullResult;
-import com.nbatch.job.core.biz.model.TriggerParam;
+import com.nbatch.job.core.biz.model.*;
 
 /**
- * @description: 执行器服务
  * @author Mr.ni
+ * @description: 执行器服务
  * @date 2025/11/05
  */
 public interface ExecutorBiz {
@@ -43,6 +34,11 @@ public interface ExecutorBiz {
      * @param killParam kill 参数
      */
     ReturnT<String> kill(KillParam killParam);
+
+    /**
+     * stop run node
+     */
+    ReturnT<String> stopRunNode(StopRunNodeParam stopRunNodeParam);
 
     /**
      * log

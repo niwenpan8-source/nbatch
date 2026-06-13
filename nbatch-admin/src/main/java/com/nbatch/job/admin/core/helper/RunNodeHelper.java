@@ -69,6 +69,12 @@ public class RunNodeHelper {
 
     private static final int RUNNING_CLOSE_TIMEOUT_HOURS = 6;
 
+    private static final String ERROR_STRATEGY_STOP = "stop";
+
+    private static final String ERROR_STRATEGY_SKIP = "skip";
+
+    private static final String ERROR_STRATEGY_RETRY = "retry";
+
     private final IJobWorkRunNodeMapper jobWorkRunNodeMapper;
 
     private final IJobWorkNodeMapper jobWorkNodeMapper;
@@ -347,7 +353,7 @@ public class RunNodeHelper {
         if (workType == WorkTypeEnum.TYPE_TURN.getCode()) {
             return executeNodeParamList.stream()
                     .filter(x -> {
-                        boolean flag = x.getNodeRunStatus() == FlowRunStatusEnum.COMPLETE.getCode();
+                            boolean flag = isDependencySatisfiedStatus(x.getNodeRunStatus());
                         if (flag && x.getTurnDate() != null) {
                             flag = turnDate != null && DateUtil.compare(x.getTurnDate(), turnDate) == 0;
                         }
@@ -357,7 +363,7 @@ public class RunNodeHelper {
                     .collect(Collectors.toList());
         } else if (workType == WorkTypeEnum.TYPE_SEQUENCE.getCode()) {
             return executeNodeParamList.stream()
-                    .filter(x -> x.getNodeRunStatus() == FlowRunStatusEnum.COMPLETE.getCode())
+                    .filter(x -> isDependencySatisfiedStatus(x.getNodeRunStatus()))
                     .map(ExecuteNodeParam::getNodeId)
                     .collect(Collectors.toList());
         }
@@ -404,7 +410,8 @@ public class RunNodeHelper {
         }
         if (runStatus == FlowRunStatusEnum.RUNNING.getCode()
                 || runStatus == FlowRunStatusEnum.WAIT.getCode()
-                || runStatus == FlowRunStatusEnum.EXCEPTION.getCode()) {
+                || runStatus == FlowRunStatusEnum.EXCEPTION.getCode()
+                || runStatus == FlowRunStatusEnum.STOPPED.getCode()) {
             JobWorkRunPo jobRunWorkPo = new JobWorkRunPo();
             jobRunWorkPo.setRunWorkId(runWorkId);
             jobRunWorkPo.setRunWorkStatus(runStatus);
@@ -438,18 +445,14 @@ public class RunNodeHelper {
                 updateCallBackRunNodeLog(executeNodeParam.getNodeLogId(), HandleCodeConstant.HANDLE_CODE_FAIL, handleMsg);
             }
         }
-        JobWorkRunNodePo updateRunNodePo = new JobWorkRunNodePo();
-        updateRunNodePo.setNodeRunStatus(FlowRunStatusEnum.EXCEPTION.getCode());
-        jobWorkRunNodeMapper.update(updateRunNodePo, Wrappers.lambdaUpdate(JobWorkRunNodePo.class)
+        List<JobWorkRunNodePo> runNodeList = jobWorkRunNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
                 .in(JobWorkRunNodePo::getRunNodeId, runNodeIdList)
                 .in(JobWorkRunNodePo::getNodeRunStatus,
                         FlowRunStatusEnum.WAIT.getCode(),
                         FlowRunStatusEnum.DISPATCHED.getCode()));
-
-        JobWorkRunPo jobRunWorkPo = new JobWorkRunPo();
-        jobRunWorkPo.setRunWorkId(executeWorkParam.getRunWorkId());
-        jobRunWorkPo.setRunWorkStatus(FlowRunStatusEnum.EXCEPTION.getCode());
-        jobRunWorkMapper.updateById(jobRunWorkPo);
+        for (JobWorkRunNodePo runNodePo : runNodeList) {
+            handleFailedRunNode(runNodePo);
+        }
     }
 
     /**
@@ -475,25 +478,6 @@ public class RunNodeHelper {
         }
     }
 
-
-    /**
-     * 节点异常停止
-     * 需要将节点状态改为异常，然后将运行节点状态改为失败
-     *
-     * @param nodeRunId 运行节点id
-     */
-    public void exceptionStopNode(String nodeRunId) {
-        JobWorkRunNodePo jobWorkRunNodePo = jobWorkRunNodeMapper.selectById(nodeRunId);
-        if (jobWorkRunNodePo == null) {
-            return;
-        }
-        JobWorkRunNodePo updateRunNodePo = new JobWorkRunNodePo();
-        updateRunNodePo.setRunNodeId(nodeRunId);
-        updateRunNodePo.setNodeRunStatus(FlowRunStatusEnum.EXCEPTION.getCode());
-
-        jobWorkRunNodeMapper.updateById(updateRunNodePo);
-    }
-
     /**
      * 根据剩余重试次数更新节点失败状态。
      */
@@ -503,22 +487,109 @@ public class RunNodeHelper {
             return;
         }
 
-        Integer retryTimes = oldRunNodePo.getRetryTimes();
-        if (retryTimes != null && retryTimes > 0) {
-            JobWorkRunNodePo jobWorkRunNodePo = new JobWorkRunNodePo();
-            jobWorkRunNodePo.setRunNodeId(nodeRunId);
-            jobWorkRunNodePo.setNodeRunStatus(FlowRunStatusEnum.WAIT.getCode());
-            jobWorkRunNodePo.setRetryTimes(retryTimes - 1);
-            jobWorkRunNodeMapper.updateById(jobWorkRunNodePo);
+        handleFailedRunNode(oldRunNodePo);
+    }
 
-            JobWorkRunPo jobRunWorkPo = new JobWorkRunPo();
-            jobRunWorkPo.setRunWorkId(oldRunNodePo.getRunWorkId());
-            jobRunWorkPo.setRunWorkStatus(FlowRunStatusEnum.WAIT.getCode());
-            jobRunWorkMapper.updateById(jobRunWorkPo);
-        } else {
-            // 如果剩余重试次数为0，则修改运行节点状态为失败
-            exceptionStopNode(nodeRunId);
+    private void handleFailedRunNode(JobWorkRunNodePo runNodePo) {
+        String errorStrategy = runNodePo.getErrorStrategy();
+        if (StrUtil.equals(errorStrategy, ERROR_STRATEGY_SKIP)) {
+            skipRunNode(runNodePo);
+            return;
         }
+        if (StrUtil.equals(errorStrategy, ERROR_STRATEGY_RETRY)
+                || (StrUtil.isBlank(errorStrategy) && hasRetryTimes(runNodePo))) {
+            if (hasRetryTimes(runNodePo)) {
+                retryRunNode(runNodePo);
+            } else {
+                stopRunNode(runNodePo);
+            }
+            return;
+        }
+        if (StrUtil.equals(errorStrategy, ERROR_STRATEGY_STOP)) {
+            stopRunNode(runNodePo);
+            return;
+        }
+        stopRunNode(runNodePo);
+    }
+
+    /**
+     * 判断节点是否还有重试次数
+     *
+     * @param runNodePo 运行节点
+     * @return true:有重试次数
+     */
+    private boolean hasRetryTimes(JobWorkRunNodePo runNodePo) {
+        return runNodePo.getRetryTimes() != null && runNodePo.getRetryTimes() > 0;
+    }
+
+    private boolean isDependencySatisfiedStatus(Integer nodeRunStatus) {
+        return nodeRunStatus != null
+                && (nodeRunStatus == FlowRunStatusEnum.COMPLETE.getCode()
+                || nodeRunStatus == FlowRunStatusEnum.SKIPPED.getCode());
+    }
+
+    /**
+     * 重试节点
+     *
+     * @param runNodePo 运行节点
+     */
+    private void retryRunNode(JobWorkRunNodePo runNodePo) {
+        JobWorkRunNodePo updateRunNodePo = new JobWorkRunNodePo();
+        updateRunNodePo.setRunNodeId(runNodePo.getRunNodeId());
+        updateRunNodePo.setNodeRunStatus(FlowRunStatusEnum.WAIT.getCode());
+        updateRunNodePo.setRetryTimes(runNodePo.getRetryTimes() - 1);
+        updateRunNodePo.setStartTime(null);
+        updateRunNodePo.setEndTime(null);
+        jobWorkRunNodeMapper.updateById(updateRunNodePo);
+
+        updateRunWorkStatusIfNotException(runNodePo.getRunWorkId(), FlowRunStatusEnum.WAIT.getCode());
+    }
+
+    /**
+     * 跳过节点 -- 如果是跳过表示，无论节点是否执行成功都会标记成功继续往下执行
+     *
+     * @param runNodePo 运行节点
+     */
+    private void skipRunNode(JobWorkRunNodePo runNodePo) {
+        JobWorkRunNodePo updateRunNodePo = new JobWorkRunNodePo();
+        updateRunNodePo.setRunNodeId(runNodePo.getRunNodeId());
+        updateRunNodePo.setNodeRunStatus(FlowRunStatusEnum.SKIPPED.getCode());
+        updateRunNodePo.setEndTime(LocalDateTime.now());
+        jobWorkRunNodeMapper.updateById(updateRunNodePo);
+
+        // updateRunWorkStatusIfNotException(runNodePo.getRunWorkId(), FlowRunStatusEnum.WAIT.getCode());
+    }
+
+    /**
+     * 停止节点
+     *
+     * @param runNodePo 运行节点
+     */
+    private void stopRunNode(JobWorkRunNodePo runNodePo) {
+        JobWorkRunNodePo updateRunNodePo = new JobWorkRunNodePo();
+        updateRunNodePo.setRunNodeId(runNodePo.getRunNodeId());
+        updateRunNodePo.setNodeRunStatus(FlowRunStatusEnum.STOPPED.getCode());
+        updateRunNodePo.setEndTime(LocalDateTime.now());
+        jobWorkRunNodeMapper.updateById(updateRunNodePo);
+
+        JobWorkRunPo jobRunWorkPo = new JobWorkRunPo();
+        jobRunWorkPo.setRunWorkId(runNodePo.getRunWorkId());
+        jobRunWorkPo.setRunWorkStatus(FlowRunStatusEnum.STOPPED.getCode());
+        jobRunWorkMapper.updateById(jobRunWorkPo);
+    }
+
+    /**
+     * 修改运行作业状态如果没有异常状态
+     */
+    private void updateRunWorkStatusIfNotException(String runWorkId, Integer runStatus) {
+        if (StrUtil.isBlank(runWorkId) || runStatus == null) {
+            return;
+        }
+        jobRunWorkMapper.update(null, Wrappers.lambdaUpdate(JobWorkRunPo.class)
+                .set(JobWorkRunPo::getRunWorkStatus, runStatus)
+                .eq(JobWorkRunPo::getRunWorkId, runWorkId)
+                .ne(JobWorkRunPo::getRunWorkStatus, FlowRunStatusEnum.EXCEPTION.getCode())
+                .ne(JobWorkRunPo::getRunWorkStatus, FlowRunStatusEnum.STOPPED.getCode()));
     }
 
     /**
@@ -562,8 +633,13 @@ public class RunNodeHelper {
                         FlowRunStatusEnum.DISPATCHED.getCode(),
                         FlowRunStatusEnum.WAIT.getCode()));
 
-        if (updateCount <= 0 && getRunNodeLog(eventParam.getNodeLogId()) != null) {
-            updateRunNodeLogHandle(eventParam.getNodeLogId(), 0, handleMsg);
+        if (updateCount <= 0) {
+            if (isRunNodeStopped(eventParam.getRunNodeId())) {
+                return;
+            }
+            if (getRunNodeLog(eventParam.getNodeLogId()) != null) {
+                updateRunNodeLogHandle(eventParam.getNodeLogId(), 0, handleMsg);
+            }
             return;
         }
 
@@ -575,6 +651,35 @@ public class RunNodeHelper {
         }
 
         updateRunWorkStatus(eventParam.getRunWorkId(), FlowRunStatusEnum.RUNNING.getCode());
+    }
+
+    public void markRunNodeStopped(RunNodeLogEventParam eventParam) {
+        if (eventParam == null || StrUtil.isBlank(eventParam.getRunNodeId()) || StrUtil.isBlank(eventParam.getNodeLogId())) {
+            return;
+        }
+        JobWorkRunNodePo updateRunNodePo = new JobWorkRunNodePo();
+        updateRunNodePo.setNodeRunStatus(FlowRunStatusEnum.STOPPED.getCode());
+        updateRunNodePo.setEndTime(LocalDateTime.now());
+        jobWorkRunNodeMapper.update(updateRunNodePo, Wrappers.lambdaUpdate(JobWorkRunNodePo.class)
+                .eq(JobWorkRunNodePo::getRunNodeId, eventParam.getRunNodeId())
+                .in(JobWorkRunNodePo::getNodeRunStatus,
+                        FlowRunStatusEnum.WAIT.getCode(),
+                        FlowRunStatusEnum.DISPATCHED.getCode(),
+                        FlowRunStatusEnum.RUNNING.getCode(),
+                        FlowRunStatusEnum.STOPPED.getCode()));
+
+        JobWorkRunNodeLogPo oldLog = getRunNodeLog(eventParam.getNodeLogId());
+        String handleMsg = StrUtil.blankToDefault(eventParam.getHandleMsg(), "运行节点已停止");
+        int handleCode = eventParam.getHandleCode() == null ? HandleCodeConstant.HANDLE_CODE_FAIL : eventParam.getHandleCode();
+        if (oldLog == null) {
+            JobWorkRunNodeLogPo runNodeLogPo = buildRunNodeLog(eventParam, handleMsg);
+            runNodeLogPo.setHandleCode(handleCode);
+            runNodeLogPo.setCallBackTime(DateUtil.date());
+            jobWorkRunNodeLogMapper.insert(runNodeLogPo);
+        } else {
+            updateCallBackRunNodeLog(eventParam.getNodeLogId(), handleCode, handleMsg);
+        }
+        updateRunWorkStatus(eventParam.getRunWorkId(), FlowRunStatusEnum.STOPPED.getCode());
     }
 
     private JobWorkRunNodeLogPo buildRunNodeLog(ExecuteNodeParam executeNodeParam,
@@ -611,6 +716,17 @@ public class RunNodeHelper {
 
     public JobWorkRunNodeLogPo getRunNodeLog(String nodeLogId) {
         return jobWorkRunNodeLogMapper.selectById(nodeLogId);
+    }
+
+    /**
+     * 判断运行节点是否已停止
+     */
+    public boolean isRunNodeStopped(String runNodeId) {
+        if (StrUtil.isBlank(runNodeId)) {
+            return false;
+        }
+        JobWorkRunNodePo runNodePo = jobWorkRunNodeMapper.selectById(runNodeId);
+        return runNodePo != null && runNodePo.getNodeRunStatus() == FlowRunStatusEnum.STOPPED.getCode();
     }
 
     /**
@@ -678,8 +794,7 @@ public class RunNodeHelper {
                                               JobWorkRunNodeLogPo runNodeLogPo,
                                               Integer handleCode,
                                               String handleMsg) {
-        jobWorkRunNodePo.setNodeRunStatus(FlowRunStatusEnum.EXCEPTION.getCode());
-        jobWorkRunNodeMapper.updateById(jobWorkRunNodePo);
+        handleFailedRunNode(jobWorkRunNodePo);
         if (runNodeLogPo != null) {
             updateCallBackRunNodeLog(runNodeLogPo.getNodeLogId(), handleCode, handleMsg);
         }
