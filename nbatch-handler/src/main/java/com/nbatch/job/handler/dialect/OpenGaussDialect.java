@@ -150,6 +150,36 @@ public class OpenGaussDialect implements BaseDialect {
     }
 
     /**
+     * 删除表根据表名
+     */
+    @Override
+    public int dropTable(Connection connection, String tableName) throws Exception {
+        String dropTableSql = "DROP TABLE IF EXISTS " + tableName;
+        log.info("执行 drop table sql：{}", dropTableSql);
+        return SpecialSqlUtil.executeUpdate(connection, dropTableSql);
+    }
+
+    /**
+     * 根据表名根据原表创建临时表，临时表名格式为原表名_today
+     */
+    @Override
+    public int copyTableStructure(Connection connection, String tableName, String targetTableName) throws Exception {
+        String createTableSql = StrUtil.format("CREATE TABLE {} (LIKE {} INCLUDING ALL)", targetTableName, tableName);
+        log.info("执行 create table sql：{}", createTableSql);
+        return SpecialSqlUtil.executeUpdate(connection, createTableSql);
+    }
+
+    /**
+     * 将临时表修改为原表名
+     */
+    @Override
+    public int renameTable(Connection connection, String currentTableName, String targetTableName) throws Exception {
+        String renameTableSql = StrUtil.format("ALTER TABLE {} RENAME TO {}", currentTableName, targetTableName);
+        log.info("执行 rename table sql：{}", renameTableSql);
+        return SpecialSqlUtil.executeUpdate(connection, renameTableSql);
+    }
+
+    /**
      * 生成gbase文件导入db的sql
      */
     private String generateFileToDbExecuteSql(ExecuteFileToDbParam param) {

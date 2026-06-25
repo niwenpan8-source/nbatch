@@ -1,5 +1,6 @@
 package com.nbatch.job.handler.dialect;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.nbatch.job.core.biz.model.ExecuteDbToFileParam;
 import com.nbatch.job.core.biz.model.ExecuteFileToDbParam;
@@ -39,4 +40,20 @@ public interface BaseDialect {
      * 执行修改
      */
     int executeUpdate(Connection connection, String sql) throws Exception;
+
+    /**
+     * 删除表根据表名
+     */
+    int dropTable(Connection connection, String tableName) throws Exception;
+
+    /**
+     * 根据表名根据原表创建临时表，临时表名格式为原表名_today
+     */
+    int copyTableStructure(Connection connection, String tableName, String targetTableName)  throws Exception;
+
+    /**
+     * 将临时表修改为原表名
+     */
+    int renameTable(Connection connection, String currentTableName, String targetTableName) throws Exception;
+
 }

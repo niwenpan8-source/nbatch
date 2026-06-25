@@ -67,14 +67,15 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
         String importTableName = param.getImportTableName();
         String importTodayTableName = importTableName + TODAY_TABLE_SUFFIX;
         long importDbCount;
+        dialect.dropTable(dialectHelper.getConnection(nodeParam.getDbType()), importTodayTableName);
+        dialect.copyTableStructure(dialectHelper.getConnection(nodeParam.getDbType()), importTableName, importTodayTableName);
         // 全量导入
         if (param.getAllUpdate() == 1) {
-            String deleteAllSql = getDeleteAllSql(importTableName);
-            dialect.executeUpdate(dialectHelper.getConnection(nodeParam.getDbType()), deleteAllSql);
-            importDbCount = dialect.fileToDb(dialectHelper.getConnection(nodeParam.getDbType()), param);
+            importDbCount = handleAllTable(importTableName, importTodayTableName, param, dialect, nodeParam.getDbType());
         } else {
             importDbCount = handleUpdateTable(importTableName, importTodayTableName, param, dialect, nodeParam.getDbType());
         }
+        dialect.dropTable(dialectHelper.getConnection(nodeParam.getDbType()), importTodayTableName);
         int totalLines = FileUtil.getTotalLines(new File(importDbFilePath));
         NbatchFileUtil.checkImportDataNum(totalLines, importDbCount);
     }
@@ -168,6 +169,27 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
                 insertFormalTable);
         return importDbCount;
 
+    }
+
+    /**
+     * 处理全量导入数据
+     */
+    private long handleAllTable(String importTableName,
+                                   String importTodayTableName,
+                                   ExecuteFileToDbParam param,
+                                   BaseDialect dialect,
+                                   String dbType
+    ) throws Exception {
+        long importDbCount;
+        // 将所有数据导入到临时表
+        ExecuteFileToDbParam copyParam = BeanUtil.toBean(param, ExecuteFileToDbParam.class);
+        copyParam.setImportTableName(importTodayTableName);
+        importDbCount = dialect.fileToDb(dialectHelper.getConnection(dbType), copyParam);
+        // 删除原表
+        dialect.dropTable(dialectHelper.getConnection(dbType), importTableName);
+        // 将临时表修改为原表名
+        dialect.renameTable(dialectHelper.getConnection(dbType), importTodayTableName, importTableName);
+        return importDbCount;
     }
 
 
