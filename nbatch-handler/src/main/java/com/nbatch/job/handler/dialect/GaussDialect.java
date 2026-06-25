@@ -1,5 +1,6 @@
 package com.nbatch.job.handler.dialect;
 
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.nbatch.job.core.biz.model.ExecuteDbToFileParam;
@@ -109,6 +110,7 @@ public class GaussDialect implements BaseDialect {
 
     @Override
     public boolean dbToFile(Connection connection, ExecuteDbToFileParam param) throws Exception {
+        FileUtil.touch(param.getFilePath());
         try (
                 FileOutputStream fileOutputStream = new FileOutputStream(param.getFilePath())
         ) {

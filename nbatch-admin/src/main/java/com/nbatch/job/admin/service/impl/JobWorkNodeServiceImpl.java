@@ -430,7 +430,7 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
             if (jobWorkPo == null) {
                 return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "作业不存在");
             }
-            java.util.Date initTurnDate = resolveInitTurnDate(jobWorkPo);
+            Date initTurnDate = resolveInitTurnDate(jobWorkPo);
             targetRunWorkPo = jobWorkRunMapper.selectOne(Wrappers.lambdaQuery(JobWorkRunPo.class)
                     .eq(JobWorkRunPo::getWorkId, runWorkPo.getWorkId())
                     .eq(JobWorkRunPo::getTurnDate, initTurnDate)
@@ -490,8 +490,8 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
         return ReturnT.SUCCESS;
     }
 
-    private java.util.Date resolveInitTurnDate(JobWorkPo jobWorkPo) {
-        java.util.Date initTurnDate = jobWorkPo.getInitTurnDate() == null
+    private Date resolveInitTurnDate(JobWorkPo jobWorkPo) {
+        Date initTurnDate = jobWorkPo.getInitTurnDate() == null
                 ? DateUtil.parseDate(DateUtil.today())
                 : DateUtil.parseDate(DateUtil.formatDate(jobWorkPo.getInitTurnDate()));
         if (jobWorkPo.getInitTurnDate() == null) {
@@ -504,7 +504,7 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
         return initTurnDate;
     }
 
-    private ReturnT<JobWorkRunPo> initRunWorkForTurnDate(JobWorkPo jobWorkPo, java.util.Date turnDate) {
+    private ReturnT<JobWorkRunPo> initRunWorkForTurnDate(JobWorkPo jobWorkPo, Date turnDate) {
         List<JobWorkNodePo> nodeList = jobWorkNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkNodePo.class)
                 .eq(JobWorkNodePo::getWorkId, jobWorkPo.getWorkId()));
         if (CollUtil.isEmpty(nodeList)) {
@@ -703,7 +703,7 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
         return rerunNodeIdSet;
     }
 
-    private void deleteRunWorkAfterTurnDate(String workId, java.util.Date turnDate) {
+    private void deleteRunWorkAfterTurnDate(String workId, Date turnDate) {
         List<JobWorkRunPo> deleteRunWorkList = jobWorkRunMapper.selectList(Wrappers.lambdaQuery(JobWorkRunPo.class)
                 .eq(JobWorkRunPo::getWorkId, workId)
                 .gt(JobWorkRunPo::getTurnDate, turnDate));

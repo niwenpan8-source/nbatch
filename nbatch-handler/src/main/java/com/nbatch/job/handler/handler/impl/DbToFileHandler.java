@@ -56,7 +56,7 @@ public class DbToFileHandler implements JobNodeHandlerAdapter {
         // 创建文件
         setFilePath(param, executeFinishGenerateFileName);
         // gauss 数据库没有文件的话他会报错
-        FileUtil.touch(param.getFilePath());
+        // FileUtil.touch(param.getFilePath());
         // 导出相关文件
         boolean flag = dialectHelper.getDialect(nodeParam.getDbType())
                 .dbToFile(dialectHelper.getConnection(nodeParam.getDbType()), param);

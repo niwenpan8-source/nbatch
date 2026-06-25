@@ -1,5 +1,6 @@
 package com.nbatch.job.handler.dialect;
 
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -37,6 +38,7 @@ public class GBaseDialect implements BaseDialect {
 
     @Override
     public boolean dbToFile(Connection connection, ExecuteDbToFileParam param) throws Exception {
+        FileUtil.del(param.getFilePath());
         String setExportDirSql = "SET gbase_export_directory = 0";
         log.info("执行 set export sql：{}", setExportDirSql);
         SpecialSqlUtil.executeNotCloseConnect(connection, setExportDirSql);
@@ -171,7 +173,9 @@ public class GBaseDialect implements BaseDialect {
 
         executeSql.append(" INTO OUTFILE '")
                 .append(param.getRemoteFilePath())
-                .append("'").append(" FIELDS TERMINATED BY ' | '")
+                .append("'").append(" FIELDS TERMINATED BY ' | '").append("'")
+                .append(StrUtil.isEmpty(param.getSep()) ? "|" : param.getSep())
+                .append("'")
                 .append(" LINES TERMINATED BY '\\n'")
                 .append(" null_value ''");
 
