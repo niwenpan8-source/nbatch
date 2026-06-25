@@ -52,6 +52,11 @@ public interface BaseDialect {
     int copyTableStructure(Connection connection, String tableName, String targetTableName)  throws Exception;
 
     /**
+     * 根据表名根据原表创建临时表，临时表名格式为原表名_today
+     */
+    int copyTableNotStructure(Connection connection, String tableName, String targetTableName) throws Exception;
+
+    /**
      * 将临时表修改为原表名
      */
     int renameTable(Connection connection, String currentTableName, String targetTableName) throws Exception;

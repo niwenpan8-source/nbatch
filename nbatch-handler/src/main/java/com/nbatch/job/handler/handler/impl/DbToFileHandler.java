@@ -64,6 +64,10 @@ public class DbToFileHandler implements JobNodeHandlerAdapter {
         File file = new File(dbToFilePath, executeFinishGenerateFileName);
         // 将压缩文件进行重命名
         FileUtil.rename(file, dbToFilePath + File.separator + finishGenerateFileName, true);
+        // 是否压缩：1压缩 0不压缩
+        if (param.getIsGzip() == 1) {
+            NbatchFileUtil.gzipFile(dbToFilePath + File.separator + finishGenerateFileName);
+        }
         if (!flag) {
             throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "数据库导出文件失败");
         }

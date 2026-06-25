@@ -59,6 +59,8 @@ spring:
       connection-test-query: SELECT 1
       # 连接验证超时时间（毫秒），1秒内完成连接有效性检查
       validation-timeout: 5000
+      # 如果连接池初始化失败，直接抛出异常并阻止启动
+      initialization-fail-timeout: 0
   mail:
     host: ${NBATCH_MAIL_HOST:smtp.qq.com}
     port: ${NBATCH_MAIL_PORT:25}

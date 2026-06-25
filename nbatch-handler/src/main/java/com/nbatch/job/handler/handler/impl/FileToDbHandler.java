@@ -12,11 +12,15 @@ import com.nbatch.job.handler.dialect.BaseDialect;
 import com.nbatch.job.handler.exception.HandlerException;
 import com.nbatch.job.handler.handler.JobNodeHandlerAdapter;
 import com.nbatch.job.handler.helper.DialectHelper;
+import com.nbatch.job.handler.thread.BatchThreadPoolExecutor;
+import com.nbatch.job.handler.utils.BatchThreadPoolUtil;
 import com.nbatch.job.handler.utils.NbatchFileUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import static com.nbatch.job.core.enums.NodeTypeEnum.NODE_TYPE_FILE_TO_DB;
 import static com.nbatch.job.handler.constant.JobHandlerConstant.TODAY_TABLE_SUFFIX;
@@ -62,20 +66,33 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
         }
         // 文件导入到数据库解压文件名称
         setFilePath(param, importFileName);
+        // 是否压缩：1压缩 0不压缩
+        String gzFilePath =  param.getFilePath() + "gz";
+        if (param.getIsGzip() == 1) {
+            String tempFilePath =  param.getFilePath() + "temp";
+            NbatchFileUtil.unGzipFile(param.getFilePath(), tempFilePath);
+            FileUtil.rename(FileUtil.file(param.getFilePath()), gzFilePath, true);
+            FileUtil.rename(FileUtil.file(tempFilePath), param.getFilePath(), true);
+        }
         BaseDialect dialect = dialectHelper.getDialect(nodeParam.getDbType());
         // 导入的逻辑首先将数据导入到中间表，然后进行数据校验
         String importTableName = param.getImportTableName();
         String importTodayTableName = importTableName + TODAY_TABLE_SUFFIX;
         long importDbCount;
         dialect.dropTable(dialectHelper.getConnection(nodeParam.getDbType()), importTodayTableName);
-        dialect.copyTableStructure(dialectHelper.getConnection(nodeParam.getDbType()), importTableName, importTodayTableName);
         // 全量导入
         if (param.getAllUpdate() == 1) {
+            dialect.copyTableStructure(dialectHelper.getConnection(nodeParam.getDbType()), importTableName, importTodayTableName);
             importDbCount = handleAllTable(importTableName, importTodayTableName, param, dialect, nodeParam.getDbType());
         } else {
+            dialect.copyTableNotStructure(dialectHelper.getConnection(nodeParam.getDbType()), importTableName, importTodayTableName);
             importDbCount = handleUpdateTable(importTableName, importTodayTableName, param, dialect, nodeParam.getDbType());
         }
-        dialect.dropTable(dialectHelper.getConnection(nodeParam.getDbType()), importTodayTableName);
+
+        if (param.getIsGzip() == 1) {
+            FileUtil.rename(FileUtil.file(gzFilePath), param.getFilePath(), true);
+        }
+        // dialect.dropTable(dialectHelper.getConnection(nodeParam.getDbType()), importTodayTableName);
         int totalLines = FileUtil.getTotalLines(new File(importDbFilePath));
         NbatchFileUtil.checkImportDataNum(totalLines, importDbCount);
     }

@@ -82,6 +82,16 @@ public class MysqlDialect implements BaseDialect {
     }
 
     /**
+     * 根据表名根据原表创建临时表，临时表名格式为原表名_today
+     */
+    @Override
+    public int copyTableNotStructure(Connection connection, String tableName, String targetTableName) throws Exception {
+        String createTableSql = StrUtil.format("CREATE TABLE {} LIKE {}", targetTableName, tableName);
+        log.info("执行 create table not structure sql：{}", createTableSql);
+        return SpecialSqlUtil.executeUpdate(connection, createTableSql);
+    }
+
+    /**
      * 将临时表修改为原表名
      */
     @Override

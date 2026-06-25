@@ -31,6 +31,16 @@ import static com.nbatch.job.handler.enums.ExceptionCodeEnum.DB_TO_FILE_FAIL;
 public class NbatchFileUtil {
 
     /**
+     * 压缩文件，同时删除压缩文件，同时将压缩后的文件修改为压缩文件的名称
+     */
+    public static void gzipFile(String compressFilePath) throws IOException {
+        String tempFilePath =  compressFilePath + "temp";
+        gzipFile(compressFilePath, tempFilePath);
+        FileUtil.del(compressFilePath);
+        FileUtil.rename(FileUtil.file(tempFilePath), compressFilePath, true);
+    }
+
+    /**
      * 文件解压(gz)
      */
     public static void unGzipFile(String importFilePath, String exportFilePath) throws IOException {
