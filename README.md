@@ -81,6 +81,13 @@ NBATCH_ACCESS_TOKEN=default_token
 
 启动后访问：`http://localhost:8095/nbatch`
 
+### 登录密码加密
+
+- 调度中心启动时会在内存中生成 2048 位 RSA 密钥对。
+- 前端通过 `/rsaPublicKey` 获取公钥，使用 `RSA-OAEP/SHA-256` 加密登录、用户新增/修改、个人改密等密码字段。
+- 后端收到 Base64 密文后用私钥解密，再沿用原有 MD5 存储与校验逻辑。
+- 前端加密依赖浏览器 WebCrypto API，生产环境建议使用 HTTPS；本地 `localhost` 开发环境通常可直接使用。
+
 ### 执行器
 
 配置文件：`nbatch-consumer/src/main/resources/application.yml`

@@ -190,7 +190,8 @@ $(function() {
                 "permission": permissionArr.join(',')
 			};
 
-        	$.post(base_url + "/user/add", paramData, function(data, status) {
+            RsaPassword.encryptFields(paramData, ['password']).then(function (encryptedData) {
+                $.post(base_url + "/user/add", encryptedData, function(data, status) {
     			if (data.code == "200") {
 					$('#addModal').modal('hide');
 
@@ -205,6 +206,9 @@ $(function() {
 					});
     			}
     		});
+            }, function (msg) {
+                layer.msg(msg || I18n.system_add_fail, {icon: 2});
+            });
 		}
 	});
 	$("#addModal").on('hide.bs.modal', function () {
@@ -282,7 +286,8 @@ $(function() {
                 "permission": permissionArr.join(',')
             };
 
-            $.post(base_url + "/user/update", paramData, function(data, status) {
+            RsaPassword.encryptFields(paramData, ['password']).then(function (encryptedData) {
+            $.post(base_url + "/user/update", encryptedData, function(data, status) {
                 if (data.code == "200") {
                     $('#updateModal').modal('hide');
 
@@ -296,6 +301,9 @@ $(function() {
                         icon: '2'
                     });
                 }
+            });
+            }, function (msg) {
+                layer.msg(msg || I18n.system_update_fail, {icon: 2});
             });
 		}
 	});

@@ -260,7 +260,8 @@ $(function(){
             element.parent('div').append(error);
         },
         submitHandler : function(form) {
-            $.post(base_url + "/user/updatePwd",  $("#updatePwdModal .form").serialize(), function(data, status) {
+            RsaPassword.encryptForm($("#updatePwdModal .form"), ['oldPassword', 'password']).then(function (paramData) {
+                $.post(base_url + "/user/updatePwd",  paramData, function(data, status) {
                 if (data.code == 200) {
                     $('#updatePwdModal').modal('hide');
 
@@ -283,6 +284,9 @@ $(function(){
                         content: (data.msg|| I18n.change_pwd + I18n.system_fail )
                     });
                 }
+                });
+            }, function (msg) {
+                layer.msg(msg || I18n.change_pwd + I18n.system_fail, {icon: 2});
             });
         }
     });

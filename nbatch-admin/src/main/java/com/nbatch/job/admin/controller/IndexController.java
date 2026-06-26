@@ -2,9 +2,11 @@ package com.nbatch.job.admin.controller;
 
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.admin.controller.annotation.PermissionLimit;
+import com.nbatch.job.admin.core.util.RsaPasswordUtil;
 import com.nbatch.job.admin.service.impl.LoginService;
 import com.nbatch.job.admin.service.IJobService;
 import com.nbatch.job.core.biz.model.ReturnT;
+import com.nbatch.job.core.constant.HandleCodeConstant;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -34,6 +36,8 @@ public class IndexController {
 	private IJobService jobService;
 	@Resource
 	private LoginService loginService;
+	@Resource
+	private RsaPasswordUtil rsaPasswordUtil;
 
 	@RequestMapping("/")
 	public String index(Model model) {
@@ -63,8 +67,19 @@ public class IndexController {
 	@ResponseBody
 	@PermissionLimit(limit=false)
 	public ReturnT<String> loginDo(HttpServletRequest request, HttpServletResponse response, String userName, String password, String ifRemember){
+		ReturnT<String> decryptResult = rsaPasswordUtil.decryptPassword(password);
+		if (decryptResult.getCode() != HandleCodeConstant.HANDLE_CODE_SUCCESS) {
+			return decryptResult;
+		}
 		boolean ifRem = StrUtil.isNotBlank(ifRemember) && StrUtil.equals("on", ifRemember);
-		return loginService.login(request, response, userName, password, ifRem);
+		return loginService.login(request, response, userName, decryptResult.getContent(), ifRem);
+	}
+
+	@RequestMapping(value="rsaPublicKey", method=RequestMethod.GET)
+	@ResponseBody
+	@PermissionLimit(limit=false)
+	public ReturnT<Map<String, String>> rsaPublicKey(){
+		return ReturnT.success(rsaPasswordUtil.publicKeyInfo());
 	}
 	
 	@RequestMapping(value="logout", method=RequestMethod.POST)

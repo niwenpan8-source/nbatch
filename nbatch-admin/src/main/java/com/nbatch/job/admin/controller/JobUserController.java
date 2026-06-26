@@ -11,6 +11,7 @@ import com.nbatch.job.admin.core.domain.param.JobUserParam;
 import com.nbatch.job.admin.core.domain.po.JobGroupPo;
 import com.nbatch.job.admin.core.domain.po.JobUserPo;
 import com.nbatch.job.admin.core.util.I18nUtil;
+import com.nbatch.job.admin.core.util.RsaPasswordUtil;
 import com.nbatch.job.admin.mapper.IJobGroupMapper;
 import com.nbatch.job.admin.mapper.IJobUserMapper;
 import com.nbatch.job.core.biz.model.ReturnT;
@@ -41,6 +42,8 @@ public class JobUserController {
     private IJobUserMapper jobUserMapper;
     @Resource
     private IJobGroupMapper jobGroupMapper;
+    @Resource
+    private RsaPasswordUtil rsaPasswordUtil;
 
     @RequestMapping
     @PermissionLimit(adminuser = true)
@@ -91,6 +94,11 @@ public class JobUserController {
     @ResponseBody
     @PermissionLimit(adminuser = true)
     public ReturnT<String> add(JobUserParam param) {
+        ReturnT<String> passwordDecryptResult = rsaPasswordUtil.decryptPassword(param.getPassword());
+        if (passwordDecryptResult.getCode() != HandleCodeConstant.HANDLE_CODE_SUCCESS) {
+            return passwordDecryptResult;
+        }
+        param.setPassword(passwordDecryptResult.getContent());
 
         // valid username
         if (!StringUtils.hasText(param.getUsername())) {
@@ -134,6 +142,11 @@ public class JobUserController {
 
         // valid password
         if (StringUtils.hasText(param.getPassword())) {
+            ReturnT<String> passwordDecryptResult = rsaPasswordUtil.decryptPassword(param.getPassword());
+            if (passwordDecryptResult.getCode() != HandleCodeConstant.HANDLE_CODE_SUCCESS) {
+                return passwordDecryptResult;
+            }
+            param.setPassword(passwordDecryptResult.getContent());
             param.setPassword(param.getPassword().trim());
             if (!(param.getPassword().length() >= 4 && param.getPassword().length() <= 20)) {
                 return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, I18nUtil.getString("system_lengh_limit") + "[4-20]");
@@ -167,6 +180,16 @@ public class JobUserController {
     @RequestMapping("/updatePwd")
     @ResponseBody
     public ReturnT<String> updatePwd(HttpServletRequest request, String password, String oldPassword) {
+        ReturnT<String> oldPasswordDecryptResult = rsaPasswordUtil.decryptPassword(oldPassword);
+        if (oldPasswordDecryptResult.getCode() != HandleCodeConstant.HANDLE_CODE_SUCCESS) {
+            return oldPasswordDecryptResult;
+        }
+        ReturnT<String> passwordDecryptResult = rsaPasswordUtil.decryptPassword(password);
+        if (passwordDecryptResult.getCode() != HandleCodeConstant.HANDLE_CODE_SUCCESS) {
+            return passwordDecryptResult;
+        }
+        oldPassword = oldPasswordDecryptResult.getContent();
+        password = passwordDecryptResult.getContent();
 
         // valid
         if (StrUtil.isBlank(oldPassword)) {

@@ -46,7 +46,8 @@ $(function(){
             element.parent('div').append(error);  
         },
         submitHandler : function(form) {
-			$.post(base_url + "/login", $("#loginForm").serialize(), function(data, status) {
+            RsaPassword.encryptForm($("#loginForm"), ['password']).then(function (paramData) {
+                $.post(base_url + "/login", paramData, function(data, status) {
 				if (data.code == "200") {
                     layer.msg( I18n.login_success );
                     setTimeout(function(){
@@ -60,7 +61,10 @@ $(function(){
                         icon: '2'
                     });
 				}
-			});
+			    });
+            }, function (msg) {
+                layer.msg(msg || I18n.login_fail, {icon: 2});
+            });
 		}
 	});
 });
