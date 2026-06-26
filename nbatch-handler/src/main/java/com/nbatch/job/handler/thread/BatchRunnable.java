@@ -32,23 +32,30 @@ public abstract class BatchRunnable implements Runnable{
     @Override
     public void run() {
         runningThread = Thread.currentThread();
+        boolean runAfterRequired = false;
+        boolean stopped = false;
         try {
             if (isStopRequested()) {
                 runStop();
+                stopped = true;
                 return;
             }
+            runAfterRequired = true;
             runBefore();
             if (isStopRequested()) {
                 runStop();
+                stopped = true;
                 return;
             }
-            try {
-                runBatch();
-            } finally {
-                runAfter();
-            }
+            runBatch();
         } finally {
-            runningThread = null;
+            try {
+                if (runAfterRequired && !stopped) {
+                    runAfter();
+                }
+            } finally {
+                runningThread = null;
+            }
         }
     }
 

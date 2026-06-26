@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.SYSTEM_ERROR;
 /**
@@ -28,62 +29,149 @@ import static com.nbatch.job.handler.enums.ExceptionCodeEnum.SYSTEM_ERROR;
 @RequiredArgsConstructor
 public class JobHandlerHolder implements IJobHandlerHolder {
 
+    private static final long NODE_AWAIT_TIMEOUT = 24;
+
+    private static final TimeUnit NODE_AWAIT_TIME_UNIT = TimeUnit.HOURS;
 
     private final Map<String, JobNodeHandlerAdapter> jobHandlerAdapterMap;
 
     /**
-     * 测试
+     * 处理作业节点
      */
     @Override
     public void handle(ExecuteWorkParam workNodeParam) {
-        // 每种节点类型使用一种线程池进行运行
         List<ExecuteNodeParam> executeNodeParamList = workNodeParam.getExecuteNodeParamList();
         if (CollUtil.isEmpty(executeNodeParamList)) {
-            // 日志缓存使用线程变量，InheritableThreadLocal，支持子线程继承父线程的日志缓存
-            BatchJobHelper.log("jobId:{},workId：{},此次执行没有运行节点不需要运行", workNodeParam.getJobId(),
+            BatchJobHelper.log("jobId:{},workId:{}, no executable node", workNodeParam.getJobId(),
                     workNodeParam.getWorkId());
-            throw new HandlerException(SYSTEM_ERROR.getCode(), "执行节点参数为空");
+            throw new HandlerException(SYSTEM_ERROR.getCode(), "execute node params is empty");
         }
 
-        // 这个的作用是起到了屏障的作用，当前 JobHandlerHolder.handle() 需要等本轮可执行节点完成后，
-        // 才能判断下一批依赖节点是否可执行
         CountDownLatch latch = new CountDownLatch(executeNodeParamList.size());
         for (ExecuteNodeParam nodeParam : executeNodeParamList) {
             executeNode(workNodeParam, nodeParam, latch);
         }
+        awaitNodes(workNodeParam, latch);
+        checkNodeResults(executeNodeParamList);
+    }
+
+    /**
+     * 等待所有作业节点执行完成
+     */
+    private void awaitNodes(ExecuteWorkParam workNodeParam, CountDownLatch latch) {
         try {
-            latch.await();
+            boolean completed = latch.await(NODE_AWAIT_TIMEOUT, NODE_AWAIT_TIME_UNIT);
+            if (!completed) {
+                throw new HandlerException(SYSTEM_ERROR.getCode(),
+                        "wait executable nodes timeout, jobId:" + workNodeParam.getJobId()
+                                + ", workId:" + workNodeParam.getWorkId());
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new HandlerException(SYSTEM_ERROR.getCode(), e);
         }
     }
 
+    /**
+     * 检查所有作业节点执行结果
+     */
+    private void checkNodeResults(List<ExecuteNodeParam> executeNodeParamList) {
+        StringBuilder failMsg = new StringBuilder();
+        for (ExecuteNodeParam nodeParam : executeNodeParamList) {
+            if (nodeParam == null) {
+                appendFailMessage(failMsg, "null", null);
+                continue;
+            }
+            Integer status = nodeParam.getNodeRunStatus();
+            if (!isCompleteStatus(status)) {
+                appendFailMessage(failMsg, getNodeKey(nodeParam), status);
+            }
+        }
+        if (failMsg.length() > 0) {
+            throw new HandlerException(SYSTEM_ERROR.getCode(), "node execute failed: " + failMsg);
+        }
+    }
+
+    private void appendFailMessage(StringBuilder failMsg, String nodeKey, Integer status) {
+        if (failMsg.length() > 0) {
+            failMsg.append("; ");
+        }
+        failMsg.append("node=").append(nodeKey).append(", status=").append(status);
+    }
+
+    private boolean isCompleteStatus(Integer status) {
+        return Integer.valueOf(FlowRunStatusEnum.COMPLETE.getCode()).equals(status);
+    }
+
+    private boolean isExceptionStatus(Integer status) {
+        return Integer.valueOf(FlowRunStatusEnum.EXCEPTION.getCode()).equals(status);
+    }
+
+    /**
+     * 执行作业节点
+     */
     private void executeNode(ExecuteWorkParam workNodeParam, ExecuteNodeParam nodeParam,
                              CountDownLatch latch) {
-        String threadPoolKey = getNodeThreadPoolKey(nodeParam);
-        BatchThreadPoolExecutor batchThreadPoolExecutor = BatchThreadPoolUtil.getBatchThreadPoolExecutor(threadPoolKey);
-        if (batchThreadPoolExecutor == null) {
-            NodeTypeEnum nodeTypeEnum = NodeTypeEnum.getByCode(nodeParam.getNodeType());
-            if (nodeTypeEnum == null) {
-                BatchJobHelper.log("不支持该节点类型：{}", nodeParam.getNodeType());
-                nodeParam.setNodeRunStatus(FlowRunStatusEnum.EXCEPTION.getCode());
+        try {
+            if (nodeParam == null) {
                 latch.countDown();
                 return;
             }
-            Integer threadPoolNum = nodeTypeEnum.getThreadPoolNum();
-            batchThreadPoolExecutor = BatchThreadPoolUtil.newThreadPoolExecutorDiscard(threadPoolKey, threadPoolNum,
-                    threadPoolNum, 30, TimeUnit.MINUTES, 1000);
+            BatchThreadPoolExecutor executor = getExecutor(nodeParam);
+            if (executor == null) {
+                markNodeFailed(nodeParam, latch, "unsupported node type:" + nodeParam.getNodeType());
+                return;
+            }
+            JobNodeHandlerAdapter handlerAdapter = jobHandlerAdapterMap.get(nodeParam.getNodeType());
+            if (handlerAdapter == null) {
+                markNodeFailed(nodeParam, latch, "node handler not found:" + nodeParam.getNodeType());
+                return;
+            }
+            submitNode(workNodeParam, nodeParam, handlerAdapter, executor, latch);
+        } catch (Exception e) {
+            if (nodeParam != null) {
+                nodeParam.setNodeRunStatus(FlowRunStatusEnum.EXCEPTION.getCode());
+            }
+            latch.countDown();
+            BatchJobHelper.log("jobId:{},workId:{}, node submit error:{}", workNodeParam.getJobId(),
+                    workNodeParam.getWorkId(), e.getMessage());
         }
-        JobNodeHandlerAdapter jobHandlerAdapter = jobHandlerAdapterMap.get(nodeParam.getNodeType());
-        if (jobHandlerAdapter == null) {
-            BatchJobHelper.log("未找到节点处理器：{}", nodeParam.getNodeType());
+    }
+
+    private BatchThreadPoolExecutor getExecutor(ExecuteNodeParam nodeParam) {
+        NodeTypeEnum nodeTypeEnum = NodeTypeEnum.getByCode(nodeParam.getNodeType());
+        if (nodeTypeEnum == null) {
+            return null;
+        }
+        Integer threadPoolNum = nodeTypeEnum.getThreadPoolNum();
+        return BatchThreadPoolUtil.newThreadPoolExecutorDiscard(getNodeThreadPoolKey(nodeParam), threadPoolNum,
+                threadPoolNum, 30, TimeUnit.MINUTES, 1000);
+    }
+
+    private void markNodeFailed(ExecuteNodeParam nodeParam, CountDownLatch latch, String message) {
+        BatchJobHelper.log(message);
+        nodeParam.setNodeRunStatus(FlowRunStatusEnum.EXCEPTION.getCode());
+        latch.countDown();
+    }
+
+    private void submitNode(ExecuteWorkParam workNodeParam, ExecuteNodeParam nodeParam,
+                            JobNodeHandlerAdapter handlerAdapter, BatchThreadPoolExecutor executor,
+                            CountDownLatch latch) {
+        BatchRunnable batchRunnable = buildNodeRunnable(workNodeParam, nodeParam, handlerAdapter, latch);
+        boolean submitted = executor.executeBatch(batchRunnable);
+        if (!submitted) {
             nodeParam.setNodeRunStatus(FlowRunStatusEnum.EXCEPTION.getCode());
             latch.countDown();
-            return;
+            BatchJobHelper.log("jobId:{},workId:{}, node submit thread pool failed, nodeId:{}", workNodeParam.getJobId(),
+                    workNodeParam.getWorkId(), nodeParam.getNodeId());
         }
+    }
+
+    private BatchRunnable buildNodeRunnable(ExecuteWorkParam workNodeParam, ExecuteNodeParam nodeParam,
+                                            JobNodeHandlerAdapter handlerAdapter, CountDownLatch latch) {
         JSONObject cacheObj = getEntries(workNodeParam, nodeParam);
-        BatchRunnable batchRunnable = new BatchRunnable(cacheObj) {
+        return new BatchRunnable(cacheObj) {
+            private final AtomicBoolean finished = new AtomicBoolean(false);
             private boolean success = false;
 
             @Override
@@ -94,12 +182,15 @@ public class JobHandlerHolder implements IJobHandlerHolder {
             @Override
             public void runBatch() {
                 try {
-                    jobHandlerAdapter.execute(nodeParam);
+                    handlerAdapter.execute(nodeParam);
                     success = true;
                 } catch (Exception e) {
                     nodeParam.setNodeRunStatus(FlowRunStatusEnum.EXCEPTION.getCode());
-                    BatchJobHelper.log("jobId:{},workId：{},节点执行异常：{}", workNodeParam.getJobId(),
+                    BatchJobHelper.log("jobId:{},workId:{}, node execute error:{}", workNodeParam.getJobId(),
                             workNodeParam.getWorkId(), e.getMessage());
+                    if (e instanceof HandlerException) {
+                        throw (HandlerException) e;
+                    }
                     throw new HandlerException(SYSTEM_ERROR.getCode(), e);
                 }
             }
@@ -109,29 +200,29 @@ public class JobHandlerHolder implements IJobHandlerHolder {
                 try {
                     if (success) {
                         nodeParam.setNodeRunStatus(FlowRunStatusEnum.COMPLETE.getCode());
-                    } else if (nodeParam.getNodeRunStatus() != FlowRunStatusEnum.EXCEPTION.getCode()) {
+                    } else if (!isExceptionStatus(nodeParam.getNodeRunStatus())) {
                         nodeParam.setNodeRunStatus(FlowRunStatusEnum.EXCEPTION.getCode());
                     }
                 } finally {
-                    latch.countDown();
+                    finish();
                 }
             }
 
             @Override
             public void runStop() {
-                nodeParam.setNodeRunStatus(FlowRunStatusEnum.STOPPED.getCode());
-                latch.countDown();
+                try {
+                    nodeParam.setNodeRunStatus(FlowRunStatusEnum.STOPPED.getCode());
+                } finally {
+                    finish();
+                }
+            }
+
+            private void finish() {
+                if (finished.compareAndSet(false, true)) {
+                    latch.countDown();
+                }
             }
         };
-
-        boolean submitted = batchThreadPoolExecutor.executeBatch(batchRunnable);
-        if (!submitted) {
-            nodeParam.setNodeRunStatus(FlowRunStatusEnum.EXCEPTION.getCode());
-            latch.countDown();
-            BatchJobHelper.log("jobId:{},workId：{},节点提交线程池失败，nodeId:{}", workNodeParam.getJobId(),
-                    workNodeParam.getWorkId(), nodeParam.getNodeId());
-        }
-
     }
 
     private String getNodeThreadPoolKey(ExecuteNodeParam nodeParam) {
@@ -167,6 +258,4 @@ public class JobHandlerHolder implements IJobHandlerHolder {
     }
 
 }
-
-
 

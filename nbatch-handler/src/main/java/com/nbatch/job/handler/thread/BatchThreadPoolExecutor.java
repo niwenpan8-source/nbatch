@@ -120,10 +120,7 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
             if (runnable instanceof BatchRunnable) {
                 BatchRunnable batchRunnable = (BatchRunnable) runnable;
                 if (nodeLogIdList.contains(batchRunnable.getNodeLogId()) && this.getQueue().remove(runnable)) {
-                    batchRunnable.requestStop();
-                    appendRunNodeEvent(batchRunnable, STOPPED.getValue(), HandleCodeConstant.HANDLE_CODE_FAIL, "运行节点已停止");
-                    batchRunnable.runStop();
-                    RunNodeStopRegistry.clear(batchRunnable.getNodeLogId());
+                    stopWaitingTask(runnable);
                     stopCount++;
                 }
             }
@@ -143,7 +140,26 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
     @Override
     public void shutdown() {
         log.info("shutdown threadPool:{}", threadPoolKey);
-        this.shutdownNow();
+        List<Runnable> waitingTasks = this.shutdownNow();
+        for (Runnable waitingTask : waitingTasks) {
+            stopWaitingTask(waitingTask);
+        }
+    }
+
+    private void stopWaitingTask(Runnable runnable) {
+        if (!(runnable instanceof BatchRunnable)) {
+            return;
+        }
+        BatchRunnable batchRunnable = (BatchRunnable) runnable;
+        try {
+            batchRunnable.requestStop();
+            appendRunNodeEvent(batchRunnable, STOPPED.getValue(), HandleCodeConstant.HANDLE_CODE_FAIL, "运行节点已停止");
+            batchRunnable.runStop();
+        } catch (Exception e) {
+            log.error("stop waiting task error, hashCode:{}", runnable.hashCode(), e);
+        } finally {
+            RunNodeStopRegistry.clear(batchRunnable.getNodeLogId());
+        }
     }
 
     public static void appendRunNodeEvent(BatchRunnable batchRunnable, String eventType, Integer handleCode, String handleMsg) {

@@ -47,13 +47,12 @@ public class BatchThreadPoolUtil {
     public static BatchThreadPoolExecutor newThreadPoolExecutorDiscard(String threadPoolKey, int corePoolSize,
                                                                        int maxPoolSize, int keepAliveTime,
                                                                        TimeUnit timeUnit, int queueSize) {
-        BatchThreadPoolExecutor executor = new BatchThreadPoolExecutor(threadPoolKey,
-                corePoolSize, maxPoolSize,
-                keepAliveTime, timeUnit,
-                new ArrayBlockingQueue<>(queueSize), newThreadFactory(threadPoolKey),
-                new DiscardRejectedExecutionPolicy());
-        THREAD_POOL_EXECUTOR.put(threadPoolKey, executor);
-        return executor;
+        return THREAD_POOL_EXECUTOR.computeIfAbsent(threadPoolKey, key ->
+                new BatchThreadPoolExecutor(key,
+                        corePoolSize, maxPoolSize,
+                        keepAliveTime, timeUnit,
+                        new ArrayBlockingQueue<>(queueSize), newThreadFactory(key),
+                        new DiscardRejectedExecutionPolicy()));
     }
 
     public static BatchThreadPoolExecutor getBatchThreadPoolExecutor(String threadPoolKey) {
