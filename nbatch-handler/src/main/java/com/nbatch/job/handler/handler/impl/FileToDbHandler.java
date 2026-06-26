@@ -12,15 +12,11 @@ import com.nbatch.job.handler.dialect.BaseDialect;
 import com.nbatch.job.handler.exception.HandlerException;
 import com.nbatch.job.handler.handler.JobNodeHandlerAdapter;
 import com.nbatch.job.handler.helper.DialectHelper;
-import com.nbatch.job.handler.thread.BatchThreadPoolExecutor;
-import com.nbatch.job.handler.utils.BatchThreadPoolUtil;
 import com.nbatch.job.handler.utils.NbatchFileUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 import static com.nbatch.job.core.enums.NodeTypeEnum.NODE_TYPE_FILE_TO_DB;
 import static com.nbatch.job.handler.constant.JobHandlerConstant.TODAY_TABLE_SUFFIX;
@@ -67,7 +63,7 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
         // 文件导入到数据库解压文件名称
         setFilePath(param, importFileName);
         // 是否压缩：1压缩 0不压缩
-        String tempFilePath =  importDbFilePath + ".temp";
+        String tempFilePath = importDbFilePath + ".temp";
         if (param.getIsGzip() == 1) {
             String tempFileName = importFileName + ".temp";
             NbatchFileUtil.unGzipFile(param.getFilePath(), tempFilePath);
@@ -77,23 +73,20 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
         // 导入的逻辑首先将数据导入到中间表，然后进行数据校验
         String importTableName = param.getImportTableName();
         String importTodayTableName = importTableName + TODAY_TABLE_SUFFIX;
-        long importDbCount;
         dialect.dropTable(dialectHelper.getConnection(nodeParam.getDbType()), importTodayTableName);
         // 全量导入
         if (param.getAllUpdate() == 1) {
             dialect.copyTableStructure(dialectHelper.getConnection(nodeParam.getDbType()), importTableName, importTodayTableName);
-            importDbCount = handleAllTable(importTableName, importTodayTableName, param, dialect, nodeParam.getDbType());
+            handleAllTable(importTableName, importTodayTableName, param, dialect, nodeParam.getDbType());
         } else {
             dialect.copyTableNotStructure(dialectHelper.getConnection(nodeParam.getDbType()), importTableName, importTodayTableName);
-            importDbCount = handleUpdateTable(importTableName, importTodayTableName, param, dialect, nodeParam.getDbType());
+            handleUpdateTable(importTableName, importTodayTableName, param, dialect, nodeParam.getDbType());
         }
 
         if (param.getIsGzip() == 1) {
             FileUtil.del(tempFilePath);
         }
         // dialect.dropTable(dialectHelper.getConnection(nodeParam.getDbType()), importTodayTableName);
-        int totalLines = FileUtil.getTotalLines(new File(importDbFilePath));
-        NbatchFileUtil.checkImportDataNum(totalLines, importDbCount);
     }
 
     /**
@@ -168,6 +161,8 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
         ExecuteFileToDbParam copyParam = BeanUtil.toBean(param, ExecuteFileToDbParam.class);
         copyParam.setImportTableName(importTodayTableName);
         importDbCount = dialect.fileToDb(dialectHelper.getConnection(dbType), copyParam);
+        int totalLines = FileUtil.getTotalLines(new File(param.getFilePath()));
+        NbatchFileUtil.checkImportDataNum(totalLines, importDbCount);
         String importTableCondition = param.getImportTableCondition();
         if (StrUtil.isEmpty(importTableCondition)) {
             throw new HandlerException(FILE_TO_DB_FAIL.getCode(), "导入文件表条件列不可为空！");
@@ -191,16 +186,18 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
      * 处理全量导入数据
      */
     private long handleAllTable(String importTableName,
-                                   String importTodayTableName,
-                                   ExecuteFileToDbParam param,
-                                   BaseDialect dialect,
-                                   String dbType
+                                String importTodayTableName,
+                                ExecuteFileToDbParam param,
+                                BaseDialect dialect,
+                                String dbType
     ) throws Exception {
         long importDbCount;
         // 将所有数据导入到临时表
         ExecuteFileToDbParam copyParam = BeanUtil.toBean(param, ExecuteFileToDbParam.class);
         copyParam.setImportTableName(importTodayTableName);
         importDbCount = dialect.fileToDb(dialectHelper.getConnection(dbType), copyParam);
+        int totalLines = FileUtil.getTotalLines(new File(param.getFilePath()));
+        NbatchFileUtil.checkImportDataNum(totalLines, importDbCount);
         // 删除原表
         dialect.dropTable(dialectHelper.getConnection(dbType), importTableName);
         // 将临时表修改为原表名

@@ -7,13 +7,17 @@ import com.nbatch.job.core.biz.model.ExecuteDbToFileParam;
 import com.nbatch.job.core.biz.model.ExecuteFileToDbParam;
 import com.nbatch.job.handler.exception.HandlerException;
 import com.nbatch.job.handler.utils.AsciiUtil;
+import com.nbatch.job.handler.utils.InvisibleCharUtil;
+import com.nbatch.job.handler.utils.NbatchCsvUtil;
 import com.nbatch.job.handler.utils.SpecialSqlUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.util.List;
 
@@ -29,8 +33,8 @@ public class MysqlDialect implements BaseDialect {
 
     @Override
     public long fileToDb(Connection connection, ExecuteFileToDbParam param) throws Exception {
-        String executeSql = generateFileToDbExecuteSql(param);
         initImportFileFields(param);
+        String executeSql = generateFileToDbExecuteSql(param);
         log.info("执行 file to db sql：{}", executeSql);
         return SpecialSqlUtil.executeUpdate(connection, executeSql);
     }
@@ -108,16 +112,13 @@ public class MysqlDialect implements BaseDialect {
         if (StrUtil.isEmpty(param.getImportTableFiled())) {
             return;
         }
-        String separator = param.getSep();
-        if (StrUtil.contains(separator, "X'")) {
-            // 3. 处理原始字符串中的十六进制部分
-            String hexPart = separator.replaceAll("X'|'", "");
-            separator = AsciiUtil.hexToAscii(hexPart);
+        String separator = NbatchCsvUtil.resolveFileSeparator(param.getSep());
+        int actualColumnSize = NbatchCsvUtil.readCsvFirstSize(param, separator);
+        if (actualColumnSize <= 0) {
+            log.warn("mysql import file first line column size read failed, skip auto TABLE_FIELDS padding, filePath:{}, remoteFilePath:{}",
+                    param.getFilePath(), param.getRemoteFilePath());
+            return;
         }
-        if (StrUtil.isEmpty(separator)) {
-            separator = " | ";
-        }
-        int actualColumnSize = readCsvFirstSize(param.getRemoteFilePath(), separator);
         List<String> templateColumns = StrUtil.split(param.getImportTableFiled(), StrPool.COMMA);
         if (actualColumnSize > templateColumns.size()) {
             StringBuilder importTableFiled = new StringBuilder(param.getImportTableFiled());
@@ -126,25 +127,6 @@ public class MysqlDialect implements BaseDialect {
             }
             param.setImportTableFiled(importTableFiled.toString());
         }
-    }
-
-    /**
-     * 测试写入csv
-     */
-    public int readCsvFirstSize(String filePath, String separator) {
-        try (
-                FileInputStream fileInputStream = new FileInputStream(filePath);
-                InputStreamReader isr = new InputStreamReader(fileInputStream, StandardCharsets.UTF_8);
-                BufferedReader reader = new BufferedReader(isr)
-        ) {
-            String firstLine = reader.readLine();
-            //CSV格式文件为逗号分隔符文件，这里根据逗号切分
-            List<String> itemList = StrUtil.split(firstLine, separator);
-            return itemList.size();
-        } catch (Exception e) {
-            log.error("读取csv文件异常");
-        }
-        return 0;
     }
 
     /**
@@ -166,10 +148,11 @@ public class MysqlDialect implements BaseDialect {
         String exportSql = "LOAD DATA INFILE " + "'" + param.getRemoteFilePath() + "'" +
                 " INTO TABLE " + param.getImportTableName() +
                 " character set " + param.getFileCode();
-        if (param.getSep() != null && StrUtil.contains(param.getSep(), "'")) {
-            exportSql += " FIELDS TERMINATED BY " + param.getSep();
+        String separator = NbatchCsvUtil.resolveSqlSeparator(param.getSep());
+        if (NbatchCsvUtil.isSqlHexSeparator(separator)) {
+            exportSql += " FIELDS TERMINATED BY " + separator;
         } else {
-            exportSql += " FIELDS TERMINATED BY '" + param.getSep() + "'";
+            exportSql += " FIELDS TERMINATED BY '" + NbatchCsvUtil.escapeSqlString(separator) + "'";
         }
         if (StrUtil.isNotBlank(param.getImportTableFiled())) {
             exportSql += " TABLE_FIELDS " + "'" + param.getImportTableFiled() + "'";
@@ -206,9 +189,16 @@ public class MysqlDialect implements BaseDialect {
             executeSql.append(" where ").append(param.getExportTableCondition());
         }
 
+        String separator = NbatchCsvUtil.resolveSqlSeparator(param.getSep());
         executeSql.append(" INTO OUTFILE '")
                 .append(param.getRemoteFilePath())
-                .append("'").append(" FIELDS TERMINATED BY ' | '")
+                .append("'");
+        if (NbatchCsvUtil.isSqlHexSeparator(separator)) {
+            executeSql.append(" FIELDS TERMINATED BY ").append(separator);
+        } else {
+            executeSql.append(" FIELDS TERMINATED BY '").append(NbatchCsvUtil.escapeSqlString(separator)).append("'");
+        }
+        executeSql
                 .append(" LINES TERMINATED BY '\\n'")
                 .append(" null_value ''");
 
