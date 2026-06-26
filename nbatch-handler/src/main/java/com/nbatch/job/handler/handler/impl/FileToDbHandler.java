@@ -67,12 +67,11 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
         // 文件导入到数据库解压文件名称
         setFilePath(param, importFileName);
         // 是否压缩：1压缩 0不压缩
-        String gzFilePath =  param.getFilePath() + "gz";
+        String tempFilePath =  importDbFilePath + ".temp";
         if (param.getIsGzip() == 1) {
-            String tempFilePath =  param.getFilePath() + "temp";
+            String tempFileName = importFileName + ".temp";
             NbatchFileUtil.unGzipFile(param.getFilePath(), tempFilePath);
-            FileUtil.rename(FileUtil.file(param.getFilePath()), gzFilePath, true);
-            FileUtil.rename(FileUtil.file(tempFilePath), param.getFilePath(), true);
+            setFilePath(param, tempFileName);
         }
         BaseDialect dialect = dialectHelper.getDialect(nodeParam.getDbType());
         // 导入的逻辑首先将数据导入到中间表，然后进行数据校验
@@ -90,7 +89,7 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
         }
 
         if (param.getIsGzip() == 1) {
-            FileUtil.rename(FileUtil.file(gzFilePath), param.getFilePath(), true);
+            FileUtil.del(tempFilePath);
         }
         // dialect.dropTable(dialectHelper.getConnection(nodeParam.getDbType()), importTodayTableName);
         int totalLines = FileUtil.getTotalLines(new File(importDbFilePath));
