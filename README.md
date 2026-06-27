@@ -238,6 +238,31 @@ java -jar nbatch-consumer/target/nbatch-consumer-2.5.0.jar
 - 本次 README 更新基于提交 `406648e` 的代码差异整理。
 - 建议提交前执行：`mvn -pl nbatch-admin -am -DskipTests compile`。
 
+## 2026-06-27 修改报告
+
+### 前端交互
+
+- 批次流程依赖配置页新增“流程预览”能力，可基于当前页面已配置或未保存的依赖关系生成节点依赖流程图。
+- 流程图箭头方向为“依赖节点 → 当前节点”，支持滚轮缩放、画布拖拽平移和一键重置。
+- 节点名称按三行展示，减少长名称截断；缩放时节点字体会跟随缩放并保留最小字号，兼顾可读性和信息密度。
+- 右键点击流程图节点可查看“它依赖的节点”和“依赖它的节点”，并可点击关联节点快速定位。
+- 画布平移增加边界限制，避免流程图被拖离可视区域过远。
+- 修复流程预览按钮初始化时序和右键菜单 JS 拼接语法问题，避免 `openFlowPreview is not defined` 等前端运行错误。
+
+### 执行端与文件处理
+
+- `JobHandlerHolder`、`BatchRunnable`、线程池工具类完成结构整理，降低节点执行、计数器释放和异常处理逻辑的耦合度。
+- `NbatchFileUtil` 优化压缩与解压逻辑，支持目录压缩场景，并减少重复校验和冗余代码。
+- `NbatchCsvUtil`、`GBaseDialect`、`MysqlDialect` 优化 CSV 首行读取和字段数量识别逻辑，兼容 BOM、不可见字符、空行等异常输入。
+- 文件入库处理链路优化导入流程，减少读取首行和正式导入之间的重复处理。
+- `SpecialSqlUtil` 调整特殊 SQL 处理逻辑，去除不必要的执行时间输出。
+
+### 验证结果
+
+- 已通过模板语法与渲染后 JS 语法检查。
+- 已通过编译验证：`mvn -pl nbatch-admin -am -DskipTests compile`。
+- 全量编译仍需本地 Maven 可解析 `com.gbase:gbase-jdbc:9.5.0.7`。
+
 ## 常用开发命令
 
 ```bash

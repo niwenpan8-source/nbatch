@@ -233,6 +233,31 @@ java -jar nbatch-consumer/target/nbatch-consumer-2.5.0.jar
 - This README update was prepared based on code changes in commit `406648e`.
 - Recommended verification before commit: `mvn -pl nbatch-admin -am -DskipTests compile`.
 
+## Change Report: 2026-06-27
+
+### Frontend
+
+- Added workflow dependency preview on the dependency configuration page. It generates a node dependency flowchart from the current page state, including unsaved changes.
+- The flowchart uses the direction `dependency node → current node`, and supports mouse-wheel zoom, canvas dragging, and reset.
+- Node names are displayed in up to three lines to reduce truncation. Font size follows zoom changes while keeping a minimum readable size.
+- Right-clicking a node shows both upstream dependencies and downstream dependent nodes, and related nodes can be clicked for quick positioning.
+- Canvas dragging is bounded so the flowchart cannot be moved too far away from the visible area.
+- Fixed preview button initialization timing and context-menu JavaScript string composition issues to avoid frontend runtime errors such as `openFlowPreview is not defined`.
+
+### Executor and File Handling
+
+- Refactored `JobHandlerHolder`, `BatchRunnable`, and thread-pool utilities to reduce coupling between node execution, latch release, and exception handling.
+- Optimized `NbatchFileUtil` compression and decompression logic, including directory compression support and less duplicated validation code.
+- Optimized CSV first-line reading and column-count detection in `NbatchCsvUtil`, `GBaseDialect`, and `MysqlDialect`, with compatibility for BOM, invisible characters, and blank lines.
+- Optimized the file import flow to reduce duplicated processing between first-line detection and actual import.
+- Adjusted `SpecialSqlUtil` special SQL handling and removed unnecessary execution-time output.
+
+### Verification
+
+- Verified FreeMarker template parsing and rendered JavaScript syntax.
+- Verified with: `mvn -pl nbatch-admin -am -DskipTests compile`.
+- Full compilation still requires local Maven resolution for `com.gbase:gbase-jdbc:9.5.0.7`.
+
 ## Common Development Commands
 
 ```bash
