@@ -121,7 +121,9 @@ public class GaussDialect implements BaseDialect {
             CopyManager copyManager = new CopyManager(baseConnection);
             String exportSql = generateDbToFileExecuteSql(param);
             log.info("高斯数据库导出sql：{}", exportSql);
-            return copyManager.copyOut(exportSql, fileOutputStream) > 0;
+            long exportNum = copyManager.copyOut(exportSql, fileOutputStream);
+            log.warn("高斯数据库导出条数：{}", exportNum);
+            return exportNum > 0;
         } catch (Exception e) {
             log.error("高斯数据库导出数据异常");
             throw e;
