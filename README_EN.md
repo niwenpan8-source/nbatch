@@ -164,7 +164,7 @@ java -jar nbatch-consumer/target/nbatch-consumer-2.5.0.jar
 - Full rerun: reset all nodes in the latest runtime batch and execute the whole batch again.
 - Recovery rerun: reset only failed, stopped, dispatched, or running nodes; completed and skipped nodes keep their original statuses.
 - Node rerun: reset a specific runtime node. If other nodes depend on it, all affected downstream nodes are reset together.
-- Initialization rerun: locate the runtime batch by the workflow initialization turn date, reset that batch, and clean later runtime records. If the initialization turn date or corresponding runtime batch does not exist, it is automatically initialized.
+- Initialization rerun: locate and reset the current runtime snapshot by the workflow initialization turn date. If the runtime snapshot does not exist, it is automatically initialized.
 
 ## Stop and Failure Strategies
 
@@ -257,6 +257,39 @@ java -jar nbatch-consumer/target/nbatch-consumer-2.5.0.jar
 - Verified FreeMarker template parsing and rendered JavaScript syntax.
 - Verified with: `mvn -pl nbatch-admin -am -DskipTests compile`.
 - Full compilation still requires local Maven resolution for `com.gbase:gbase-jdbc:9.5.0.7`.
+
+## Change Report: 2026-06-30
+
+### Runtime Snapshot and Rerun
+
+- Runtime jobs now reuse the current snapshot model. Turn-date workflows and sequence workflows no longer continuously create new `runwork` and `runnode` records after each run; the current runtime snapshot is reset after the previous run completes.
+- Runtime nodes are synchronized from template nodes. Newly added template nodes are backfilled into runtime nodes, while removed template nodes cascade cleanup of runtime nodes, node logs, and detail logs.
+- Full rerun, initialization-date rerun, recovery rerun, and specific-node rerun now reset the current snapshot consistently to avoid unbounded runtime-batch growth.
+- Rerun and retry still create a new `nodeLogId` execution log, preserving multiple execution attempts under the same `runNodeId`.
+
+### Logs and Scheduling
+
+- Runtime node logs and detail logs now include `turn_date`, allowing pages and queries to distinguish different turn dates.
+- `ExecuteNodeParam`, `RunNodeLogEventParam`, and `RunNodeLogDetailParam` now carry the turn date so dispatch, executor events, and detail logs stay consistent.
+- Executor duplicate-trigger detection now uses `triggerKey` instead of only `logId`. Workflow dispatch builds the key from `runWorkId + turnDate + runNodeId` to avoid false duplicate detection across node batches under the same schedule log.
+- Dispatch failures, executor event pulling, and unclosed-log handling continue to keep independent `nodeLogId` records for each dispatch attempt.
+
+### Retry and Frontend
+
+- Node retry count now supports `-1` for unlimited retries, `0` for no retry, and positive values for a maximum retry count.
+- Job node add and update pages explain the `-1` unlimited-retry rule and allow `-1` as the minimum input value.
+- Dependency saving now uses an in-memory relation map on the frontend as the source of truth, avoiding lost relations caused by filtering, DOM cache, or render state.
+- The dependency save API now performs transactional diff updates: it deletes only removed relations, inserts only new relations, and filters duplicate, self-dependent, or invalid node relations.
+
+### Database
+
+- `sql/init/mysql.sql` now includes `nbatch_job_work_run_node_log.turn_date` and `nbatch_job_work_run_node_log_detail.turn_date`.
+- Added upgrade script: `sql/upgrade/20260630_add_run_node_log_turn_date.sql`.
+
+### Verification
+
+- Verified with: `mvn -pl nbatch-admin -am -DskipTests compile`.
+- Verified with: `git diff --check`; only Git line-ending warnings remain.
 
 ## Common Development Commands
 
