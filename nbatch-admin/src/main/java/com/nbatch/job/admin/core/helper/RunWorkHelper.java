@@ -8,12 +8,16 @@ import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nbatch.job.admin.core.domain.po.JobWorkNodePo;
 import com.nbatch.job.admin.core.domain.po.JobWorkPo;
+import com.nbatch.job.admin.core.domain.po.JobWorkRunNodeLogDetailPo;
+import com.nbatch.job.admin.core.domain.po.JobWorkRunNodeLogPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkRunNodePo;
 import com.nbatch.job.admin.core.domain.po.JobWorkRunPo;
 import com.nbatch.job.admin.mapper.IJobWorkMapper;
 import com.nbatch.job.admin.mapper.IJobWorkNodeMapper;
 import com.nbatch.job.admin.mapper.IJobLockMapper;
 import com.nbatch.job.admin.mapper.IJobWorkRunMapper;
+import com.nbatch.job.admin.mapper.IJobWorkRunNodeLogDetailMapper;
+import com.nbatch.job.admin.mapper.IJobWorkRunNodeLogMapper;
 import com.nbatch.job.admin.mapper.IJobWorkRunNodeMapper;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.constant.HandleCodeConstant;
@@ -23,9 +27,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @description: 运行作业帮助类
@@ -48,6 +52,10 @@ public class RunWorkHelper {
 
     private final IJobWorkRunNodeMapper jobWorkRunNodeMapper;
 
+    private final IJobWorkRunNodeLogMapper jobWorkRunNodeLogMapper;
+
+    private final IJobWorkRunNodeLogDetailMapper jobWorkRunNodeLogDetailMapper;
+
     /**
      * 初始化运行作业
      *
@@ -65,47 +73,43 @@ public class RunWorkHelper {
         if (jobWorkPo == null) {
             return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "作业不存在.");
         }
-        // 看是否有没有完成运行中作业
-        List<JobWorkRunPo> notCompleteJobRunWorkList = jobRunWorkMapper
+        List<JobWorkNodePo> jobWorkNodePos = jobWorkNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkNodePo.class)
+                .eq(JobWorkNodePo::getWorkId, jobWorkPo.getWorkId()));
+        if (CollUtil.isEmpty(jobWorkNodePos)) {
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "该运行作业没有运行节点.");
+        }
+
+        List<JobWorkRunPo> jobRunWorkList = jobRunWorkMapper
                 .selectList(Wrappers.lambdaQuery(JobWorkRunPo.class)
                         .eq(JobWorkRunPo::getWorkId, jobWorkPo.getWorkId())
                         .orderByDesc(JobWorkRunPo::getCreateTime));
-        JobWorkRunPo jobRunWorkPo = null;
-        if (CollUtil.isEmpty(notCompleteJobRunWorkList)) {
-            Date initTurnDate = jobWorkPo.getInitTurnDate() == null
-                    ? DateUtil.parseDate(DateUtil.today())
-                    : DateUtil.parseDate(DateUtil.formatDate(jobWorkPo.getInitTurnDate()));
-            jobRunWorkPo = initRunWork(jobWorkPo.getWorkId(), jobWorkPo.getWorkType(), initTurnDate);
+        JobWorkRunPo jobRunWorkPo;
+        // 作业第一次执行
+        if (CollUtil.isEmpty(jobRunWorkList)) {
+            Date initRunDate = resolveInitRunDate(jobWorkPo);
+            jobRunWorkPo = initRunWork(jobWorkPo.getWorkId(), jobWorkPo.getWorkType(), initRunDate);
+            jobRunWorkMapper.insert(jobRunWorkPo);
         } else {
-            JobWorkRunPo lastJobRunWorkPo = notCompleteJobRunWorkList.get(0);
-            // 如果运行状态为待执行或者进行中，则不处理
-            if (lastJobRunWorkPo.getRunWorkStatus() == FlowRunStatusEnum.COMPLETE.getCode()) {
-                // 当jobRunWorkPo.getTurnDate()为空时currentTurnDate为空，
-                // DateUtil.compare(currentTurnDate, DateUtil.parseDate(DateUtil.today())) 为-1，所有顺序类型作业不需要增加判断
-                DateTime currentTurnDate = DateUtil.offset(lastJobRunWorkPo.getTurnDate(), DateField.DAY_OF_MONTH, 1);
-                if (DateUtil.compare(currentTurnDate, DateUtil.parseDate(DateUtil.today())) > 0) {
+            JobWorkRunPo lastJobRunWorkPo = jobRunWorkList.get(0);
+            // 如果上一份运行作业状态不是执行完毕，返回错误,不可继续执行
+            if (!Objects.equals(lastJobRunWorkPo.getRunWorkStatus(), FlowRunStatusEnum.COMPLETE.getCode())) {
+                return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "可执行的运行作业为空.");
+            }
+            // 如果是翻牌作业，判断是否是翻牌时间
+            if (Objects.equals(jobWorkPo.getWorkType(), WorkTypeEnum.TYPE_TURN.getCode())) {
+                DateTime nextTurnDate = DateUtil.offset(resolveLastTurnDate(jobWorkPo, lastJobRunWorkPo), DateField.DAY_OF_MONTH, 1);
+                // 如果任务已经执行了今天，返回错误,不可继续执行
+                if (DateUtil.compare(nextTurnDate, DateUtil.parseDate(DateUtil.today())) > 0) {
                     return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "今天的翻牌任务已经执行过了.");
                 }
-                jobRunWorkPo = initRunWork(lastJobRunWorkPo.getWorkId(), jobWorkPo.getWorkType(), currentTurnDate);
+                reuseRunWorkSnapshot(lastJobRunWorkPo, nextTurnDate);
+                jobRunWorkPo = lastJobRunWorkPo;
+            } else {
+                reuseRunWorkSnapshot(lastJobRunWorkPo, DateUtil.parseDate(DateUtil.today()));
+                jobRunWorkPo = lastJobRunWorkPo;
             }
         }
-        if (jobRunWorkPo == null) {
-            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "可执行的运行作业为空.");
-        }
-        List<JobWorkRunNodePo> insertRunNodeList = new ArrayList<>();
-        List<JobWorkNodePo> jobWorkNodePos = jobWorkNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkNodePo.class)
-                .eq(JobWorkNodePo::getWorkId, jobRunWorkPo.getWorkId()));
-        if (CollUtil.isEmpty(jobWorkNodePos)) {
-            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "该运行作用没有运行节点.");
-        }
-        for (JobWorkNodePo elementNode : jobWorkNodePos) {
-            JobWorkRunNodePo jobWorkRunNodePo = initRunNode(elementNode, jobRunWorkPo);
-            insertRunNodeList.add(jobWorkRunNodePo);
-        }
-        jobRunWorkMapper.insert(jobRunWorkPo);
-        for (JobWorkRunNodePo jobWorkRunNodePo : insertRunNodeList) {
-            jobWorkRunNodeMapper.insert(jobWorkRunNodePo);
-        }
+        syncRunNodesFromTemplate(jobWorkPo, jobRunWorkPo, jobWorkNodePos);
         return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_SUCCESS, "job work started successfully.");
     }
 
@@ -113,6 +117,60 @@ public class RunWorkHelper {
         String lockName = RUN_WORK_INIT_LOCK_PREFIX.concat(workId);
         jobLockMapper.insertIgnore(lockName);
         jobLockMapper.lockByName(lockName);
+    }
+
+    private Date resolveInitTurnDate(JobWorkPo jobWorkPo) {
+        return jobWorkPo.getInitTurnDate() == null
+                ? DateUtil.parseDate(DateUtil.today())
+                : DateUtil.parseDate(DateUtil.formatDate(jobWorkPo.getInitTurnDate()));
+    }
+
+    private Date resolveInitRunDate(JobWorkPo jobWorkPo) {
+        if (Objects.equals(jobWorkPo.getWorkType(), WorkTypeEnum.TYPE_TURN.getCode())) {
+            return resolveInitTurnDate(jobWorkPo);
+        }
+        return DateUtil.parseDate(DateUtil.today());
+    }
+
+    /**
+     * 得到翻牌时间
+     */
+    private Date resolveLastTurnDate(JobWorkPo jobWorkPo, JobWorkRunPo lastJobRunWorkPo) {
+        return lastJobRunWorkPo.getTurnDate() == null ? resolveInitTurnDate(jobWorkPo) : lastJobRunWorkPo.getTurnDate();
+    }
+
+    /**
+     * 重新生成运行作业
+     */
+    private void reuseRunWorkSnapshot(JobWorkRunPo jobRunWorkPo, Date turnDate) {
+        Date now = DateUtil.date();
+        jobRunWorkMapper.update(null, Wrappers.lambdaUpdate(JobWorkRunPo.class)
+                .set(JobWorkRunPo::getRunWorkStatus, FlowRunStatusEnum.WAIT.getCode())
+                .set(JobWorkRunPo::getTurnDate, turnDate)
+                .set(JobWorkRunPo::getContextJson, null)
+                .set(JobWorkRunPo::getCreateTime, now)
+                .eq(JobWorkRunPo::getRunWorkId, jobRunWorkPo.getRunWorkId()));
+        jobRunWorkPo.setRunWorkStatus(FlowRunStatusEnum.WAIT.getCode());
+        jobRunWorkPo.setTurnDate(turnDate);
+        jobRunWorkPo.setContextJson(null);
+        jobRunWorkPo.setCreateTime(now);
+    }
+
+    /**
+     * 重置运行作业快照
+     */
+    public ReturnT<String> resetRunWorkSnapshot(JobWorkPo jobWorkPo, JobWorkRunPo jobRunWorkPo, Date turnDate) {
+        if (jobWorkPo == null || jobRunWorkPo == null) {
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "运行作业不存在.");
+        }
+        List<JobWorkNodePo> jobWorkNodePos = jobWorkNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkNodePo.class)
+                .eq(JobWorkNodePo::getWorkId, jobWorkPo.getWorkId()));
+        if (CollUtil.isEmpty(jobWorkNodePos)) {
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "该运行作业没有运行节点.");
+        }
+        reuseRunWorkSnapshot(jobRunWorkPo, turnDate);
+        syncRunNodesFromTemplate(jobWorkPo, jobRunWorkPo, jobWorkNodePos);
+        return ReturnT.SUCCESS;
     }
 
     /**
@@ -126,14 +184,15 @@ public class RunWorkHelper {
         jobRunWorkPo.setRunWorkId(runNodeId);
         jobRunWorkPo.setWorkId(workId);
         jobRunWorkPo.setRunWorkStatus(FlowRunStatusEnum.WAIT.getCode());
-        if (workType == WorkTypeEnum.TYPE_TURN.getCode()) {
-            jobRunWorkPo.setTurnDate(turnDate);
-        }
+        jobRunWorkPo.setTurnDate(turnDate);
         jobRunWorkPo.setWorkType(workType);
         jobRunWorkPo.setCreateTime(DateUtil.date());
         return jobRunWorkPo;
     }
 
+    /**
+     * 初始化运行节点
+     */
     private JobWorkRunNodePo initRunNode(JobWorkNodePo elementNode,
                                          JobWorkRunPo jobRunWorkPo) {
         JobWorkRunNodePo jobWorkRunNodePo = new JobWorkRunNodePo();
@@ -141,14 +200,70 @@ public class RunWorkHelper {
         jobWorkRunNodePo.setWorkId(jobRunWorkPo.getWorkId());
         jobWorkRunNodePo.setNodeId(elementNode.getNodeId());
         jobWorkRunNodePo.setNodeRunStatus(FlowRunStatusEnum.WAIT.getCode());
-        if (jobRunWorkPo.getWorkType() == WorkTypeEnum.TYPE_TURN.getCode()) {
-            jobWorkRunNodePo.setTurnDate(jobRunWorkPo.getTurnDate());
-        }
+        jobWorkRunNodePo.setTurnDate(jobRunWorkPo.getTurnDate());
         jobWorkRunNodePo.setCreateTime(DateUtil.date());
         // 错误策略
         jobWorkRunNodePo.setErrorStrategy(elementNode.getErrorStrategy());
         jobWorkRunNodePo.setRetryTimes(elementNode.getRetryTimes());
         return jobWorkRunNodePo;
+    }
+
+    /**
+     * 同步运行作业节点
+     */
+    private void syncRunNodesFromTemplate(JobWorkPo jobWorkPo,
+                                          JobWorkRunPo jobRunWorkPo,
+                                          List<JobWorkNodePo> templateNodeList) {
+        // 模板节点map
+        Map<String, JobWorkNodePo> templateNodeMap = templateNodeList.stream()
+                .collect(Collectors.toMap(JobWorkNodePo::getNodeId, Function.identity(), (oldValue, newValue) -> oldValue));
+        List<JobWorkRunNodePo> runNodeList = jobWorkRunNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
+                .eq(JobWorkRunNodePo::getRunWorkId, jobRunWorkPo.getRunWorkId()));
+        Map<String, JobWorkRunNodePo> runNodeMap = CollUtil.isEmpty(runNodeList)
+                ? Collections.emptyMap()
+                : runNodeList.stream()
+                  .collect(Collectors.toMap(JobWorkRunNodePo::getNodeId, Function.identity(), (oldValue, newValue) -> oldValue));
+
+        deleteRemovedTemplateRunNodes(runNodeList, templateNodeMap.keySet());
+
+        for (JobWorkNodePo templateNode : templateNodeList) {
+            JobWorkRunNodePo oldRunNode = runNodeMap.get(templateNode.getNodeId());
+            if (oldRunNode == null) {
+                jobWorkRunNodeMapper.insert(initRunNode(templateNode, jobRunWorkPo));
+            } else {
+                jobWorkRunNodeMapper.update(null, Wrappers.lambdaUpdate(JobWorkRunNodePo.class)
+                        .set(JobWorkRunNodePo::getNodeRunStatus, FlowRunStatusEnum.WAIT.getCode())
+                        .set(JobWorkRunNodePo::getTurnDate, jobRunWorkPo.getTurnDate())
+                        .set(JobWorkRunNodePo::getCreateTime, DateUtil.date())
+                        .set(JobWorkRunNodePo::getErrorStrategy, templateNode.getErrorStrategy())
+                        .set(JobWorkRunNodePo::getRetryTimes, templateNode.getRetryTimes())
+                        .set(JobWorkRunNodePo::getStartTime, null)
+                        .set(JobWorkRunNodePo::getEndTime, null)
+                        .eq(JobWorkRunNodePo::getRunNodeId, oldRunNode.getRunNodeId()));
+            }
+        }
+    }
+
+    /**
+     * 删除掉节点模版表中不存在的节点的所有信息，包括日志信息以及运行节点信息
+     */
+    private void deleteRemovedTemplateRunNodes(List<JobWorkRunNodePo> runNodeList, Set<String> templateNodeIdSet) {
+        if (CollUtil.isEmpty(runNodeList)) {
+            return;
+        }
+        List<String> removedRunNodeIdList = runNodeList.stream()
+                .filter(runNode -> !templateNodeIdSet.contains(runNode.getNodeId()))
+                .map(JobWorkRunNodePo::getRunNodeId)
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(removedRunNodeIdList)) {
+            return;
+        }
+        jobWorkRunNodeLogDetailMapper.delete(Wrappers.lambdaQuery(JobWorkRunNodeLogDetailPo.class)
+                .in(JobWorkRunNodeLogDetailPo::getRunNodeId, removedRunNodeIdList));
+        jobWorkRunNodeLogMapper.delete(Wrappers.lambdaQuery(JobWorkRunNodeLogPo.class)
+                .in(JobWorkRunNodeLogPo::getRunNodeId, removedRunNodeIdList));
+        jobWorkRunNodeMapper.delete(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
+                .in(JobWorkRunNodePo::getRunNodeId, removedRunNodeIdList));
     }
 
     /**
@@ -162,6 +277,18 @@ public class RunWorkHelper {
                         FlowRunStatusEnum.STOPPED.getCode())
                 .lt(JobWorkRunPo::getCreateTime, DateUtil.offsetDay(new Date(), -30)));
         for (JobWorkRunPo jobRunWorkPo : jobRunWorkPoList) {
+            JobWorkRunPo latestRunWork = jobRunWorkMapper.selectOne(Wrappers.lambdaQuery(JobWorkRunPo.class)
+                    .eq(JobWorkRunPo::getWorkId, jobRunWorkPo.getWorkId())
+                    .orderByDesc(JobWorkRunPo::getCreateTime)
+                    .orderByDesc(JobWorkRunPo::getRunWorkId)
+                    .last("limit 1"));
+            if (latestRunWork != null && Objects.equals(latestRunWork.getRunWorkId(), jobRunWorkPo.getRunWorkId())) {
+                continue;
+            }
+            jobWorkRunNodeLogDetailMapper.delete(Wrappers.lambdaQuery(JobWorkRunNodeLogDetailPo.class)
+                    .eq(JobWorkRunNodeLogDetailPo::getRunWorkId, jobRunWorkPo.getRunWorkId()));
+            jobWorkRunNodeLogMapper.delete(Wrappers.lambdaQuery(JobWorkRunNodeLogPo.class)
+                    .eq(JobWorkRunNodeLogPo::getRunWorkId, jobRunWorkPo.getRunWorkId()));
             jobWorkRunNodeMapper.delete(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
                     .eq(JobWorkRunNodePo::getRunWorkId, jobRunWorkPo.getRunWorkId()));
             jobRunWorkMapper.deleteById(jobRunWorkPo);
@@ -210,9 +337,7 @@ public class RunWorkHelper {
                             .setRunWorkStatus(FlowRunStatusEnum.COMPLETE.getCode())
                             .setWorkId(jobRunWorkPo.getWorkId())
                             .setRunWorkId(jobRunWorkPo.getRunWorkId());
-//                    if (offsetTurnDate != null) {
-//                        updateJobWork.setTurnDate(offsetTurnDate);
-//                    }
+
                     jobRunWorkMapper.updateById(updateJobWork);
                 }
             }

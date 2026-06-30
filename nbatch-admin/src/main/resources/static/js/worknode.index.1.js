@@ -34,6 +34,13 @@ $(function () {
         return escapeHtml(value || '-');
     }
 
+    function retryTimesText(value) {
+        if (value === null || value === undefined || value === '') {
+            return '-';
+        }
+        return Number(value) === -1 ? '无限重试' : escapeHtml(value);
+    }
+
     function dateTimeOrDash(value) {
         if (!value) {
             return '-';
@@ -69,7 +76,7 @@ $(function () {
                 '<td class="node-info-id">' + textOrDash(item.runWorkId) + '</td>' +
                 '<td>' + dateOrDash(item.turnDate) + '</td>' +
                 '<td>' + textOrDash(item.nodeRunStatusName) + '</td>' +
-                '<td>' + escapeHtml(item.retryTimes == null ? '-' : item.retryTimes) + '</td>' +
+                '<td>' + retryTimesText(item.retryTimes) + '</td>' +
                 '<td>' + dateTimeOrDash(item.createTime) + '</td>' +
                 '<td>' + dateTimeOrDash(item.startTime) + '</td>' +
                 '<td>' + dateTimeOrDash(item.endTime) + '</td>' +
@@ -86,7 +93,7 @@ $(function () {
             detailItem('数据库', textOrDash(data.dbType)) +
             detailItem('状态', textOrDash(data.nodeStatusName)) +
             detailItem('运行次数', escapeHtml(data.runCount == null ? 0 : data.runCount)) +
-            detailItem('默认重试', escapeHtml(data.retryTimes == null ? '-' : data.retryTimes)) +
+            detailItem('默认重试', retryTimesText(data.retryTimes)) +
             detailItem('执行器', textOrDash(data.executeHandler)) +
             detailItem('脚本类型', textOrDash(data.scriptType)) +
             detailItem('失败策略', textOrDash(data.errorStrategy)) +

@@ -64,7 +64,21 @@
             return '<span>' + escapeHtml(text.substring(0, 120)) + '...</span> ' +
                 '<a href="javascript:void(0);" class="show-full-log" data-log="' + escaped + '">详情</a>';
         }
-
+        function dateOrDash(value) {
+            if (value === null || value === undefined || value === '') {
+                return '-';
+            }
+            if (typeof value === 'string') {
+                return value.length > 10 ? value.substring(0, 10) : value;
+            }
+            var date = new Date(value);
+            if (isNaN(date.getTime())) {
+                return escapeHtml(value);
+            }
+            var month = String(date.getMonth() + 1).padStart(2, '0');
+            var day = String(date.getDate()).padStart(2, '0');
+            return date.getFullYear() + '-' + month + '-' + day;
+        }
         function logWhere() {
             var range = $('#createTimeRange').val().split(' - ');
             return {nodeId: nodeId, workId: workId, startTime: range[0] || '', endTime: range[1] || ''};
@@ -90,6 +104,7 @@
             cols: [[
                 {field: 'runWorkId', title: '运行作业ID', width: 180},
                 {field: 'runNodeId', title: '运行节点ID', width: 180},
+                {field: 'turnDate', title: '运行日期', width: 120, templet: function(row) { return dateOrDash(row.turnDate); }},
                 {field: 'handleCode', title: '执行状态', width: 100},
                 {field: 'handleMsg', title: '执行信息', minWidth: 260, templet: function(row) { return shortText(row.handleMsg); }},
                 {field: 'createTime', title: '创建时间', width: 170},

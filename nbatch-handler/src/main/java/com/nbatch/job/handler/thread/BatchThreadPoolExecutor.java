@@ -173,6 +173,7 @@ public class BatchThreadPoolExecutor extends ThreadPoolExecutor {
                 .setNodeId(batchRunnable.getCacheObj().getStr("nodeId"))
                 .setRunNodeId(batchRunnable.getCacheObj().getStr("runNodeId"))
                 .setNodeLogId(batchRunnable.getCacheObj().getStr("nodeLogId"))
+                .setTurnDate(batchRunnable.getCacheObj().getDate("turnDate"))
                 .setWorkType(batchRunnable.getCacheObj().getInt("workType"))
                 .setHandleCode(handleCode)
                 .setHandleMsg(handleMsg);

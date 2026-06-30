@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * 运行节点本地事件日志。
@@ -22,6 +23,7 @@ public class RunNodeLogEventParam implements Serializable {
     private String nodeId;
     private String runNodeId;
     private String nodeLogId;
+    private Date turnDate;
     private Integer workType;
     private Integer handleCode;
     private String handleMsg;

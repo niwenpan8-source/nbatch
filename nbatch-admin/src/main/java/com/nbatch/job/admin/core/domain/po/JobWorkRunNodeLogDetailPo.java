@@ -48,6 +48,11 @@ public class JobWorkRunNodeLogDetailPo extends Model<JobWorkRunNodeLogDetailPo> 
 	private String runNodeId;
 
 	/**
+	 * 翻牌日期
+	 */
+	private Date turnDate;
+
+	/**
 	 * 执行信息
 	 */
 	private String handleMsg;

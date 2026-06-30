@@ -419,6 +419,9 @@ public class RunNodeHelper {
         }
     }
 
+    /**
+     * 插入节点运行节点日志
+     */
     private void insertRunNodeLogs(ExecuteWorkParam executeWorkParam) {
         for (ExecuteNodeParam executeNodeParam : executeWorkParam.getExecuteNodeParamList()) {
             if (getRunNodeLog(executeNodeParam.getNodeLogId()) != null) {
@@ -429,6 +432,9 @@ public class RunNodeHelper {
         }
     }
 
+    /**
+     * 标记节点执行失败
+     */
     public void markRunNodesDispatchFailed(ExecuteWorkParam executeWorkParam, String handleMsg) {
         if (executeWorkParam == null || CollUtil.isEmpty(executeWorkParam.getExecuteNodeParamList())) {
             return;
@@ -519,7 +525,15 @@ public class RunNodeHelper {
      * @return true:有重试次数
      */
     private boolean hasRetryTimes(JobWorkRunNodePo runNodePo) {
-        return runNodePo.getRetryTimes() != null && runNodePo.getRetryTimes() > 0;
+        return runNodePo.getRetryTimes() != null
+                && (runNodePo.getRetryTimes() == -1 || runNodePo.getRetryTimes() > 0);
+    }
+
+    private Integer resolveNextRetryTimes(Integer retryTimes) {
+        if (retryTimes == null || retryTimes == -1) {
+            return retryTimes;
+        }
+        return retryTimes - 1;
     }
 
     private boolean isDependencySatisfiedStatus(Integer nodeRunStatus) {
@@ -537,7 +551,7 @@ public class RunNodeHelper {
         JobWorkRunNodePo updateRunNodePo = new JobWorkRunNodePo();
         updateRunNodePo.setRunNodeId(runNodePo.getRunNodeId());
         updateRunNodePo.setNodeRunStatus(FlowRunStatusEnum.WAIT.getCode());
-        updateRunNodePo.setRetryTimes(runNodePo.getRetryTimes() - 1);
+        updateRunNodePo.setRetryTimes(resolveNextRetryTimes(runNodePo.getRetryTimes()));
         updateRunNodePo.setStartTime(null);
         updateRunNodePo.setEndTime(null);
         jobWorkRunNodeMapper.updateById(updateRunNodePo);
@@ -692,6 +706,7 @@ public class RunNodeHelper {
         jobWorkRunNodeLogPo.setRunWorkId(executeNodeParam.getRunWorkId());
         jobWorkRunNodeLogPo.setNodeId(executeNodeParam.getNodeId());
         jobWorkRunNodeLogPo.setRunNodeId(executeNodeParam.getRunNodeId());
+        jobWorkRunNodeLogPo.setTurnDate(executeNodeParam.getTurnDate());
         jobWorkRunNodeLogPo.setExecutorAddress(executorAddress);
         jobWorkRunNodeLogPo.setHandleCode(handleCode);
         jobWorkRunNodeLogPo.setHandleMsg(handleMsg);
@@ -707,6 +722,7 @@ public class RunNodeHelper {
         jobWorkRunNodeLogPo.setRunWorkId(eventParam.getRunWorkId());
         jobWorkRunNodeLogPo.setNodeId(eventParam.getNodeId());
         jobWorkRunNodeLogPo.setRunNodeId(eventParam.getRunNodeId());
+        jobWorkRunNodeLogPo.setTurnDate(eventParam.getTurnDate());
         jobWorkRunNodeLogPo.setHandleCode(0);
         jobWorkRunNodeLogPo.setHandleMsg(handleMsg);
         jobWorkRunNodeLogPo.setCreateTime(LocalDateTime.now());
@@ -758,14 +774,23 @@ public class RunNodeHelper {
         }
     }
 
+    /**
+     * 获取未完成闭环的运行节点日志
+     */
     private JobWorkRunNodeLogPo getUnclosedRunNodeLog(String runNodeId) {
+        JobWorkRunNodePo runNodePo = jobWorkRunNodeMapper.selectById(runNodeId);
         return jobWorkRunNodeLogMapper.selectOne(Wrappers.lambdaQuery(JobWorkRunNodeLogPo.class)
                 .eq(JobWorkRunNodeLogPo::getRunNodeId, runNodeId)
+                .eq(runNodePo != null && runNodePo.getTurnDate() != null, JobWorkRunNodeLogPo::getTurnDate,
+                        runNodePo == null ? null : runNodePo.getTurnDate())
                 .isNull(JobWorkRunNodeLogPo::getCallBackTime)
                 .orderByDesc(JobWorkRunNodeLogPo::getCreateTime)
                 .last("limit 1"));
     }
 
+    /**
+     * 判断执行器是否已离线
+     */
     private boolean isExecutorOffline(String executorAddress) {
         if (StrUtil.isBlank(executorAddress)) {
             return false;

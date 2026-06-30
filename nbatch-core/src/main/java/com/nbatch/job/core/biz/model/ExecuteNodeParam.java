@@ -120,6 +120,7 @@ public class ExecuteNodeParam {
         RunNodeLogDetailParam runNodeLogDetailParam = new RunNodeLogDetailParam();
         runNodeLogDetailParam.setWorkId(workId).setRunWorkId(runWorkId)
                 .setNodeId(nodeId).setRunNodeId(runNodeId)
+                .setTurnDate(turnDate)
                 .setExecuteTime(DateUtil.date()).setHandleMsg(msg);
         RunNodeLogDetailCallbackThread.pushRunNodeLogDetailCallback(runNodeLogDetailParam);
     }

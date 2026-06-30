@@ -140,6 +140,7 @@ public class JobTrigger {
         triggerParam.setExecutorBlockStrategy(jobInfo.getExecutorBlockStrategy());
         triggerParam.setExecutorTimeout(jobInfo.getExecutorTimeout());
         triggerParam.setLogId(jobLog.getId());
+        triggerParam.setTriggerKey(jobLog.getId());
         triggerParam.setLogDateTime(jobLog.getTriggerTime().getTime());
         triggerParam.setGlueType(jobInfo.getGlueType());
         triggerParam.setGlueSource(jobInfo.getGlueSource());

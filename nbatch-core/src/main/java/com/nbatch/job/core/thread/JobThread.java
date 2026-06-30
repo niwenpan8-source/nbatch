@@ -1,6 +1,7 @@
 package com.nbatch.job.core.thread;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.TriggerParam;
@@ -9,6 +10,7 @@ import com.nbatch.job.core.context.BatchJobContext;
 import com.nbatch.job.core.context.BatchJobHelper;
 import com.nbatch.job.core.executor.BatchJobExecutor;
 import com.nbatch.job.core.handler.IJobHandler;
+import com.nbatch.job.core.handler.impl.WorkJobHandler;
 import com.nbatch.job.core.log.JobFileAppender;
 import com.nbatch.job.core.util.ThrowableUtil;
 import lombok.Getter;
@@ -37,8 +39,8 @@ public class JobThread extends Thread{
 	@Getter
     private final IJobHandler handler;
 	private final LinkedBlockingQueue<TriggerParam> triggerQueue;
-	// avoid repeat trigger for the same TRIGGER_LOG_ID
-	private final Set<String> triggerLogIdSet;
+	// avoid repeat trigger for the same trigger key
+	private final Set<String> triggerKeySet;
 
 	private volatile boolean toStop = false;
 	private String stopReason;
@@ -53,7 +55,7 @@ public class JobThread extends Thread{
 		this.jobId = jobId;
 		this.handler = handler;
 		this.triggerQueue = new LinkedBlockingQueue<>();
-		this.triggerLogIdSet = Collections.synchronizedSet(new HashSet<>());
+		this.triggerKeySet = Collections.synchronizedSet(new HashSet<>());
 
 		// assign job thread name
 		this.setName("job, JobThread-"+jobId+"-"+System.currentTimeMillis());
@@ -65,15 +67,27 @@ public class JobThread extends Thread{
      * @param triggerParam 调度参数
      */
 	public ReturnT<String> pushTriggerQueue(TriggerParam triggerParam) {
+		String triggerKey = resolveTriggerKey(triggerParam);
 		// avoid repeat
-		if (triggerLogIdSet.contains(triggerParam.getLogId())) {
-			log.info(">>>>>>>>>>> repeate trigger job, logId:{}", triggerParam.getLogId());
-			return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "repeate trigger job, logId:" + triggerParam.getLogId());
+		if (triggerKeySet.contains(triggerKey)) {
+			log.info(">>>>>>>>>>> repeat trigger job, triggerKey:{}, logId:{}", triggerKey, triggerParam.getLogId());
+			return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_SUCCESS, "repeat trigger ignored, triggerKey:" + triggerKey);
 		}
 
-		triggerLogIdSet.add(triggerParam.getLogId());
+		triggerParam.setTriggerKey(triggerKey);
+		triggerKeySet.add(triggerKey);
 		triggerQueue.add(triggerParam);
         return ReturnT.SUCCESS;
+	}
+
+	private String resolveTriggerKey(TriggerParam triggerParam) {
+		return StrUtil.blankToDefault(triggerParam.getTriggerKey(), triggerParam.getLogId());
+	}
+
+	private void prepareHandler(TriggerParam triggerParam) {
+		if (handler instanceof WorkJobHandler && triggerParam.getExecuteWorkParam() != null) {
+			((WorkJobHandler) handler).setWorkNodeParam(triggerParam.getExecuteWorkParam());
+		}
 	}
 
     /**
@@ -120,7 +134,6 @@ public class JobThread extends Thread{
 				if (triggerParam!=null) {
 					running = true;
 					idleTimes = 0;
-					triggerLogIdSet.remove(triggerParam.getLogId());
 
 					// log filename, like "logPath/yyyy-MM-dd/9999.log"
 					String logFileName = JobFileAppender.makeLogFileName(new Date(triggerParam.getLogDateTime()), triggerParam.getLogId());
@@ -133,6 +146,7 @@ public class JobThread extends Thread{
 
 					// init job context
 					BatchJobContext.setBatchJobContext(batchJobContext);
+					prepareHandler(triggerParam);
 
 					// execute
 					BatchJobHelper.log("<br>----------- job job execute start -----------<br>----------- Param:" + batchJobContext.getJobParam());
@@ -231,6 +245,7 @@ public class JobThread extends Thread{
                         // is killed
                         TriggerCallbackThread.pushCallBack(handleCallbackParam);
                     }
+					triggerKeySet.remove(resolveTriggerKey(triggerParam));
                 }
             }
         }

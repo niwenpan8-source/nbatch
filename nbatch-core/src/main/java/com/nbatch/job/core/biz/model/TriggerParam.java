@@ -27,6 +27,10 @@ public class TriggerParam implements Serializable{
 
     private String logId;
     private long logDateTime;
+    /**
+     * Trigger idempotency key. Defaults to logId when blank.
+     */
+    private String triggerKey;
 
     private String glueType;
     private String glueSource;

@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 /**
  * @description: 作业运行节点日志
@@ -34,6 +35,7 @@ public class JobWorkRunNodeLogVo {
      */
     private String nodeId;
     private String runNodeId;
+    private Date turnDate;
 
     /**
      * 执行状态

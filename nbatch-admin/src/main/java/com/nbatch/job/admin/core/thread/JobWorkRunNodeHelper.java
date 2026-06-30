@@ -1,6 +1,7 @@
 package com.nbatch.job.admin.core.thread;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nbatch.job.admin.core.conf.JobAdminConfig;
@@ -25,6 +26,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * job work run node execute
@@ -118,6 +120,7 @@ public class JobWorkRunNodeHelper {
 
                 TriggerParam triggerParam = context.getTriggerParam();
                 triggerParam.setExecuteWorkParam(executeWorkParam);
+                triggerParam.setTriggerKey(buildWorkTriggerKey(executeWorkParam));
 
                 String address = resolveExecutorAddress(context, triggerParam);
                 if (StrUtil.isBlank(address)) {
@@ -132,11 +135,11 @@ public class JobWorkRunNodeHelper {
                 ReturnT<String> runResult = ExecutorBizProxy.run(address, triggerParam);
 
                 // 如果存在网络问题，则将运行作业标记为异常
-                if (runResult == null || runResult.getCode() >= HandleCodeConstant.HANDLE_CODE_FAIL) {
-                    String handleMsg = runResult == null ? "运行节点下发失败" : runResult.getMsg();
+                if (runResult.getCode() >= HandleCodeConstant.HANDLE_CODE_FAIL) {
+                    String handleMsg = runResult.getMsg();
                     JobAdminConfig.getAdminConfig().getRunNodeHelper()
                             .markRunNodesDispatchFailed(executeWorkParam, handleMsg);
-                    if (runResult == null || runResult.getCode() >= HandleCodeConstant.HANDLE_CODE_TIMEOUT) {
+                    if (runResult.getCode() >= HandleCodeConstant.HANDLE_CODE_TIMEOUT) {
                         RUN_WORK_ID_CACHE.remove(jobRunWorkPo.getRunWorkId());
                     }
                 } else {
@@ -176,6 +179,18 @@ public class JobWorkRunNodeHelper {
             }
         }
 
+    }
+
+    private String buildWorkTriggerKey(ExecuteWorkParam executeWorkParam) {
+        String turnDate = executeWorkParam.getTurnDate() == null ? "" : DateUtil.formatDate(executeWorkParam.getTurnDate());
+        String runNodeIds = CollUtil.isEmpty(executeWorkParam.getExecuteNodeParamList())
+                ? ""
+                : executeWorkParam.getExecuteNodeParamList().stream()
+                .map(ExecuteNodeParam::getRunNodeId)
+                .filter(StrUtil::isNotBlank)
+                .sorted()
+                .collect(Collectors.joining(","));
+        return "WORK:" + executeWorkParam.getRunWorkId() + ":" + turnDate + ":" + runNodeIds;
     }
 
     private RunWorkExecuteContext getRunWorkExecuteContext(JobWorkRunPo jobRunWorkPo, ExecuteWorkParam executeWorkParam) {
@@ -308,7 +323,7 @@ public class JobWorkRunNodeHelper {
      */
     private boolean isExecutorAlive(String address) {
         ReturnT<String> beatResult = ExecutorBizProxy.beat(address);
-        return beatResult != null && beatResult.getCode() == HandleCodeConstant.HANDLE_CODE_SUCCESS;
+        return beatResult.getCode() == HandleCodeConstant.HANDLE_CODE_SUCCESS;
     }
 
     /**

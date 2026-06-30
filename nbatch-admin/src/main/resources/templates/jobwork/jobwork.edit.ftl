@@ -159,6 +159,8 @@
         var workId = '${workId}';
         var selectedCurrentNode = null;
         var selectedDependencyNodes = [];
+        var relationMap = {};
+        var relationSaving = false;
 
         function escapeHtml(value) {
             if (value === null || value === undefined) {
@@ -203,20 +205,23 @@
             return lines.length > 0 ? lines : [''];
         }
 
-        function collectDependencies() {
-            var relationList = [];
-            $('#dependencyList tr').each(function() {
-                var nodeId1 = $(this).find('td:first').data('node-id');
-                var nodeId2 = $(this).find('td:nth-child(2)').data('node-id');
-                if (!nodeId1 || !nodeId2) {
-                    return;
-                }
-                relationList.push({
-                    currentNodeId: String(nodeId1),
-                    dependencyNodeId: String(nodeId2)
-                });
+        function relationKey(currentNodeId, dependencyNodeId) {
+            return String(currentNodeId) + '_' + String(dependencyNodeId);
+        }
+
+        function getRelationList() {
+            return Object.keys(relationMap).sort().map(function(key) {
+                return relationMap[key];
             });
-            return relationList;
+        }
+
+        function collectDependencies() {
+            return getRelationList().map(function(relation) {
+                return {
+                    currentNodeId: relation.currentNodeId,
+                    dependencyNodeId: relation.dependencyNodeId
+                };
+            });
         }
 
         function buildRelationIndex(relationList) {
@@ -766,56 +771,85 @@
             layer.msg(addedCount > 0 ? '已添加 ' + addedCount + ' 个依赖关系' : '没有新增依赖关系');
         };
 
+        function renderDependencyList() {
+            var keyword = $.trim($('#relationNodeName').val()).toLowerCase();
+            var rows = [];
+            getRelationList().forEach(function(relation) {
+                var searchText = (relation.currentNodeName + ' ' + relation.currentNodeId + ' ' + relation.dependencyNodeName + ' ' + relation.dependencyNodeId).toLowerCase();
+                if (keyword && searchText.indexOf(keyword) < 0) {
+                    return;
+                }
+                var key = relationKey(relation.currentNodeId, relation.dependencyNodeId);
+                rows.push('<tr data-relation-key="' + escapeHtml(key) + '">' +
+                    '<td data-node-id="' + escapeHtml(relation.currentNodeId) + '">' + escapeHtml(relation.currentNodeName) + '<span class="node-id">' + escapeHtml(relation.currentNodeId) + '</span></td>' +
+                    '<td data-node-id="' + escapeHtml(relation.dependencyNodeId) + '">' + escapeHtml(relation.dependencyNodeName) + '<span class="node-id">' + escapeHtml(relation.dependencyNodeId) + '</span></td>' +
+                    '<td><button class="layui-btn layui-btn-danger layui-btn-sm" onclick="deleteDependency(this)"><i class="layui-icon layui-icon-delete"></i>\u5220\u9664</button></td>' +
+                    '</tr>');
+            });
+            $('#dependencyList').html(rows.length > 0 ? rows.join('') : emptyRow());
+        }
+
+        function loadRelationCacheFromDom() {
+            relationMap = {};
+            $('#dependencyList tr').each(function() {
+                var nodeId1 = $(this).find('td:first').data('node-id');
+                var nodeId2 = $(this).find('td:nth-child(2)').data('node-id');
+                if (!nodeId1 || !nodeId2) {
+                    return;
+                }
+                var currentNode = findNode(nodeId1);
+                var dependencyNode = findNode(nodeId2);
+                var key = relationKey(nodeId1, nodeId2);
+                relationMap[key] = {
+                    currentNodeId: String(nodeId1),
+                    currentNodeName: currentNode ? currentNode.nodeName : $.trim($(this).find('td:first').contents().first().text()),
+                    dependencyNodeId: String(nodeId2),
+                    dependencyNodeName: dependencyNode ? dependencyNode.nodeName : $.trim($(this).find('td:nth-child(2)').contents().first().text())
+                };
+            });
+        }
+
         window.updateDependencyTable = function (currentNodeId, currentNodeName, dependencyNodeId, dependencyNodeName, showMessage) {
-            var relationKey = currentNodeId + '_' + dependencyNodeId;
-            if ($('#dependencyList tr[data-relation-key="' + relationKey + '"]').length > 0) {
+            var key = relationKey(currentNodeId, dependencyNodeId);
+            if (relationMap[key]) {
                 if (showMessage !== false) {
-                    layer.msg('该依赖关系已存在');
+                    layer.msg('\u8be5\u4f9d\u8d56\u5173\u7cfb\u5df2\u5b58\u5728');
                 }
                 return false;
             }
-            $('#dependencyList .empty-row').remove();
-
-            var newRow = '<tr data-relation-key="' + relationKey + '">' +
-                '<td data-node-id="' + currentNodeId + '">' + escapeHtml(currentNodeName) + '<span class="node-id">' + currentNodeId + '</span></td>' +
-                '<td data-node-id="' + dependencyNodeId + '">' + escapeHtml(dependencyNodeName) + '<span class="node-id">' + dependencyNodeId + '</span></td>' +
-                '<td><button class="layui-btn layui-btn-danger layui-btn-sm" onclick="deleteDependency(this)"><i class="layui-icon layui-icon-delete"></i>删除</button></td>' +
-                '</tr>';
-
-            $('#dependencyList').append(newRow);
-            filterDependencyList();
+            relationMap[key] = {
+                currentNodeId: String(currentNodeId),
+                currentNodeName: currentNodeName,
+                dependencyNodeId: String(dependencyNodeId),
+                dependencyNodeName: dependencyNodeName
+            };
+            renderDependencyList();
             if (showMessage !== false) {
-                layer.msg('依赖关系已添加');
+                layer.msg('\u4f9d\u8d56\u5173\u7cfb\u5df2\u6dfb\u52a0');
             }
             return true;
         };
 
         window.deleteDependency = function (button) {
-            $(button).closest('tr').remove();
-            if ($('#dependencyList tr').length === 0) {
-                $('#dependencyList').html(emptyRow());
+            var key = $(button).closest('tr').data('relation-key');
+            if (key) {
+                delete relationMap[key];
             }
-            layer.msg('依赖关系已删除');
+            renderDependencyList();
+            layer.msg('\u4f9d\u8d56\u5173\u7cfb\u5df2\u5220\u9664');
         };
 
         window.resetDependencyList = function() {
-            $('#dependencyList').html(emptyRow());
+            relationMap = {};
+            renderDependencyList();
             selectedCurrentNode = null;
             selectedDependencyNodes = [];
             renderPickerText();
-            layer.msg('依赖关系列表已清空');
+            layer.msg('\u4f9d\u8d56\u5173\u7cfb\u5217\u8868\u5df2\u6e05\u7a7a');
         };
 
         window.filterDependencyList = function() {
-            var keyword = $.trim($('#relationNodeName').val()).toLowerCase();
-            $('#dependencyList tr').each(function() {
-                var row = $(this);
-                if (row.hasClass('empty-row')) {
-                    return;
-                }
-                var text = row.text().toLowerCase();
-                row.toggle(!keyword || text.indexOf(keyword) >= 0);
-            });
+            renderDependencyList();
         };
 
         window.clearDependencyFilter = function() {
@@ -829,22 +863,24 @@
             }
         });
 
+        loadRelationCacheFromDom();
+        renderDependencyList();
         renderPickerText();
 
         window.submitDependencies = function() {
+            if (relationSaving) {
+                return;
+            }
             var nodeRelationList = [];
-            $('#dependencyList tr').each(function() {
-                var nodeId1 = $(this).find('td:first').data('node-id');
-                var nodeId2 = $(this).find('td:nth-child(2)').data('node-id');
-                if (!nodeId1 || !nodeId2) {
-                    return;
-                }
+            getRelationList().forEach(function(relation) {
                 nodeRelationList.push({
-                    nodeId1: nodeId1,
-                    nodeId2: nodeId2
+                    nodeId1: relation.currentNodeId,
+                    nodeId2: relation.dependencyNodeId
                 });
             });
 
+            relationSaving = true;
+            var loadingIndex = layer.load(1, {shade: [0.12, '#000']});
             $.ajax({
                 url: '${request.contextPath}/work/edit',
                 type: 'POST',
@@ -853,15 +889,20 @@
                     nodeRelationList: nodeRelationList
                 }),
                 contentType: 'application/json',
+                timeout: 30000,
                 success: function(response) {
                     if (response.code === 200) {
-                        layer.msg('依赖关系保存成功', {icon: 1});
+                        layer.msg('\u4f9d\u8d56\u5173\u7cfb\u4fdd\u5b58\u6210\u529f', {icon: 1});
                     } else {
-                        layer.msg(response.msg || '依赖关系保存失败', {icon: 2});
+                        layer.msg(response.msg || '\u4f9d\u8d56\u5173\u7cfb\u4fdd\u5b58\u5931\u8d25', {icon: 2});
                     }
                 },
                 error: function() {
-                    layer.msg('依赖关系保存失败', {icon: 2});
+                    layer.msg('\u4f9d\u8d56\u5173\u7cfb\u4fdd\u5b58\u5931\u8d25', {icon: 2});
+                },
+                complete: function() {
+                    relationSaving = false;
+                    layer.close(loadingIndex);
                 }
             });
         };

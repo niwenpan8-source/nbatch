@@ -74,7 +74,10 @@
                 </select>
             </div>
             <label class="col-sm-2 control-label">重试次数</label>
-            <div class="col-sm-4"><input type="number" class="form-control" name="retryCount" value="<#if model.retryCount??>${model.retryCount}<#else>0</#if>" min="0"></div>
+            <div class="col-sm-4">
+                <input type="number" class="form-control" name="retryCount" value="<#if model.retryCount??>${model.retryCount}<#else>0</#if>" min="-1">
+                <span class="help-block">填 -1 表示无限重试，0 表示不重试，大于 0 表示最多重试次数。</span>
+            </div>
         </div>
 
         <div class="config-section" data-section="script">

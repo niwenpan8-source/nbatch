@@ -44,6 +44,11 @@ public class JobWorkRunNodeLogPo extends Model<JobWorkRunNodeLogPo> {
 	private String runNodeId;
 
 	/**
+	 * 翻牌日期
+	 */
+	private Date turnDate;
+
+	/**
 	 * 执行状态
 	 */
 	private Integer handleCode;
