@@ -1,5 +1,6 @@
 package com.nbatch.job.core.enums;
 
+import cn.hutool.core.util.ObjUtil;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -20,26 +21,42 @@ public enum FlowRunStatusEnum {
 
     EXCEPTION(3, "执行异常"),
 
+    /**
+     * 只有向客户端发送请求成功，才会修改节点状态为已下发
+     */
     DISPATCHED(4, "已下发"),
 
     SKIPPED(5, "已跳过"),
 
     STOPPED(6, "已停止"),
+
+    /**
+     * 已向执行器发送停止请求，等待任务线程真实退出。
+     */
+    STOPPING(7, "停止中"),
+
+    /**
+     * 新增节点尚未初始化到本批次。
+     */
+    UNINITIALIZED(8, "未初始化"),
     ;
 
     /**
      * 状态码
      */
-    private final int code;
+    private final Integer code;
 
     /**
      * 状态描述
      */
     private final String value;
 
-    public static String getValueByCode(int code) {
+    public static String getValueByCode(Integer code) {
+        if (code == null) {
+            return null;
+        }
         for (FlowRunStatusEnum value : FlowRunStatusEnum.values()) {
-            if (value.getCode() == code) {
+            if (ObjUtil.equals(value.getCode(), code)) {
                 return value.getValue();
             }
         }

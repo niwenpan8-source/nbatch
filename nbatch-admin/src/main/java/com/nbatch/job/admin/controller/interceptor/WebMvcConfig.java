@@ -7,7 +7,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import javax.annotation.Resource;
 
 /**
- * web mvc config
+ * Web MVC 配置
  *
  * @author Mr.ni
  */

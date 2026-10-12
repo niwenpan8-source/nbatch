@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.LUA_SCRIPT_FAIL;
 
 /**
- * lua脚本执行帮助类
+ * Lua 脚本执行工具类
  * @author: Mr.ni
  * @date: 2025/12/22
  */

@@ -25,7 +25,7 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
-@TableName("nbatch_job_group")
+@TableName("nbatch_group")
 public class JobGroupPo extends Model<JobGroupPo> {
 
     /**

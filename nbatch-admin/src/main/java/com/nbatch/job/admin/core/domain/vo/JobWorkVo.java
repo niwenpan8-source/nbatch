@@ -38,13 +38,14 @@ public class JobWorkVo {
 
     private String workTypeName;
 
-    /**
-     * 作业状态：0=停用、1=启用
-     */
-    private Integer workStatus;
-
-    private String workStatusName;
-
+    private String jobGroup;
+    private String jobGroupName;
+    private String scheduleType;
+    private String scheduleConf;
+    private Integer scheduleStatus;
+    private String misfireStrategy;
+    private Long triggerLastTime;
+    private Long triggerNextTime;
     private String cronExpression;
 
     private Integer timeout;
@@ -52,13 +53,6 @@ public class JobWorkVo {
     private String notifyEmail;
 
     private Integer version;
-
-    /**
-     * 初始化翻牌日期
-     */
-    private Date initTurnDate;
-
-    private String initTurnDateText;
 
     private Date createTime;
 
@@ -69,7 +63,6 @@ public class JobWorkVo {
      */
     private String turnDate;
 
-    private String runWorkId;
 
     private String runWorkCreateTime;
 

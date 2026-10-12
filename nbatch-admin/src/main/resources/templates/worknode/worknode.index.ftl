@@ -17,17 +17,20 @@
         #work_node_list th:nth-child(4), #work_node_list td:nth-child(4) {width: 100px;}
         #work_node_list th:nth-child(5), #work_node_list td:nth-child(5) {width: 80px;}
         #work_node_list th:nth-child(6), #work_node_list td:nth-child(6) {width: 90px;}
-        #work_node_list th:nth-child(7), #work_node_list td:nth-child(7) {width: 110px;}
-        #work_node_list th:nth-child(8), #work_node_list td:nth-child(8) {width: 120px;}
+        #work_node_list th:nth-child(7), #work_node_list td:nth-child(7) {width: 100px;}
+        #work_node_list th:nth-child(8), #work_node_list td:nth-child(8) {width: 110px;}
+        #work_node_list th:nth-child(9), #work_node_list td:nth-child(9) {width: 120px;}
         #work_node_list .node-main-text {display: inline-block; max-width: 220px; word-break: break-word;}
         .work-node-detail-toggle {font-weight: 600;}
-        .work-node-detail-modal {padding: 18px; background: #f8fafc; max-height: 70vh; overflow: auto;}
-        .work-node-run-detail {display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px 18px; padding: 12px 16px; border-left: 3px solid #3c8dbc; background: #fff;}
+        .work-node-detail-modal {padding: 18px; background: #edf3f1; max-height: calc(100vh - 150px); overflow: auto;}
+        .work-node-run-detail {display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px 18px; padding: 12px 16px; border-left: 3px solid #216f6b; background: #fff;}
         .work-node-run-item {display: flex; align-items: flex-start; gap: 8px; min-width: 0;}
         .work-node-run-label {flex: 0 0 86px; color: #6b7280; font-weight: 600;}
         .node-info-id {font-family: Menlo, Monaco, Consolas, monospace; color: #374151; word-break: break-all;}
         .detail-section-title {margin: 16px 0 10px; font-weight: 600; color: #374151;}
-        .detail-history-table {background: #fff;}
+        .detail-history-wrap {overflow-x: auto; background: #fff; border: 1px solid #e5e7eb;}
+        .detail-history-table {background: #fff; margin-bottom: 0; min-width: 920px;}
+        .detail-history-table th {white-space: nowrap;}
         @media (max-width: 1199px) {
             #work_node_list {min-width: 900px;}
         }
@@ -38,7 +41,7 @@
         }
     </style>
 </head>
-<body class="hold-transition skin-blue sidebar-mini <#if cookieMap?exists && cookieMap["xxljob_adminlte_settings"]?exists && "off" == cookieMap["xxljob_adminlte_settings"].value >sidebar-collapse</#if>">
+<body class="hold-transition skin-blue sidebar-mini list-page <#if cookieMap?exists && cookieMap["xxljob_adminlte_settings"]?exists && "off" == cookieMap["xxljob_adminlte_settings"].value >sidebar-collapse</#if>">
 <div class="wrapper">
     <!-- header -->
     <@netCommon.commonHeader />
@@ -49,7 +52,7 @@
     <div class="content-wrapper">
         <!-- Content Header (Page header) -->
         <section class="content-header">
-            <h1>作业节点管理</h1>
+            <h1>节点管理</h1>
         </section>
 
         <!-- Main content -->
@@ -58,13 +61,13 @@
                 <div class="col-xs-12">
                     <div class="box">
                         <div class="box-header with-border">
-                            <h3 class="box-title">作业节点管理</h3>
+                            <h3 class="box-title">节点管理</h3>
                             <div class="box-tools pull-right">
                                 <button class="btn btn-success add" type="button">${I18n.jobinfo_field_add}</button>
                             </div>
                         </div>
                         <div class="box-body">
-                            <div class="row">
+                            <div class="row list-filter-row">
                                 <div class="col-xs-12 col-md-2">
                                     <div class="input-group">
                                         <span class="input-group-addon">节点名称</span>
@@ -114,7 +117,7 @@
             </div>
             <div class="row">
                 <div class="col-xs-12">
-                    <div class="box">
+                    <div class="box list-table-box">
                         <div class="box-body">
                             <div class="table-responsive-wrap">
                             <table id="work_node_list" class="table table-bordered table-striped" width="100%">
@@ -124,7 +127,6 @@
                                     <th>作业</th>
                                     <th>类型</th>
                                     <th>数据库</th>
-                                    <th>状态</th>
                                     <th>运行状态</th>
                                     <th>翻牌时间</th>
                                     <th class="table-action-cell">${I18n.system_opt}</th>
@@ -152,7 +154,8 @@
 <!-- moment -->
 <script src="${request.contextPath}/static/adminlte/bower_components/moment/moment.min.js"></script>
 <#-- cronGen -->
+<script src="${request.contextPath}/static/plugins/cronGen/cronGen_core.js"></script>
 <script src="${request.contextPath}/static/plugins/cronGen/cronGen<#if I18n.admin_i18n?default('')?length gt 0 >_${I18n.admin_i18n}</#if>.js"></script>
-<script src="${request.contextPath}/static/js/worknode.index.1.js?v=2026061302"></script>
+<script src="${request.contextPath}/static/js/worknode.index.1.js?v=2026081302"></script>
 </body>
 </html>

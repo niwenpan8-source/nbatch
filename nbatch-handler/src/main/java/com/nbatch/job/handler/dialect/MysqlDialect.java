@@ -6,22 +6,14 @@ import cn.hutool.json.JSONObject;
 import com.nbatch.job.core.biz.model.ExecuteDbToFileParam;
 import com.nbatch.job.core.biz.model.ExecuteFileToDbParam;
 import com.nbatch.job.handler.exception.HandlerException;
-import com.nbatch.job.handler.utils.AsciiUtil;
-import com.nbatch.job.handler.utils.InvisibleCharUtil;
 import com.nbatch.job.handler.utils.NbatchCsvUtil;
 import com.nbatch.job.handler.utils.SpecialSqlUtil;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.BufferedReader;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.util.List;
 
-import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_UPDATE_SQL_FAIL;
+import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_SQL_FAIL;
 
 /**
  * @description: Mysql数据库方言
@@ -62,7 +54,13 @@ public class MysqlDialect implements BaseDialect {
     @Override
     public int executeUpdate(Connection connection, String sql) throws Exception {
         log.info("执行 update sql：{}", sql);
-        return SpecialSqlUtil.executeUpdate(connection, sql);
+        return SpecialSqlUtil.executeUpdate(connection, sql, 600);
+    }
+
+    @Override
+    public int executeUpdate(Connection connection, String sql, int timeout) throws Exception {
+        log.info("执行 update sql：{}", sql);
+        return SpecialSqlUtil.executeUpdate(connection, sql, timeout);
     }
 
     /**
@@ -134,16 +132,16 @@ public class MysqlDialect implements BaseDialect {
      */
     private String generateFileToDbExecuteSql(ExecuteFileToDbParam param) {
         if (param == null) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "Mysql文件导入db,参数不能为空");
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), "Mysql文件导入db,参数不能为空");
         }
         if (StrUtil.isBlank(param.getRemoteFilePath())) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "Mysql文件导入db,文件路径不能为空");
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), "Mysql文件导入db,文件路径不能为空");
         }
         if (StrUtil.isBlank(param.getImportTableName())) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "Mysql文件导入db,表名不能为空");
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), "Mysql文件导入db,表名不能为空");
         }
         if (StrUtil.isBlank(param.getFileCode())) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "Mysql文件导入db,文件编码不能为空");
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), "Mysql文件导入db,文件编码不能为空");
         }
         String exportSql = "LOAD DATA INFILE " + "'" + param.getRemoteFilePath() + "'" +
                 " INTO TABLE " + param.getImportTableName() +
@@ -166,16 +164,16 @@ public class MysqlDialect implements BaseDialect {
      */
     private String generateDbToFileExecuteSql(ExecuteDbToFileParam param) {
         if (param == null) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "Mysqldb导入文件,参数不能为空");
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), "Mysqldb导入文件,参数不能为空");
         }
         if (StrUtil.isBlank(param.getRemoteFilePath())) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "Mysqldb导入文件,文件路径不能为空");
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), "Mysqldb导入文件,文件路径不能为空");
         }
         if (StrUtil.isBlank(param.getExportTableName())) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "Mysqldb导入文件,表名不能为空");
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), "Mysqldb导入文件,表名不能为空");
         }
         if (StrUtil.isBlank(param.getFileCode())) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "Mysqldb导入文件,文件编码不能为空");
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), "Mysqldb导入文件,文件编码不能为空");
         }
         StringBuilder executeSql = new StringBuilder();
         executeSql.append("select ");

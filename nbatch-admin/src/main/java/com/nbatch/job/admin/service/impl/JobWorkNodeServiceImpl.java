@@ -3,7 +3,6 @@ package com.nbatch.job.admin.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -11,50 +10,24 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodeLogPageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodePageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodeParam;
-import com.nbatch.job.admin.core.domain.param.JobWorkNodeRelationParam;
-import com.nbatch.job.admin.core.domain.po.JobWorkExportFilePo;
-import com.nbatch.job.admin.core.domain.po.JobWorkImportFilePo;
-import com.nbatch.job.admin.core.domain.po.JobWorkNodePo;
-import com.nbatch.job.admin.core.domain.po.JobWorkNodeRelationPo;
-import com.nbatch.job.admin.core.domain.po.JobWorkPo;
-import com.nbatch.job.admin.core.domain.po.JobWorkRunNodePo;
-import com.nbatch.job.admin.core.domain.po.JobWorkRunNodeLogDetailPo;
-import com.nbatch.job.admin.core.domain.po.JobWorkRunNodeLogPo;
-import com.nbatch.job.admin.core.domain.po.JobWorkRunPo;
-import com.nbatch.job.admin.core.domain.vo.JobWorkNodeRelationVo;
+import com.nbatch.job.admin.core.domain.po.*;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeLogVo;
-import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeVo;
-import com.nbatch.job.admin.core.helper.RunWorkHelper;
-import com.nbatch.job.core.enums.NodeTypeEnum;
-import com.nbatch.job.admin.mapper.IJobWorkExportFileMapper;
-import com.nbatch.job.admin.mapper.IJobWorkImportFileMapper;
-import com.nbatch.job.admin.mapper.IJobWorkMapper;
-import com.nbatch.job.admin.mapper.IJobWorkNodeMapper;
-import com.nbatch.job.admin.mapper.IJobWorkNodeRelationMapper;
-import com.nbatch.job.admin.mapper.IJobWorkRunMapper;
-import com.nbatch.job.admin.mapper.IJobWorkRunNodeMapper;
-import com.nbatch.job.admin.mapper.IJobWorkRunNodeLogDetailMapper;
-import com.nbatch.job.admin.mapper.IJobWorkRunNodeLogMapper;
+import com.nbatch.job.admin.core.enums.FlowElementTypeEnum;
+import com.nbatch.job.admin.core.helper.FlowGroupHelper;
+import com.nbatch.job.admin.mapper.*;
 import com.nbatch.job.admin.service.IJobWorkNodeService;
-import com.nbatch.job.core.enums.FlowRunStatusEnum;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.constant.HandleCodeConstant;
+import com.nbatch.job.core.enums.FlowRunStatusEnum;
+import com.nbatch.job.core.enums.NodeTypeEnum;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Date;
+import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -66,6 +39,7 @@ import java.util.stream.Collectors;
 public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final int MAX_SCRIPT_CONTENT_BYTES = 60_000;
 
     @Resource
     private IJobWorkNodeMapper jobWorkNodeMapper;
@@ -74,7 +48,7 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
     private IJobWorkMapper jobWorkMapper;
 
     @Resource
-    private IJobWorkNodeRelationMapper jobWorkNodeRelationMapper;
+    private IJobWorkFlowDependencyMapper jobWorkFlowDependencyMapper;
 
     @Resource
     private IJobWorkRunNodeLogMapper jobWorkRunNodeLogMapper;
@@ -83,54 +57,48 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
     private IJobWorkRunNodeLogDetailMapper jobWorkRunNodeLogDetailMapper;
 
     @Resource
-    private IJobWorkRunNodeMapper jobWorkRunNodeMapper;
-
-    @Resource
-    private IJobWorkRunMapper jobWorkRunMapper;
-
-    @Resource
     private IJobWorkImportFileMapper jobWorkImportFileMapper;
 
     @Resource
     private IJobWorkExportFileMapper jobWorkExportFileMapper;
 
     @Resource
-    private RunWorkHelper runWorkHelper;
+    private FlowGroupHelper flowGroupHelper;
 
     /**
      * 分页列表
      */
     @Override
     public Map<String, Object> pageList(JobWorkNodePageParam param) {
-        Set<String> runStatusNodeIdSet = getLatestRunStatusNodeIdSet(param.getNodeRunStatus());
         Page<JobWorkNodePo> page = jobWorkNodeMapper.selectPage(new Page<>((param.getStart() / param.getLength()) + 1, param.getLength()),
                 Wrappers.lambdaQuery(JobWorkNodePo.class)
                         .eq(StrUtil.isNotBlank(param.getWorkId()), JobWorkNodePo::getWorkId, param.getWorkId())
                         .eq(StrUtil.isNotBlank(param.getNodeType()), JobWorkNodePo::getNodeType, param.getNodeType())
-                        .in(param.getNodeRunStatus() != null, JobWorkNodePo::getNodeId, runStatusNodeIdSet)
-                        .like(StrUtil.isNotBlank(param.getNodeName()), JobWorkNodePo::getNodeName, param.getNodeName()));
+                        .eq(param.getNodeRunStatus() != null, JobWorkNodePo::getNodeRunStatus, param.getNodeRunStatus())
+                        .apply(StrUtil.isNotBlank(param.getNodeName()), "LOWER(node_name) LIKE CONCAT('%', LOWER({0}), '%')", param.getNodeName()));
+        //.like(StrUtil.isNotBlank(param.getNodeName()), JobWorkNodePo::getNodeName, param.getNodeName()));
 
         List<JobWorkPo> jobWorkPos = jobWorkMapper.selectList(Wrappers.lambdaQuery(JobWorkPo.class));
         Map<String, String> workMap = new HashMap<>();
+        // 作业类型map
+        Map<String, Integer> workTypeMap = new HashMap<>();
         if (CollUtil.isNotEmpty(jobWorkPos)) {
             workMap = jobWorkPos.stream()
                     .collect(Collectors.toMap(JobWorkPo::getWorkId, JobWorkPo::getWorkName));
+            workTypeMap = jobWorkPos.stream()
+                    .filter(work -> work.getWorkType() != null)
+                    .collect(Collectors.toMap(JobWorkPo::getWorkId, JobWorkPo::getWorkType,
+                            (oldValue, newValue) -> oldValue));
         }
-        // package result
+        // 封装返回结果
         Map<String, String> finalWorkMap = workMap;
-        List<String> nodeIdList = page.getRecords().stream().map(JobWorkNodePo::getNodeId).collect(Collectors.toList());
-        List<JobWorkRunNodePo> runNodeList = CollUtil.isEmpty(nodeIdList) ? Collections.emptyList()
-                : jobWorkRunNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
-                .in(JobWorkRunNodePo::getNodeId, nodeIdList)
-                .orderByDesc(JobWorkRunNodePo::getCreateTime));
-        Map<String, JobWorkRunNodePo> runNodeMap = runNodeList.stream()
-                .collect(Collectors.toMap(JobWorkRunNodePo::getNodeId, x -> x, (old, value) -> old));
+        Map<String, Integer> finalWorkTypeMap = workTypeMap;
         page.convert(jobWorkNodePo -> {
-            JobWorkRunNodeVo jobWorkNodeVo = BeanUtil.toBean(jobWorkNodePo, JobWorkRunNodeVo.class);
+            JobWorkNodeVo jobWorkNodeVo = BeanUtil.toBean(jobWorkNodePo, JobWorkNodeVo.class);
             jobWorkNodeVo.setNodeTypeName(NodeTypeEnum.getValueByCode(jobWorkNodePo.getNodeType()));
             jobWorkNodeVo.setWorkName(finalWorkMap.get(jobWorkNodePo.getWorkId()));
-            JobWorkRunNodePo runNodePo = runNodeMap.get(jobWorkNodePo.getNodeId());
-            fillRunNodeInfo(jobWorkNodeVo, runNodePo);
+            jobWorkNodeVo.setWorkType(finalWorkTypeMap.get(jobWorkNodePo.getWorkId()));
+            fillWorkNodeVo(jobWorkNodeVo, jobWorkNodePo);
             return jobWorkNodeVo;
         });
         Map<String, Object> maps = new HashMap<>();
@@ -143,35 +111,19 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
         return maps;
     }
 
-    private Set<String> getLatestRunStatusNodeIdSet(Integer nodeRunStatus) {
-        if (nodeRunStatus == null) {
-            return Collections.emptySet();
-        }
-        List<JobWorkRunNodePo> runNodeList = jobWorkRunNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
-                .orderByDesc(JobWorkRunNodePo::getCreateTime));
-        if (CollUtil.isEmpty(runNodeList)) {
-            return Collections.singleton("__none__");
-        }
-        Map<String, JobWorkRunNodePo> latestRunNodeMap = new LinkedHashMap<>();
-        for (JobWorkRunNodePo runNodePo : runNodeList) {
-            latestRunNodeMap.putIfAbsent(runNodePo.getNodeId(), runNodePo);
-        }
-        Set<String> nodeIdSet = latestRunNodeMap.values().stream()
-                .filter(runNodePo -> runNodePo.getNodeRunStatus() != null
-                        && runNodePo.getNodeRunStatus().equals(nodeRunStatus))
-                .map(JobWorkRunNodePo::getNodeId)
-                .collect(Collectors.toSet());
-        return nodeIdSet.isEmpty() ? Collections.singleton("__none__") : nodeIdSet;
-    }
-
     /**
      * 插入
      */
     @Override
     public int insert(JobWorkNodeParam param) {
+        normalizeScriptContent(param);
         param.setUpdateTime(DateUtil.date());
         JobWorkNodePo jobWorkNodePo = BeanUtil.toBean(param, JobWorkNodePo.class);
+        // 如果没有组则归属于默认组
+        jobWorkNodePo.setGroupId(flowGroupHelper.resolveGroupId(param.getWorkId(), param.getGroupId()));
+        // 设置重试次数
         jobWorkNodePo.setRetryTimes(normalizeRetryTimes(param.getRetryCount()));
+        jobWorkNodePo.setNodeRunStatus(FlowRunStatusEnum.UNINITIALIZED.getCode());
         int count = jobWorkNodeMapper.insert(jobWorkNodePo);
         param.setNodeId(jobWorkNodePo.getNodeId());
         saveFileConfig(param);
@@ -184,6 +136,20 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
     @Override
     public int update(JobWorkNodeParam param) {
         param.setUpdateTime(DateUtil.date());
+        JobWorkNodePo currentNode = jobWorkNodeMapper.selectById(param.getNodeId());
+        if (currentNode == null) {
+            return 0;
+        }
+        param.setNodeType(StrUtil.blankToDefault(param.getNodeType(), currentNode.getNodeType()));
+        normalizeScriptContent(param);
+        String workId = StrUtil.blankToDefault(param.getWorkId(), currentNode.getWorkId());
+        param.setWorkId(workId);
+        if (StrUtil.isBlank(param.getGroupId())) {
+            param.setGroupId(StrUtil.blankToDefault(currentNode.getGroupId(),
+                    flowGroupHelper.resolveGroupId(workId, null)));
+        } else {
+            param.setGroupId(flowGroupHelper.resolveGroupId(workId, param.getGroupId()));
+        }
         JobWorkNodePo jobWorkNodePo = BeanUtil.toBean(param, JobWorkNodePo.class);
         jobWorkNodePo.setRetryTimes(normalizeRetryTimes(param.getRetryCount()));
         int count = jobWorkNodeMapper.updateById(jobWorkNodePo);
@@ -191,11 +157,33 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
         return count;
     }
 
+    /**
+     * 正常化重试次数
+     */
     private Integer normalizeRetryTimes(Integer retryTimes) {
         if (retryTimes == null) {
             return 0;
         }
         return retryTimes < -1 ? -1 : retryTimes;
+    }
+
+    /**
+     * 脚本统一以 LF 保存，避免不同操作系统的换行符在回显和执行时产生差异。
+     */
+    private void normalizeScriptContent(JobWorkNodeParam param) {
+        if (!StrUtil.equals(NodeTypeEnum.NODE_TYPE_SCRIPT.getCode(), param.getNodeType())
+                || param.getExecuteContent() == null) {
+            return;
+        }
+        String content = param.getExecuteContent();
+        if (content.indexOf('\0') >= 0) {
+            throw new IllegalArgumentException("脚本内容不能包含 NUL 字符");
+        }
+        String normalized = content.replace("\r\n", "\n").replace('\r', '\n');
+        if (normalized.getBytes(StandardCharsets.UTF_8).length > MAX_SCRIPT_CONTENT_BYTES) {
+            throw new IllegalArgumentException("脚本内容不能超过 60000 个 UTF-8 字节");
+        }
+        param.setExecuteContent(normalized);
     }
 
     /**
@@ -213,6 +201,9 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
         return vo;
     }
 
+    /**
+     * 详情
+     */
     @Override
     public ReturnT<Map<String, Object>> detail(String nodeId) {
         if (StrUtil.isBlank(nodeId)) {
@@ -223,26 +214,10 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
             return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "节点不存在");
         }
         JobWorkPo workPo = jobWorkMapper.selectById(nodePo.getWorkId());
-        List<JobWorkRunNodePo> runNodeList = jobWorkRunNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
-                .eq(JobWorkRunNodePo::getNodeId, nodeId)
-                .orderByDesc(JobWorkRunNodePo::getCreateTime));
-
-        List<Map<String, Object>> snapshotRunList = runNodeList.stream().map(runNodePo -> {
-            Map<String, Object> item = new HashMap<>();
-            item.put("runNodeId", runNodePo.getRunNodeId());
-            item.put("runWorkId", runNodePo.getRunWorkId());
-            item.put("turnDate", runNodePo.getTurnDate() == null ? null : DateUtil.formatDate(runNodePo.getTurnDate()));
-            item.put("nodeRunStatus", runNodePo.getNodeRunStatus());
-            item.put("nodeRunStatusName", runNodePo.getNodeRunStatus() == null ? null : FlowRunStatusEnum.getValueByCode(runNodePo.getNodeRunStatus()));
-            item.put("retryTimes", runNodePo.getRetryTimes());
-            item.put("createTime", runNodePo.getCreateTime() == null ? null : DateUtil.formatDateTime(runNodePo.getCreateTime()));
-            item.put("startTime", runNodePo.getStartTime() == null ? null : DATE_TIME_FORMATTER.format(runNodePo.getStartTime()));
-            item.put("endTime", runNodePo.getEndTime() == null ? null : DATE_TIME_FORMATTER.format(runNodePo.getEndTime()));
-            return item;
-        }).collect(Collectors.toList());
-        List<Map<String, Object>> runList = buildNodeRunHistoryFromLogs(nodeId, runNodeList);
-        if (CollUtil.isEmpty(runList)) {
-            runList = snapshotRunList;
+        // 得到各个节点执行日志的详情
+        List<Map<String, Object>> runList = buildNodeRunHistoryFromLogs(nodeId, nodePo);
+        if (CollUtil.isEmpty(runList) && nodePo.getNodeRunStatus() != null) {
+            runList = Collections.singletonList(buildCurrentNodeRunItem(nodePo));
         }
 
         Map<String, Object> detail = new HashMap<>();
@@ -253,7 +228,6 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
         detail.put("workName", workPo == null ? null : workPo.getWorkName());
         detail.put("nodeTypeName", NodeTypeEnum.getValueByCode(nodePo.getNodeType()));
         detail.put("dbType", nodePo.getDbType());
-        detail.put("nodeStatusName", nodePo.getNodeStatus() != null && nodePo.getNodeStatus() == 1 ? "启用" : "停用");
         detail.put("executeHandler", nodePo.getExecuteHandler());
         detail.put("scriptType", nodePo.getScriptType());
         detail.put("errorStrategy", nodePo.getErrorStrategy());
@@ -265,7 +239,73 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
         return ReturnT.success(detail);
     }
 
-    private List<Map<String, Object>> buildNodeRunHistoryFromLogs(String nodeId, List<JobWorkRunNodePo> runNodeList) {
+    /**
+     * 构建当前节点运行项
+     *
+     * @param runNodePo 运行节点
+     * @return 当前节点运行项
+     */
+    private Map<String, Object> buildCurrentNodeRunItem(JobWorkNodePo runNodePo) {
+        Map<String, Object> item = new HashMap<>();
+        item.put("nodeId", runNodePo.getNodeId());
+        item.put("workId", runNodePo.getWorkId());
+        item.put("turnDate", runNodePo.getTurnDate() == null ? null : DateUtil.formatDate(runNodePo.getTurnDate()));
+        item.put("nodeRunStatus", runNodePo.getNodeRunStatus());
+        item.put("nodeRunStatusName", runNodePo.getNodeRunStatus() == null
+                ? null : FlowRunStatusEnum.getValueByCode(runNodePo.getNodeRunStatus()));
+        item.put("retryTimes", runNodePo.getCurrentRetryTimes());
+        fillRunLogTimes(item, findLatestRunNodeLog(runNodePo));
+        return item;
+    }
+
+    /**
+     * 查询最新运行节点日志
+     *
+     * @param runNodePo 运行节点
+     * @return 最新运行节点日志
+     */
+    private JobWorkRunNodeLogPo findLatestRunNodeLog(JobWorkNodePo runNodePo) {
+        return jobWorkRunNodeLogMapper.selectOne(Wrappers.lambdaQuery(JobWorkRunNodeLogPo.class)
+                .eq(JobWorkRunNodeLogPo::getWorkId, runNodePo.getWorkId())
+                .eq(JobWorkRunNodeLogPo::getNodeId, runNodePo.getNodeId())
+                .eq(runNodePo.getTurnDate() != null, JobWorkRunNodeLogPo::getTurnDate, runNodePo.getTurnDate())
+                .orderByDesc(JobWorkRunNodeLogPo::getCreateTime)
+                .last("limit 1"));
+    }
+
+    /**
+     * 填充运行日志时间
+     *
+     * @param item  运行项
+     * @param logPo 运行日志
+     */
+    private void fillRunLogTimes(Map<String, Object> item, JobWorkRunNodeLogPo logPo) {
+        if (logPo == null) {
+            item.put("createTime", null);
+            item.put("executeStartTime", null);
+            item.put("executeEndTime", null);
+            item.put("callBackTime", null);
+            return;
+        }
+        item.put("createTime", logPo.getCreateTime() == null ? null : DATE_TIME_FORMATTER.format(logPo.getCreateTime()));
+        item.put("executeStartTime", logPo.getExecuteStartTime() == null ? null
+                : DATE_TIME_FORMATTER.format(logPo.getExecuteStartTime()));
+        item.put("executeEndTime", logPo.getExecuteEndTime() == null ? null
+                : DATE_TIME_FORMATTER.format(logPo.getExecuteEndTime()));
+        item.put("callBackTime", logPo.getCallBackTime() == null ? null
+                : DATE_TIME_FORMATTER.format(logPo.getCallBackTime()));
+    }
+
+    /**
+     * 构建节点运行历史
+     *
+     * @param nodeId         节点ID
+     * @param currentRunNode 当前运行节点
+     * @return 节点运行历史
+     */
+    private List<Map<String, Object>> buildNodeRunHistoryFromLogs(String nodeId,
+                                                                  JobWorkNodePo currentRunNode) {
+        // 得到所有执行日志
         List<JobWorkRunNodeLogPo> logList = jobWorkRunNodeLogMapper.selectList(Wrappers.lambdaQuery(JobWorkRunNodeLogPo.class)
                 .eq(JobWorkRunNodeLogPo::getNodeId, nodeId)
                 .orderByDesc(JobWorkRunNodeLogPo::getTurnDate)
@@ -273,41 +313,44 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
         if (CollUtil.isEmpty(logList)) {
             return Collections.emptyList();
         }
-        Map<String, JobWorkRunNodePo> runNodeMap = runNodeList.stream()
-                .collect(Collectors.toMap(JobWorkRunNodePo::getRunNodeId, x -> x, (oldValue, newValue) -> oldValue));
+        // 得到翻牌节点当中最新的那一条日志记录
         Map<String, JobWorkRunNodeLogPo> latestTurnLogMap = new LinkedHashMap<>();
         for (JobWorkRunNodeLogPo logPo : logList) {
             String turnDate = logPo.getTurnDate() == null ? "未记录" : DateUtil.formatDate(logPo.getTurnDate());
+            // 如果key已经存在，那么不会再put而且返回旧值
             latestTurnLogMap.putIfAbsent(turnDate, logPo);
         }
-        List<Map<String, Object>> runList = new java.util.ArrayList<>();
+        List<Map<String, Object>> runList = new ArrayList<>();
         for (Map.Entry<String, JobWorkRunNodeLogPo> entry : latestTurnLogMap.entrySet()) {
             JobWorkRunNodeLogPo logPo = entry.getValue();
-            JobWorkRunNodePo runNodePo = runNodeMap.get(logPo.getRunNodeId());
+            // 该日志是否是当前执行节点的日志
+            boolean currentTurn = currentRunNode != null
+                    && StrUtil.equals(formatTurnDate(currentRunNode.getTurnDate()), entry.getKey());
             Map<String, Object> item = new HashMap<>();
-            item.put("runNodeId", logPo.getRunNodeId());
-            item.put("runWorkId", logPo.getRunWorkId());
+            item.put("nodeId", logPo.getNodeId());
+            item.put("workId", logPo.getWorkId());
             item.put("turnDate", entry.getKey());
-            if (runNodePo != null && runNodePo.getTurnDate() != null && DateUtil.formatDate(runNodePo.getTurnDate()).equals(entry.getKey())) {
-                item.put("nodeRunStatus", runNodePo.getNodeRunStatus());
-                item.put("nodeRunStatusName", runNodePo.getNodeRunStatus() == null ? null : FlowRunStatusEnum.getValueByCode(runNodePo.getNodeRunStatus()));
-                item.put("retryTimes", runNodePo.getRetryTimes());
-                item.put("createTime", runNodePo.getCreateTime() == null ? null : DateUtil.formatDateTime(runNodePo.getCreateTime()));
-                item.put("startTime", runNodePo.getStartTime() == null ? null : DATE_TIME_FORMATTER.format(runNodePo.getStartTime()));
-                item.put("endTime", runNodePo.getEndTime() == null ? null : DATE_TIME_FORMATTER.format(runNodePo.getEndTime()));
+            // 如果该日志是当前执行节点的日志，则从当前执行节点中获取数据，否则从日志中获取数据
+            if (currentTurn) {
+                item.put("nodeRunStatus", currentRunNode.getNodeRunStatus());
+                item.put("nodeRunStatusName", currentRunNode.getNodeRunStatus() == null ? null : FlowRunStatusEnum.getValueByCode(currentRunNode.getNodeRunStatus()));
+                item.put("retryTimes", currentRunNode.getCurrentRetryTimes());
+                fillRunLogTimes(item, logPo);
             } else {
                 item.put("nodeRunStatus", null);
                 item.put("nodeRunStatusName", logPo.getHandleCode() == null ? null
                         : (logPo.getHandleCode() == HandleCodeConstant.HANDLE_CODE_SUCCESS ? "执行完毕"
-                        : (logPo.getHandleCode() == 0 ? "已下发" : "执行异常")));
+                           : (logPo.getHandleCode() == 0 ? "已下发" : "执行异常")));
                 item.put("retryTimes", null);
-                item.put("createTime", logPo.getCreateTime() == null ? null : DATE_TIME_FORMATTER.format(logPo.getCreateTime()));
-                item.put("startTime", null);
-                item.put("endTime", logPo.getCallBackTime() == null ? null : DateUtil.formatDateTime(logPo.getCallBackTime()));
+                fillRunLogTimes(item, logPo);
             }
             runList.add(item);
         }
         return runList;
+    }
+
+    private String formatTurnDate(Date turnDate) {
+        return turnDate == null ? "未记录" : DateUtil.formatDate(turnDate);
     }
 
     /**
@@ -320,37 +363,22 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
         if (jobWorkPo == null) {
             return 1;
         }
-        List<JobWorkRunNodePo> runNodeList = jobWorkRunNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
-                .eq(JobWorkRunNodePo::getNodeId, id));
-        if (CollUtil.isNotEmpty(runNodeList)) {
-            List<String> runNodeIdList = runNodeList.stream()
-                    .map(JobWorkRunNodePo::getRunNodeId)
-                    .collect(Collectors.toList());
-            jobWorkRunNodeLogDetailMapper.delete(Wrappers.lambdaQuery(JobWorkRunNodeLogDetailPo.class)
-                    .in(JobWorkRunNodeLogDetailPo::getRunNodeId, runNodeIdList));
-            jobWorkRunNodeLogMapper.delete(Wrappers.lambdaQuery(JobWorkRunNodeLogPo.class)
-                    .in(JobWorkRunNodeLogPo::getRunNodeId, runNodeIdList));
-            jobWorkRunNodeMapper.delete(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
-                    .eq(JobWorkRunNodePo::getNodeId, id));
-        }
-        jobWorkNodeRelationMapper.delete(Wrappers.lambdaQuery(JobWorkNodeRelationPo.class)
-                .eq(JobWorkNodeRelationPo::getNodeId1, id)
-                .or()
-                .eq(JobWorkNodeRelationPo::getNodeId2, id));
+        // 删除依赖节点信息
+        jobWorkFlowDependencyMapper.delete(Wrappers.lambdaQuery(JobWorkFlowDependencyPo.class)
+                .eq(JobWorkFlowDependencyPo::getWorkId, jobWorkPo.getWorkId())
+                .and(wrapper -> wrapper
+                        .eq(JobWorkFlowDependencyPo::getPredecessorType, FlowElementTypeEnum.NODE.name())
+                        .eq(JobWorkFlowDependencyPo::getPredecessorId, id)
+                        .or()
+                        .eq(JobWorkFlowDependencyPo::getSuccessorType, FlowElementTypeEnum.NODE.name())
+                        .eq(JobWorkFlowDependencyPo::getSuccessorId, id)));
+        // 删除与节点相关联的导入文件信息
         jobWorkImportFileMapper.delete(Wrappers.lambdaQuery(JobWorkImportFilePo.class)
                 .eq(JobWorkImportFilePo::getNodeId, id));
+        // 删除与节点相关联的导出文件信息
         jobWorkExportFileMapper.delete(Wrappers.lambdaQuery(JobWorkExportFilePo.class)
                 .eq(JobWorkExportFilePo::getNodeId, id));
         return jobWorkNodeMapper.deleteById(id);
-    }
-
-    /**
-     * 得到所有的发布的
-     */
-    @Override
-    public List<JobWorkNodePo> getWorkNodeList(String workId) {
-        return jobWorkNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkNodePo.class)
-                .eq(JobWorkNodePo::getNodeStatus, 1).eq(JobWorkNodePo::getWorkId, workId));
     }
 
     /**
@@ -363,125 +391,58 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
     }
 
     /**
-     * 获得所有作业节点关系
-     */
-    @Override
-    public List<JobWorkNodeRelationVo> getWorkNodeRelationByWorkId(String workId) {
-        List<JobWorkNodeRelationPo> relationList = jobWorkNodeRelationMapper.selectList(Wrappers.lambdaQuery(JobWorkNodeRelationPo.class)
-                .eq(JobWorkNodeRelationPo::getWorkId, workId)
-                .orderByDesc(JobWorkNodeRelationPo::getNodeId1));
-        List<JobWorkNodePo> jobWorkNodePos = jobWorkNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkNodePo.class)
-                .eq(JobWorkNodePo::getWorkId, workId));
-        Map<String, String> nodeMap = new HashMap<>();
-        if (CollUtil.isNotEmpty(jobWorkNodePos)) {
-            nodeMap = jobWorkNodePos.stream()
-                    .collect(Collectors.toMap(JobWorkNodePo::getNodeId, JobWorkNodePo::getNodeName));
-        }
-        Map<String, String> finalNodeMap = nodeMap;
-        return relationList.stream().map(x -> {
-            JobWorkNodeRelationVo bean = BeanUtil.toBean(x, JobWorkNodeRelationVo.class);
-            bean.setNodeName1(finalNodeMap.get(x.getNodeId1()));
-            bean.setNodeName2(finalNodeMap.get(x.getNodeId2()));
-            return bean;
-        }).collect(Collectors.toList());
-    }
-
-    /**
-     * 批量插入作业节点关系
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public int updateWorkNodeRelation(JobWorkNodeRelationParam param) {
-        if (param == null || StrUtil.isBlank(param.getWorkId())) {
-            return 0;
-        }
-        String workId = param.getWorkId();
-        List<JobWorkNodePo> nodeList = jobWorkNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkNodePo.class)
-                .eq(JobWorkNodePo::getWorkId, workId));
-        Set<String> nodeIdSet = nodeList.stream()
-                .map(JobWorkNodePo::getNodeId)
-                .collect(Collectors.toSet());
-
-        Map<String, JobWorkNodeRelationParam.NodeRelation> newRelationMap = new LinkedHashMap<>();
-        if (CollUtil.isNotEmpty(param.getNodeRelationList())) {
-            for (JobWorkNodeRelationParam.NodeRelation relation : param.getNodeRelationList()) {
-                if (relation == null
-                        || StrUtil.isBlank(relation.getNodeId1())
-                        || StrUtil.isBlank(relation.getNodeId2())
-                        || StrUtil.equals(relation.getNodeId1(), relation.getNodeId2())
-                        || !nodeIdSet.contains(relation.getNodeId1())
-                        || !nodeIdSet.contains(relation.getNodeId2())) {
-                    continue;
-                }
-                newRelationMap.put(buildRelationKey(relation.getNodeId1(), relation.getNodeId2()), relation);
-            }
-        }
-
-        List<JobWorkNodeRelationPo> oldRelationList = jobWorkNodeRelationMapper.selectList(Wrappers.lambdaQuery(JobWorkNodeRelationPo.class)
-                .eq(JobWorkNodeRelationPo::getWorkId, workId));
-        Map<String, JobWorkNodeRelationPo> oldRelationMap = oldRelationList.stream()
-                .collect(Collectors.toMap(x -> buildRelationKey(x.getNodeId1(), x.getNodeId2()), x -> x, (oldValue, newValue) -> oldValue));
-
-        List<String> deleteRelationIdList = oldRelationMap.entrySet().stream()
-                .filter(entry -> !newRelationMap.containsKey(entry.getKey()))
-                .map(entry -> entry.getValue().getNodeRelationId())
-                .collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(deleteRelationIdList)) {
-            jobWorkNodeRelationMapper.delete(Wrappers.lambdaQuery(JobWorkNodeRelationPo.class)
-                    .in(JobWorkNodeRelationPo::getNodeRelationId, deleteRelationIdList));
-        }
-
-        int changeCount = CollUtil.isEmpty(deleteRelationIdList) ? 0 : deleteRelationIdList.size();
-        for (Map.Entry<String, JobWorkNodeRelationParam.NodeRelation> entry : newRelationMap.entrySet()) {
-            if (oldRelationMap.containsKey(entry.getKey())) {
-                continue;
-            }
-            JobWorkNodeRelationPo bean = BeanUtil.toBean(entry.getValue(), JobWorkNodeRelationPo.class);
-            bean.setWorkId(workId);
-            changeCount += jobWorkNodeRelationMapper.insert(bean);
-        }
-        return changeCount;
-    }
-
-    private String buildRelationKey(String nodeId1, String nodeId2) {
-        return nodeId1 + "_" + nodeId2;
-    }
-
-
-    /**
      * 获取作业节点关系
      */
     @Override
     public IPage<JobWorkRunNodeLogVo> logPageList(JobWorkNodeLogPageParam param) {
+        // 得到节点运行日志
         Date startTime = parseLogStartTime(param.getStartTime());
         Date endTime = parseLogEndTime(param.getEndTime());
+        List<String> groupNodeIds = findLogScopeNodeIds(param);
+        if (StrUtil.isNotBlank(param.getGroupId()) && CollUtil.isEmpty(groupNodeIds)) {
+            return new Page<>(param.getStart(), param.getLength());
+        }
         IPage<JobWorkRunNodeLogPo> page = jobWorkRunNodeLogMapper
                 .selectPage(new Page<>(param.getStart(), param.getLength()),
-                Wrappers.lambdaQuery(JobWorkRunNodeLogPo.class)
-                        .eq(StrUtil.isNotBlank(param.getWorkId()), JobWorkRunNodeLogPo::getWorkId, param.getWorkId())
-                        .eq(StrUtil.isNotBlank(param.getNodeId()), JobWorkRunNodeLogPo::getNodeId, param.getNodeId())
-                        .eq(StrUtil.isNotBlank(param.getRunNodeId()), JobWorkRunNodeLogPo::getRunNodeId, param.getRunNodeId())
-                        .ge(startTime != null, JobWorkRunNodeLogPo::getCreateTime, startTime)
-                        .le(endTime != null, JobWorkRunNodeLogPo::getCreateTime, endTime)
-                        .orderByDesc(JobWorkRunNodeLogPo::getCreateTime)
+                        Wrappers.lambdaQuery(JobWorkRunNodeLogPo.class)
+                                .eq(StrUtil.isNotBlank(param.getWorkId()), JobWorkRunNodeLogPo::getWorkId, param.getWorkId())
+                                .eq(StrUtil.isNotBlank(param.getNodeId()), JobWorkRunNodeLogPo::getNodeId, param.getNodeId())
+                                .in(CollUtil.isNotEmpty(groupNodeIds), JobWorkRunNodeLogPo::getNodeId, groupNodeIds)
+                                .eq(StrUtil.isNotBlank(param.getNodeLogId()), JobWorkRunNodeLogPo::getNodeLogId, param.getNodeLogId())
+                                .ge(startTime != null, JobWorkRunNodeLogPo::getCreateTime, startTime)
+                                .le(endTime != null, JobWorkRunNodeLogPo::getCreateTime, endTime)
+                                .orderByDesc(JobWorkRunNodeLogPo::getCreateTime)
                 );
         if (CollUtil.isEmpty(page.getRecords())) {
-            return page.convert(x -> BeanUtil.toBean(x, JobWorkRunNodeLogVo.class));
+            return page.convert(x -> {
+                JobWorkRunNodeLogVo vo = BeanUtil.toBean(x, JobWorkRunNodeLogVo.class);
+                vo.setExecuteStartTime(x.getExecuteStartTime() == null ? x.getCreateTime() : x.getExecuteStartTime());
+                vo.setExecuteEndTime(x.getExecuteEndTime() == null ? x.getCallBackTime() : x.getExecuteEndTime());
+                return vo;
+            });
         }
-        List<String> runNodeIdList = page.getRecords().stream().map(JobWorkRunNodeLogPo::getRunNodeId)
+        Map<String, String> nodeNameMap = findNodeNameMap(page.getRecords().stream()
+                .map(JobWorkRunNodeLogPo::getNodeId)
+                .collect(Collectors.toList()));
+        List<String> nodeLogIdList = page.getRecords().stream().map(JobWorkRunNodeLogPo::getNodeLogId)
                 .collect(Collectors.toList());
+        // 得到节点详细日志
         List<JobWorkRunNodeLogDetailPo> jobWorkRunNodeLogDetailList =
                 jobWorkRunNodeLogDetailMapper.selectList(Wrappers.lambdaQuery(JobWorkRunNodeLogDetailPo.class)
-                .in(JobWorkRunNodeLogDetailPo::getRunNodeId, runNodeIdList));
+                        .in(JobWorkRunNodeLogDetailPo::getNodeLogId, nodeLogIdList));
         Map<String, List<JobWorkRunNodeLogDetailPo>> detailMap = new HashMap<>();
+        // key = nodeLogId:turnDate,value = JobWorkRunNodeLogDetailPo列表
         if (CollUtil.isNotEmpty(jobWorkRunNodeLogDetailList)) {
             detailMap = jobWorkRunNodeLogDetailList.stream()
-                    .collect(Collectors.groupingBy(x -> buildRunNodeLogDetailKey(x.getRunNodeId(), x.getTurnDate())));
+                    .collect(Collectors.groupingBy(x -> buildRunNodeLogDetailKey(x.getNodeLogId(), x.getTurnDate())));
         }
         Map<String, List<JobWorkRunNodeLogDetailPo>> finalDetailMap = detailMap;
         return page.convert(x -> {
             JobWorkRunNodeLogVo vo = BeanUtil.toBean(x, JobWorkRunNodeLogVo.class);
-            List<JobWorkRunNodeLogDetailPo> jobWorkRunNodeLogDetailPos = finalDetailMap.get(buildRunNodeLogDetailKey(x.getRunNodeId(), x.getTurnDate()));
+            vo.setNodeName(nodeNameMap.getOrDefault(x.getNodeId(), x.getNodeId()));
+            vo.setExecuteStartTime(x.getExecuteStartTime() == null ? x.getCreateTime() : x.getExecuteStartTime());
+            vo.setExecuteEndTime(x.getExecuteEndTime() == null ? x.getCallBackTime() : x.getExecuteEndTime());
+            List<JobWorkRunNodeLogDetailPo> jobWorkRunNodeLogDetailPos = finalDetailMap.get(buildRunNodeLogDetailKey(x.getNodeLogId(), x.getTurnDate()));
             if (CollUtil.isNotEmpty(jobWorkRunNodeLogDetailPos)) {
                 String jobDetail = jobWorkRunNodeLogDetailPos.stream().map(JobWorkRunNodeLogDetailPo::getHandleMsg)
                         .collect(Collectors.joining("<br>"));
@@ -491,8 +452,15 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
         });
     }
 
-    private String buildRunNodeLogDetailKey(String runNodeId, Date turnDate) {
-        return runNodeId + ":" + (turnDate == null ? "" : DateUtil.formatDate(turnDate));
+    /**
+     * 构建运行节点日志详情key
+     *
+     * @param nodeLogId 节点日志ID
+     * @param turnDate  翻牌日期
+     * @return 运行节点日志详情key
+     */
+    private String buildRunNodeLogDetailKey(String nodeLogId, Date turnDate) {
+        return nodeLogId + ":" + (turnDate == null ? "" : DateUtil.formatDate(turnDate));
     }
 
     /**
@@ -503,166 +471,57 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
         return jobWorkNodeMapper.selectById(workNodeId);
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public ReturnT<String> rerunNode(String runNodeId) {
-        return rerunNodeInternal(runNodeId, false);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public ReturnT<String> rerunNodeFromInitTurnDate(String runNodeId) {
-        return rerunNodeInternal(runNodeId, true);
-    }
-
-    private ReturnT<String> rerunNodeInternal(String runNodeId, boolean fromInitTurnDate) {
-        if (StrUtil.isBlank(runNodeId)) {
-            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "运行节点ID不能为空");
-        }
-
-        JobWorkRunNodePo runNodePo = jobWorkRunNodeMapper.selectById(runNodeId);
-        if (runNodePo == null) {
-            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "运行节点不存在");
-        }
-
-        JobWorkRunPo runWorkPo = jobWorkRunMapper.selectById(runNodePo.getRunWorkId());
-        if (runWorkPo == null) {
-            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "运行作业不存在");
-        }
-
-        JobWorkRunPo targetRunWorkPo = runWorkPo;
-        if (fromInitTurnDate) {
-            JobWorkPo jobWorkPo = jobWorkMapper.selectById(runWorkPo.getWorkId());
-            if (jobWorkPo == null) {
-                return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "作业不存在");
-            }
-            Date initTurnDate = resolveInitTurnDate(jobWorkPo);
-            targetRunWorkPo = getLatestRunWork(runWorkPo.getWorkId());
-            if (targetRunWorkPo == null) {
-                ReturnT<JobWorkRunPo> initResult = initRunWorkForTurnDate(jobWorkPo, initTurnDate);
-                if (initResult.getCode() != HandleCodeConstant.HANDLE_CODE_SUCCESS) {
-                    return new ReturnT<>(initResult.getCode(), initResult.getMsg());
-                }
-                targetRunWorkPo = initResult.getContent();
-            }
-            if (targetRunWorkPo.getRunWorkStatus() != null
-                    && (targetRunWorkPo.getRunWorkStatus() == FlowRunStatusEnum.DISPATCHED.getCode()
-                    || targetRunWorkPo.getRunWorkStatus() == FlowRunStatusEnum.RUNNING.getCode())) {
-                return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "当前运行作业正在执行，不能切换翻牌日期重跑");
-            }
-            ReturnT<String> resetResult = runWorkHelper.resetRunWorkSnapshot(jobWorkPo, targetRunWorkPo, initTurnDate);
-            if (resetResult.getCode() != HandleCodeConstant.HANDLE_CODE_SUCCESS) {
-                return resetResult;
-            }
-        }
-
-        List<JobWorkNodePo> nodeList = jobWorkNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkNodePo.class)
-                .eq(JobWorkNodePo::getWorkId, runWorkPo.getWorkId()));
-        if (CollUtil.isEmpty(nodeList)) {
-            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "作业节点不存在");
-        }
-
-        Map<String, JobWorkNodePo> nodeMap = nodeList.stream()
-                .collect(Collectors.toMap(JobWorkNodePo::getNodeId, x -> x, (oldValue, newValue) -> oldValue));
-        if (!nodeMap.containsKey(runNodePo.getNodeId())) {
-            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "运行节点不属于当前作业");
-        }
-
-        List<JobWorkNodeRelationPo> relationList = jobWorkNodeRelationMapper.selectList(Wrappers.lambdaQuery(JobWorkNodeRelationPo.class)
-                .eq(JobWorkNodeRelationPo::getWorkId, runWorkPo.getWorkId()));
-        Map<String, List<String>> relationMap = buildNextNodeMap(relationList);
-        Set<String> rerunNodeIdSet = collectRerunNodeIdSet(runNodePo.getNodeId(), relationMap);
-
-        List<JobWorkRunNodePo> runNodeList = jobWorkRunNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkRunNodePo.class)
-                .eq(JobWorkRunNodePo::getRunWorkId, targetRunWorkPo.getRunWorkId())
-                .in(JobWorkRunNodePo::getNodeId, rerunNodeIdSet));
-        if (CollUtil.isEmpty(runNodeList)) {
-            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "当前运行作业没有可重跑节点");
-        }
-
-        for (JobWorkRunNodePo runNode : runNodeList) {
-            JobWorkNodePo workNodePo = nodeMap.get(runNode.getNodeId());
-            jobWorkRunNodeMapper.update(null, Wrappers.lambdaUpdate(JobWorkRunNodePo.class)
-                    .set(JobWorkRunNodePo::getNodeRunStatus, FlowRunStatusEnum.WAIT.getCode())
-                    .set(JobWorkRunNodePo::getStartTime, null)
-                    .set(JobWorkRunNodePo::getEndTime, null)
-                    .set(JobWorkRunNodePo::getRetryTimes, workNodePo == null ? runNode.getRetryTimes() : workNodePo.getRetryTimes())
-                    .eq(JobWorkRunNodePo::getRunNodeId, runNode.getRunNodeId()));
-        }
-
-        JobWorkRunPo updateRunWorkPo = new JobWorkRunPo();
-        updateRunWorkPo.setRunWorkId(targetRunWorkPo.getRunWorkId());
-        updateRunWorkPo.setRunWorkStatus(FlowRunStatusEnum.WAIT.getCode());
-        jobWorkRunMapper.updateById(updateRunWorkPo);
-
-        return ReturnT.SUCCESS;
-    }
-
-    private JobWorkRunPo getLatestRunWork(String workId) {
-        return jobWorkRunMapper.selectOne(Wrappers.lambdaQuery(JobWorkRunPo.class)
-                .eq(JobWorkRunPo::getWorkId, workId)
-                .orderByDesc(JobWorkRunPo::getCreateTime)
-                .orderByDesc(JobWorkRunPo::getRunWorkId)
-                .last("LIMIT 1"));
-    }
-
-    private Date resolveInitTurnDate(JobWorkPo jobWorkPo) {
-        Date initTurnDate = jobWorkPo.getInitTurnDate() == null
-                ? DateUtil.parseDate(DateUtil.today())
-                : DateUtil.parseDate(DateUtil.formatDate(jobWorkPo.getInitTurnDate()));
-        if (jobWorkPo.getInitTurnDate() == null) {
-            JobWorkPo updateJobWorkPo = new JobWorkPo();
-            updateJobWorkPo.setWorkId(jobWorkPo.getWorkId());
-            updateJobWorkPo.setInitTurnDate(initTurnDate);
-            jobWorkMapper.updateById(updateJobWorkPo);
-            jobWorkPo.setInitTurnDate(initTurnDate);
-        }
-        return initTurnDate;
-    }
-
-    private ReturnT<JobWorkRunPo> initRunWorkForTurnDate(JobWorkPo jobWorkPo, Date turnDate) {
-        List<JobWorkNodePo> nodeList = jobWorkNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkNodePo.class)
-                .eq(JobWorkNodePo::getWorkId, jobWorkPo.getWorkId()));
-        if (CollUtil.isEmpty(nodeList)) {
-            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "该运行作业没有运行节点");
-        }
-        JobWorkRunPo jobWorkRunPo = new JobWorkRunPo();
-        jobWorkRunPo.setRunWorkId(IdUtil.getSnowflakeNextIdStr());
-        jobWorkRunPo.setWorkId(jobWorkPo.getWorkId());
-        jobWorkRunPo.setRunWorkStatus(FlowRunStatusEnum.WAIT.getCode());
-        jobWorkRunPo.setWorkType(jobWorkPo.getWorkType());
-        jobWorkRunPo.setCreateTime(DateUtil.date());
-        jobWorkRunPo.setTurnDate(turnDate);
-        jobWorkRunMapper.insert(jobWorkRunPo);
-
-        for (JobWorkNodePo nodePo : nodeList) {
-            JobWorkRunNodePo runNodePo = new JobWorkRunNodePo();
-            runNodePo.setRunNodeId(IdUtil.getSnowflakeNextIdStr());
-            runNodePo.setRunWorkId(jobWorkRunPo.getRunWorkId());
-            runNodePo.setWorkId(jobWorkPo.getWorkId());
-            runNodePo.setNodeId(nodePo.getNodeId());
-            runNodePo.setNodeRunStatus(FlowRunStatusEnum.WAIT.getCode());
-            runNodePo.setTurnDate(turnDate);
-            runNodePo.setCreateTime(DateUtil.date());
-            runNodePo.setErrorStrategy(nodePo.getErrorStrategy());
-            runNodePo.setRetryTimes(nodePo.getRetryTimes());
-            jobWorkRunNodeMapper.insert(runNodePo);
-        }
-        return ReturnT.success(jobWorkRunPo);
-    }
-
+    /**
+     * 日志详情分页列表
+     */
     @Override
     public IPage<JobWorkRunNodeLogDetailPo> logDetailPageList(JobWorkNodeLogPageParam param) {
         Date startTime = parseLogStartTime(param.getStartTime());
         Date endTime = parseLogEndTime(param.getEndTime());
-        return jobWorkRunNodeLogDetailMapper.selectPage(new Page<>(param.getStart(), param.getLength()),
+        List<String> groupNodeIds = findLogScopeNodeIds(param);
+        if (StrUtil.isNotBlank(param.getGroupId()) && CollUtil.isEmpty(groupNodeIds)) {
+            return new Page<>(param.getStart(), param.getLength());
+        }
+        IPage<JobWorkRunNodeLogDetailPo> page = jobWorkRunNodeLogDetailMapper.selectPage(new Page<>(param.getStart(), param.getLength()),
                 Wrappers.lambdaQuery(JobWorkRunNodeLogDetailPo.class)
                         .eq(StrUtil.isNotBlank(param.getWorkId()), JobWorkRunNodeLogDetailPo::getWorkId, param.getWorkId())
                         .eq(StrUtil.isNotBlank(param.getNodeId()), JobWorkRunNodeLogDetailPo::getNodeId, param.getNodeId())
-                        .eq(StrUtil.isNotBlank(param.getRunNodeId()), JobWorkRunNodeLogDetailPo::getRunNodeId, param.getRunNodeId())
+                        .in(CollUtil.isNotEmpty(groupNodeIds), JobWorkRunNodeLogDetailPo::getNodeId, groupNodeIds)
+                        .eq(StrUtil.isNotBlank(param.getNodeLogId()), JobWorkRunNodeLogDetailPo::getNodeLogId, param.getNodeLogId())
                         .ge(startTime != null, JobWorkRunNodeLogDetailPo::getExecuteTime, startTime)
                         .le(endTime != null, JobWorkRunNodeLogDetailPo::getExecuteTime, endTime)
                         .orderByDesc(JobWorkRunNodeLogDetailPo::getExecuteTime));
+        if (CollUtil.isNotEmpty(page.getRecords())) {
+            Map<String, String> nodeNameMap = findNodeNameMap(page.getRecords().stream()
+                    .map(JobWorkRunNodeLogDetailPo::getNodeId)
+                    .collect(Collectors.toList()));
+            page.getRecords().forEach(log -> log.setNodeName(nodeNameMap.getOrDefault(log.getNodeId(), log.getNodeId())));
+        }
+        return page;
+    }
+
+    private Map<String, String> findNodeNameMap(Collection<String> nodeIds) {
+        if (CollUtil.isEmpty(nodeIds)) {
+            return Collections.emptyMap();
+        }
+        return jobWorkNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkNodePo.class)
+                        .in(JobWorkNodePo::getNodeId, nodeIds))
+                .stream()
+                .collect(Collectors.toMap(JobWorkNodePo::getNodeId,
+                        node -> StrUtil.blankToDefault(node.getNodeName(), node.getNodeId()),
+                        (left, right) -> left));
+    }
+
+    private List<String> findLogScopeNodeIds(JobWorkNodeLogPageParam param) {
+        if (StrUtil.isBlank(param.getGroupId())) {
+            return Collections.emptyList();
+        }
+        return jobWorkNodeMapper.selectList(Wrappers.lambdaQuery(JobWorkNodePo.class)
+                        .eq(StrUtil.isNotBlank(param.getWorkId()), JobWorkNodePo::getWorkId, param.getWorkId())
+                        .eq(JobWorkNodePo::getGroupId, param.getGroupId()))
+                .stream()
+                .map(JobWorkNodePo::getNodeId)
+                .collect(Collectors.toList());
     }
 
     private Date parseLogStartTime(String value) {
@@ -683,24 +542,19 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
         return parsed;
     }
 
-    private void fillRunNodeInfo(JobWorkRunNodeVo vo, JobWorkRunNodePo runNodePo) {
+
+    private void fillWorkNodeVo(JobWorkNodeVo vo, JobWorkNodePo runNodePo) {
         if (runNodePo == null) {
             return;
         }
-        vo.setRunNodeId(runNodePo.getRunNodeId());
-        vo.setRunWorkId(runNodePo.getRunWorkId());
-        vo.setNodeRunStatus(runNodePo.getNodeRunStatus());
         vo.setNodeRunStatusName(FlowRunStatusEnum.getValueByCode(runNodePo.getNodeRunStatus()));
-        vo.setTurnDate(runNodePo.getTurnDate());
         vo.setTurnDateText(runNodePo.getTurnDate() == null ? null : DateUtil.formatDate(runNodePo.getTurnDate()));
-        vo.setRunNodeCreateTime(runNodePo.getCreateTime() == null ? null : DateUtil.formatDateTime(runNodePo.getCreateTime()));
-        vo.setStartTime(runNodePo.getStartTime());
-        vo.setEndTime(runNodePo.getEndTime());
-        vo.setStartTimeText(runNodePo.getStartTime() == null ? null : DATE_TIME_FORMATTER.format(runNodePo.getStartTime()));
-        vo.setEndTimeText(runNodePo.getEndTime() == null ? null : DATE_TIME_FORMATTER.format(runNodePo.getEndTime()));
-        vo.setRetryTimes(runNodePo.getRetryTimes());
+        vo.setRetryTimes(runNodePo.getCurrentRetryTimes());
     }
 
+    /**
+     * 填充文件配置
+     */
     private void fillFileConfig(JobWorkNodeVo vo, String nodeId) {
         JobWorkImportFilePo importFilePo = jobWorkImportFileMapper.selectOne(Wrappers.lambdaQuery(JobWorkImportFilePo.class)
                 .eq(JobWorkImportFilePo::getNodeId, nodeId)
@@ -735,7 +589,11 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
         }
     }
 
+    /**
+     * 保存文件配置
+     */
     private void saveFileConfig(JobWorkNodeParam param) {
+        // 文件导入
         if (StrUtil.equals(param.getNodeType(), NodeTypeEnum.NODE_TYPE_FILE_TO_DB.getCode())) {
             JobWorkImportFilePo importFilePo = new JobWorkImportFilePo();
             importFilePo.setImportFileId(param.getImportFileId());
@@ -751,6 +609,7 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
             importFilePo.setFileNameParam(param.getImportFileNameParam());
             saveImportFileConfig(importFilePo);
         }
+        // 文件导出
         if (StrUtil.equals(param.getNodeType(), NodeTypeEnum.NODE_TYPE_DB_TO_FILE.getCode())) {
             JobWorkExportFilePo exportFilePo = new JobWorkExportFilePo();
             exportFilePo.setExportFileId(param.getExportFileId());
@@ -768,6 +627,9 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
         }
     }
 
+    /**
+     * 保存导入文件配置
+     */
     private void saveImportFileConfig(JobWorkImportFilePo importFilePo) {
         JobWorkImportFilePo oldPo = jobWorkImportFileMapper.selectOne(Wrappers.lambdaQuery(JobWorkImportFilePo.class)
                 .eq(JobWorkImportFilePo::getNodeId, importFilePo.getNodeId())
@@ -780,6 +642,9 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
         }
     }
 
+    /**
+     * 保存导出文件配置
+     */
     private void saveExportFileConfig(JobWorkExportFilePo exportFilePo) {
         JobWorkExportFilePo oldPo = jobWorkExportFileMapper.selectOne(Wrappers.lambdaQuery(JobWorkExportFilePo.class)
                 .eq(JobWorkExportFilePo::getNodeId, exportFilePo.getNodeId())
@@ -790,33 +655,6 @@ public class JobWorkNodeServiceImpl implements IJobWorkNodeService {
             exportFilePo.setExportFileId(oldPo.getExportFileId());
             jobWorkExportFileMapper.updateById(exportFilePo);
         }
-    }
-
-    private Map<String, List<String>> buildNextNodeMap(List<JobWorkNodeRelationPo> relationList) {
-        Map<String, List<String>> relationMap = new HashMap<>();
-        if (CollUtil.isEmpty(relationList)) {
-            return relationMap;
-        }
-        return relationList.stream()
-                .collect(Collectors.groupingBy(JobWorkNodeRelationPo::getNodeId2,
-                        Collectors.mapping(JobWorkNodeRelationPo::getNodeId1, Collectors.toList())));
-    }
-
-    private Set<String> collectRerunNodeIdSet(String startNodeId, Map<String, List<String>> relationMap) {
-        Set<String> rerunNodeIdSet = new HashSet<>();
-        Deque<String> nodeQueue = new ArrayDeque<>();
-        nodeQueue.add(startNodeId);
-        while (!nodeQueue.isEmpty()) {
-            String currentNodeId = nodeQueue.pollFirst();
-            if (!rerunNodeIdSet.add(currentNodeId)) {
-                continue;
-            }
-            List<String> nextNodeIdList = relationMap.get(currentNodeId);
-            if (CollUtil.isNotEmpty(nextNodeIdList)) {
-                nodeQueue.addAll(nextNodeIdList);
-            }
-        }
-        return rerunNodeIdSet;
     }
 
 }

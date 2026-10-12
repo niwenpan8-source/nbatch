@@ -27,6 +27,11 @@ public class JobWorkNodeParam {
     private String workId;
 
     /**
+     * 所属流程组；为空时服务端自动归入默认组。
+     */
+    private String groupId;
+
+    /**
      * 节点名称
      */
     private String nodeName;
@@ -37,12 +42,7 @@ public class JobWorkNodeParam {
     private String nodeDesc;
 
     /**
-     * 节点状态：0=停用、1=启用
-     */
-    private Integer nodeStatus;
-
-    /**
-     * script:脚本,store_procedure:存储过程,execute_sql:执行sql,file_to_db:文件导入到数据库,db_to_file:数据库导出到文件
+     * 节点类型：script（脚本）、store_procedure（存储过程）、execute_sql（执行 SQL）、file_to_db（文件导入数据库）、db_to_file（数据库导出文件）
      */
     private String nodeType;
 

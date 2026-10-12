@@ -27,5 +27,5 @@ public class JobWorkNodeTypeVo {
     /**
      * 作业节点
      */
-    private List<JobWorkRunNodeVo> jobWorkNodeList;
+    private List<JobWorkNodeVo> jobWorkNodeList;
 }

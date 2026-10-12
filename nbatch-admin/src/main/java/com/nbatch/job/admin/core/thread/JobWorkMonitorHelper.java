@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.concurrent.TimeUnit;
 
 /**
- * job work-monitor instance
+ * 作业运行监控线程
  *
  * @author Mr.ni
  */
@@ -19,31 +19,23 @@ public class JobWorkMonitorHelper {
         return INSTANCE;
     }
 
-    // ---------------------- monitor ----------------------
-
-    private Thread workThread;
+    private Thread turnDateThread;
+    private Thread timeOutNodeThread;
     private volatile boolean toStop = false;
 
     public void start() {
 
-        // for monitor
-        workThread = new Thread(() -> {
-
-            // monitor
+        // 修改节点翻牌时间
+        turnDateThread = new Thread(() -> {
             while (!toStop) {
                 try {
-                    // 修改节点翻牌时间
+                    log.info(">>>>>>>>>>> 对作业进行翻牌操作。");
                     JobAdminConfig.getAdminConfig().getRunWorkHelper().updateWorkTurnDate();
-                    // 只保留30天的运行数据
-                    JobAdminConfig.getAdminConfig().getRunWorkHelper().deleteRunWork();
-                    // 修改超过固定时间，任务状态仍然为1的节点任务修改为0
-                    JobAdminConfig.getAdminConfig().getRunNodeHelper().updateTimeOutRunNodeStatus();
                 } catch (Throwable e) {
                     if (!toStop) {
-                        log.error(">>>>>>>>>>> job, job fail work thread error:", e);
+                        log.error(">>>>>>>>>>> 作业失败日期处理线程发生异常：", e);
                     }
                 }
-
                 try {
                     TimeUnit.SECONDS.sleep(5);
                 } catch (Throwable e) {
@@ -51,25 +43,56 @@ public class JobWorkMonitorHelper {
                         log.error(e.getMessage(), e);
                     }
                 }
-
             }
-
-            log.info(">>>>>>>>>>> job, JobWorkMonitorHelper stop");
-
+            log.info(">>>>>>>>>>> 作业失败日期处理线程已停止。");
         });
-        workThread.setDaemon(true);
-        workThread.setName("job, admin JobWorkMonitorHelper");
-        workThread.start();
+        turnDateThread.setDaemon(true);
+        turnDateThread.setName("job, admin JobWorkMonitorHelper-turnDate");
+        turnDateThread.start();
+
+        // 修改超过固定时间，任务状态仍然为1的节点任务修改为0
+        timeOutNodeThread = new Thread(() -> {
+            while (!toStop) {
+                try {
+                    JobAdminConfig.getAdminConfig().getRunNodeHelper().updateTimeOutRunNodeStatus();
+                } catch (Throwable e) {
+                    if (!toStop) {
+                        log.error(">>>>>>>>>>> 作业节点超时处理线程发生异常：", e);
+                    }
+                }
+                try {
+                    TimeUnit.SECONDS.sleep(30);
+                } catch (Throwable e) {
+                    if (!toStop) {
+                        log.error(e.getMessage(), e);
+                    }
+                }
+            }
+            log.info(">>>>>>>>>>> 作业节点超时处理线程已停止。");
+        });
+        timeOutNodeThread.setDaemon(true);
+        timeOutNodeThread.setName("job, admin JobWorkMonitorHelper-timeOutNode");
+        timeOutNodeThread.start();
     }
 
     public void toStop() {
         toStop = true;
 
-        workThread.interrupt();
-        try {
-            workThread.join();
-        } catch (Throwable e) {
-            log.error(e.getMessage(), e);
+        if (turnDateThread != null) {
+            turnDateThread.interrupt();
+            try {
+                turnDateThread.join();
+            } catch (Throwable e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+        if (timeOutNodeThread != null) {
+            timeOutNodeThread.interrupt();
+            try {
+                timeOutNodeThread.join();
+            } catch (Throwable e) {
+                log.error(e.getMessage(), e);
+            }
         }
     }
 

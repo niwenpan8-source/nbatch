@@ -1,31 +1,30 @@
 package com.nbatch.job.admin.controller;
 
-import com.nbatch.job.admin.core.domain.param.JobWorkNodeRelationParam;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nbatch.job.admin.core.domain.param.JobWorkPageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkParam;
-import com.nbatch.job.admin.core.domain.po.JobWorkNodePo;
-import com.nbatch.job.admin.core.domain.vo.JobWorkNodeRelationVo;
+import com.nbatch.job.admin.core.domain.po.JobGroupPo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkVo;
-import com.nbatch.job.core.enums.FlowRunStatusEnum;
-import com.nbatch.job.core.enums.WorkTypeEnum;
-import com.nbatch.job.admin.service.IJobWorkNodeService;
+import com.nbatch.job.admin.mapper.IJobGroupMapper;
 import com.nbatch.job.admin.service.IJobWorkService;
+import com.nbatch.job.admin.service.IJobWorkRunService;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.constant.HandleCodeConstant;
+import com.nbatch.job.core.enums.FlowRunStatusEnum;
+import com.nbatch.job.core.enums.WorkTypeEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
- * index controller
+ * 作业流程控制器
  *
  * @author Mr.ni
  */
@@ -38,13 +37,16 @@ public class JobWorkController {
     private IJobWorkService jobWorkService;
 
     @Resource
-    private IJobWorkNodeService jobWorkNodeService;
+    private IJobWorkRunService jobWorkRunService;
+
+    @Resource
+    private IJobGroupMapper jobGroupMapper;
 
     @RequestMapping
     public String index(Model model) {
-        // 枚举-字典路由策略-列表
-        model.addAttribute("workStatusEnum", com.nbatch.job.core.enums.FlowStatusEnum.values());
-        model.addAttribute("runWorkStatusEnum", FlowRunStatusEnum.values());
+        model.addAttribute("runWorkStatusEnum", Arrays.stream(FlowRunStatusEnum.values())
+                .filter(status -> status != FlowRunStatusEnum.UNINITIALIZED)
+                .toArray(FlowRunStatusEnum[]::new));
         return "jobwork/jobwork.index";
     }
 
@@ -52,12 +54,6 @@ public class JobWorkController {
     @PostMapping("/pageList")
     public Map<String, Object> pageList(JobWorkPageParam param) {
         return jobWorkService.pageList(param);
-    }
-
-    @ResponseBody
-    @PostMapping("/detail")
-    public ReturnT<Map<String, Object>> detail(String workId) {
-        return jobWorkService.detail(workId);
     }
 
     @RequestMapping("/delete")
@@ -72,8 +68,8 @@ public class JobWorkController {
      */
     @RequestMapping("/recoverRunWork")
     @ResponseBody
-    public ReturnT<String> recoverRunWork(String runWorkId) {
-        return jobWorkService.recoverRunWork(runWorkId);
+    public ReturnT<String> recoverRunWork(String workId, Boolean force) {
+        return jobWorkRunService.recoverRunWork(workId, Boolean.TRUE.equals(force));
     }
 
     /**
@@ -82,32 +78,22 @@ public class JobWorkController {
     @RequestMapping("/stopLatestRunWork")
     @ResponseBody
     public ReturnT<String> stopLatestRunWork(String workId) {
-        return jobWorkService.stopLatestRunWork(workId);
+        return jobWorkRunService.stopLatestRunWork(workId);
     }
 
     /**
-     * 一键重跑指定流程最近一次运行作业。
+     * 重跑指定流程。普通作业重跑最新批次，翻牌作业使用请求指定的翻牌日期。
      */
-    @RequestMapping("/rerunLatestRunWork")
+    @RequestMapping("/rerunRunWork")
     @ResponseBody
-    public ReturnT<String> rerunLatestRunWork(String workId) {
-        return jobWorkService.rerunLatestRunWork(workId);
-    }
-
-    /**
-     * 按初始化翻牌日期重跑指定流程。
-     */
-    @RequestMapping("/rerunFromInitTurnDate")
-    @ResponseBody
-    public ReturnT<String> rerunFromInitTurnDate(String workId) {
-        return jobWorkService.rerunFromInitTurnDate(workId);
+    public ReturnT<String> rerunRunWork(String workId, String turnDate, Boolean force) {
+        return jobWorkRunService.rerunRunWork(workId, turnDate, Boolean.TRUE.equals(force));
     }
 
     @RequestMapping("/addModel")
     public String addModel(Model model) {
-        // 枚举-字典路由策略-列表
-        model.addAttribute("workStatusEnum", com.nbatch.job.core.enums.FlowStatusEnum.values());
         model.addAttribute("workTypeEnum", WorkTypeEnum.values());
+        addExecutorOptions(model);
         return "jobwork/jobwork.add";
     }
 
@@ -120,11 +106,15 @@ public class JobWorkController {
     @RequestMapping("/updateModel")
     public String updateModel(Model model, String workId) {
         JobWorkVo workVo = jobWorkService.getModel(workId);
-        // 枚举-字典路由策略-列表
-        model.addAttribute("workStatusEnum", com.nbatch.job.core.enums.FlowStatusEnum.values());
         model.addAttribute("workTypeEnum", WorkTypeEnum.values());
         model.addAttribute("model", workVo);
+        addExecutorOptions(model);
         return "jobwork/jobwork.update";
+    }
+
+    private void addExecutorOptions(Model model) {
+        model.addAttribute("jobGroupList", jobGroupMapper.selectList(Wrappers.lambdaQuery(JobGroupPo.class)
+                .orderByAsc(JobGroupPo::getAppName).orderByAsc(JobGroupPo::getId)));
     }
 
     @ResponseBody
@@ -137,22 +127,23 @@ public class JobWorkController {
         return new ReturnT<>("修改成功");
     }
 
-    @RequestMapping("/editModel")
-    public String editModel(Model model, String workId) {
-        List<JobWorkNodePo> list = jobWorkNodeService.getWorkNodeList(workId);
-        List<JobWorkNodeRelationVo> relationList = jobWorkNodeService.getWorkNodeRelationByWorkId(workId);
-        // 枚举-字典路由策略-列表
-        model.addAttribute("workId", workId);
-        model.addAttribute("list", list);
-        model.addAttribute("relationList", relationList);
-        return "jobwork/jobwork.edit";
+    @PostMapping("/startSchedule")
+    @ResponseBody
+    public ReturnT<String> startSchedule(String workId) {
+        return jobWorkService.startSchedule(workId);
     }
 
-    @RequestMapping("/edit")
+    @PostMapping("/stopSchedule")
     @ResponseBody
-    public ReturnT<String> editModel(@RequestBody JobWorkNodeRelationParam param) {
-        jobWorkNodeService.updateWorkNodeRelation(param);
-        return new ReturnT<>("修改成功");
+    public ReturnT<String> stopSchedule(String workId) {
+        return jobWorkService.stopSchedule(workId);
+    }
+
+    @RequestMapping("/editModel")
+    public String editModel(Model model, String workId) {
+        model.addAttribute("workId", workId);
+        model.addAttribute("runStatusEnum", FlowRunStatusEnum.values());
+        return "jobwork/jobwork.edit";
     }
 
 }

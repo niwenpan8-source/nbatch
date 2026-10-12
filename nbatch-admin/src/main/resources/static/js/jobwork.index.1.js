@@ -25,6 +25,8 @@ $(function () {
             labelClass = 'label-primary';
         } else if (status === 6) {
             labelClass = 'label-default';
+        } else if (status === 7) {
+            labelClass = 'label-warning';
         }
         return '<small class="label ' + labelClass + '">' + escapeHtml(text || '-') + '</small>';
     }
@@ -37,6 +39,9 @@ $(function () {
     function dateTimeOrDash(value) {
         if (!value) {
             return '-';
+        }
+        if (typeof value === 'number' || /^\d{13}$/.test(String(value))) {
+            return moment(Number(value)).format('YYYY-MM-DD HH:mm:ss');
         }
         var parsed = moment(value, [moment.ISO_8601, 'YYYY-MM-DD HH:mm:ss', 'YYYY-MM-DD'], true);
         if (parsed.isValid()) {
@@ -56,70 +61,55 @@ $(function () {
         return escapeHtml(String(value).substring(0, 10));
     }
 
-    function detailItem(label, value, extraClass) {
-        return '<div class="work-detail-item"><span class="work-detail-label">' + escapeHtml(label) + '</span>' +
-            '<span class="work-detail-value ' + (extraClass || '') + '">' + value + '</span></div>';
-    }
-
-    function renderWorkDetail(data) {
-        var runRows = (data.runList || []).map(function (item, index) {
-            return '<tr>' +
-                '<td>' + (index + 1) + '</td>' +
-                '<td class="run-info-id">' + textOrDash(item.runWorkId) + '</td>' +
-                '<td>' + dateOrDash(item.turnDate) + '</td>' +
-                '<td>' + textOrDash(item.runWorkStatusName) + '</td>' +
-                '<td>' + dateTimeOrDash(item.createTime) + '</td>' +
-                '<td>' + escapeHtml(item.nodeCount == null ? 0 : item.nodeCount) + '</td>' +
-                '<td>' + escapeHtml(item.completeCount == null ? 0 : item.completeCount) + '</td>' +
-                '<td>' + escapeHtml(item.skippedCount == null ? 0 : item.skippedCount) + '</td>' +
-                '<td>' + escapeHtml(item.dispatchedCount == null ? 0 : item.dispatchedCount) + '</td>' +
-                '<td>' + escapeHtml(item.runningCount == null ? 0 : item.runningCount) + '</td>' +
-                '<td>' + escapeHtml(item.exceptionCount == null ? 0 : item.exceptionCount) + '</td>' +
-                '<td>' + escapeHtml(item.stoppedCount == null ? 0 : item.stoppedCount) + '</td>' +
-                '<td>' + escapeHtml(item.waitCount == null ? 0 : item.waitCount) + '</td>' +
-                '</tr>';
-        }).join('');
-        if (!runRows) {
-            runRows = '<tr><td colspan="13" class="text-center">暂无运行记录</td></tr>';
+    function numberOrNull(value) {
+        if (value === null || value === undefined || value === '') {
+            return null;
         }
-        return '<div class="work-detail-panel">' +
-            detailItem('作业ID', textOrDash(data.workId), 'run-info-id') +
-            detailItem('作业名称', textOrDash(data.workName)) +
-            detailItem('类型', textOrDash(data.workTypeName)) +
-            detailItem('状态', textOrDash(data.workStatusName)) +
-            detailItem('初始化翻牌日期', dateOrDash(data.initTurnDate)) +
-            detailItem('运行次数', escapeHtml(data.runCount == null ? 0 : data.runCount)) +
-            detailItem('版本', escapeHtml(data.version == null ? 0 : data.version)) +
-            detailItem('作业描述', textOrDash(data.workDesc)) +
-            '</div>' +
-            '<div class="detail-section-title">运行历史</div>' +
-            '<table class="table table-bordered table-striped detail-history-table"><thead><tr>' +
-            '<th>#</th><th>运行ID</th><th>翻牌日期</th><th>状态</th><th>创建时间</th><th>节点数</th><th>完成</th><th>跳过</th><th>已下发</th><th>运行中</th><th>异常</th><th>停止</th><th>待执行</th>' +
-            '</tr></thead><tbody>' + runRows + '</tbody></table>';
+        var parsed = Number(value);
+        return isNaN(parsed) ? null : parsed;
     }
 
-    function openWorkDetail(workId) {
-        $.ajax({
-            type: 'POST',
-            url: base_url + '/work/detail',
-            data: {workId: workId},
-            dataType: 'json',
-            success: function (result) {
-                if (result.code !== 200) {
-                    layer.msg(result.msg || '获取详情失败', {icon: 2});
-                    return;
-                }
-                layer.open({
-                    type: 1,
-                    title: '批次流程详情',
-                    area: getModalArea(1080, 720),
-                    content: '<div class="work-detail-modal">' + renderWorkDetail(result.content || {}) + '</div>'
-                });
-            },
-            error: function () {
-                layer.msg('获取详情失败', {icon: 2});
+    function firstValue(row, names) {
+        for (var i = 0; i < names.length; i++) {
+            if (row[names[i]] !== undefined && row[names[i]] !== null) {
+                return row[names[i]];
             }
+        }
+        return null;
+    }
+
+    function normalizeWorkRow(row) {
+        row = row || {};
+        var workId = firstValue(row, ['workId', 'work_id', 'id']);
+        return $.extend({}, row, {
+            workId: workId,
+            workName: firstValue(row, ['workName', 'work_name', 'name']),
+            workType: numberOrNull(firstValue(row, ['workType', 'work_type'])),
+            workTypeName: firstValue(row, ['workTypeName', 'work_type_name', 'typeName']),
+            jobGroup: firstValue(row, ['jobGroup', 'job_group']),
+            jobGroupName: firstValue(row, ['jobGroupName', 'job_group_name', 'executorName']),
+            turnDate: firstValue(row, ['turnDate', 'turn_date']),
+            turnDateText: firstValue(row, ['turnDateText', 'turn_date_text', 'turnDate', 'turn_date']),
+            workId: firstValue(row, ['workId', 'work_id', 'workId', 'work_id', 'id']) || workId,
+            runWorkStatus: numberOrNull(firstValue(row, ['runWorkStatus', 'run_work_status'])),
+            runWorkStatusName: firstValue(row, ['runWorkStatusName', 'run_work_status_name']),
+            runWorkCreateTime: firstValue(row, ['runWorkCreateTime', 'run_work_create_time', 'runCreateTime', 'run_create_time', 'createTime', 'create_time']),
+            createTime: firstValue(row, ['createTime', 'create_time', 'runCreateTime', 'run_create_time', 'runWorkCreateTime', 'run_work_create_time']),
+            scheduleType: firstValue(row, ['scheduleType', 'schedule_type']),
+            scheduleConf: firstValue(row, ['scheduleConf', 'schedule_conf', 'cronExpression', 'cron_expression']),
+            cronExpression: firstValue(row, ['cronExpression', 'cron_expression', 'scheduleConf', 'schedule_conf']),
+            scheduleStatus: numberOrNull(firstValue(row, ['scheduleStatus', 'schedule_status'])),
+            triggerNextTime: firstValue(row, ['triggerNextTime', 'trigger_next_time'])
         });
+    }
+
+    function scheduleStatusLabel(row) {
+        if (!row.scheduleConf && !row.cronExpression) {
+            return '<small class="label label-default">未配置</small>';
+        }
+        return row.scheduleStatus === 1
+            ? '<small class="label label-success">已启动</small>'
+            : '<small class="label label-warning">已停止</small>';
     }
 
     // init date tables
@@ -133,10 +123,34 @@ $(function () {
             data: function (d) {
                 var obj = {};
                 obj.workName = $('#workName').val();
-                obj.workStatus = $('#workStatus').val();
                 obj.start = d.start;
                 obj.length = d.length;
                 return obj;
+            },
+            // Keep the table usable when an older server returns a wrapped or empty payload.
+            dataSrc: function (json) {
+                if (!json || typeof json !== 'object') {
+                    layer.msg('作业数据格式错误', {icon: 2});
+                    return [];
+                }
+                if (Array.isArray(json.data)) {
+                    return json.data.map(normalizeWorkRow);
+                }
+                if (json.content && Array.isArray(json.content.data)) {
+                    json.recordsTotal = json.recordsTotal == null ? json.content.recordsTotal : json.recordsTotal;
+                    json.recordsFiltered = json.recordsFiltered == null ? json.content.recordsFiltered : json.recordsFiltered;
+                    return json.content.data.map(normalizeWorkRow);
+                }
+                if (Array.isArray(json.rows)) {
+                    json.recordsTotal = json.recordsTotal == null ? (json.total == null ? json.rows.length : json.total) : json.recordsTotal;
+                    json.recordsFiltered = json.recordsFiltered == null ? json.recordsTotal : json.recordsFiltered;
+                    return json.rows.map(normalizeWorkRow);
+                }
+                layer.msg(json.msg || '作业数据加载失败', {icon: 2});
+                return [];
+            },
+            error: function () {
+                layer.msg('作业数据加载失败', {icon: 2});
             }
         },
         "searching": false,
@@ -148,14 +162,16 @@ $(function () {
                 "bSortable": false,
                 "visible": true,
                 "width": '190px',
-                "render": function (data) { return '<a href="javascript:void(0);" class="work-detail-toggle work-name-link">' + textOrDash(data) + '</a>'; }
+                "render": function (data) { return textOrDash(data); }
             },
             {"data": 'workTypeName', "width": '110px', "render": function (data) { return textOrDash(data); }},
-            {"data": 'workStatusName', "width": '90px', "render": function (data, type, row) { return statusLabel(row.workStatus, data); }},
-            {"data": 'initTurnDateText', "width": '130px', "render": function (data, type, row) { return dateOrDash(data || row.initTurnDate); }},
-            {"data": 'runWorkStatusName', "width": '90px', "render": function (data, type, row) { return row.runWorkId ? statusLabel(row.runWorkStatus, data) : '-'; }},
+            {"data": 'runWorkStatusName', "width": '90px', "render": function (data, type, row) { return row.workId ? statusLabel(row.runWorkStatus, data) : '-'; }},
             {"data": 'turnDate', "width": '120px', "render": function (data) { return dateOrDash(data); }},
             {"data": 'runWorkCreateTime', "width": '160px', "render": function (data) { return dateTimeOrDash(data); }},
+            {"data": 'jobGroupName', "width": '130px', "render": function (data, type, row) { return textOrDash(data || row.jobGroup); }},
+            {"data": 'cronExpression', "width": '150px', "render": function (data, type, row) { return '<code>' + textOrDash(data || row.scheduleConf) + '</code>'; }},
+            {"data": 'scheduleStatus', "width": '90px', "render": function (data, type, row) { return scheduleStatusLabel(row); }},
+            {"data": 'triggerNextTime', "width": '160px', "render": function (data) { return dateTimeOrDash(data); }},
             {
                 "data": I18n.system_opt,
                 "width": '120px',
@@ -163,21 +179,6 @@ $(function () {
                 "render": function (data, type, row) {
                     return function () {
                         tableData['key' + row.workId] = row;
-                        var recoverBtn = '';
-                        if (row.runWorkId && (row.runWorkStatus === 1 || row.runWorkStatus === 3 || row.runWorkStatus === 4 || row.runWorkStatus === 6)) {
-                            recoverBtn = '<li><a href="javascript:void(0);" class="recover" data-run-work-id="' + escapeHtml(row.runWorkId) + '">恢复重跑</a></li>';
-                        }
-                        var stopBtn = '';
-                        if (row.runWorkId && (row.runWorkStatus === 0 || row.runWorkStatus === 1 || row.runWorkStatus === 4)) {
-                            stopBtn = '<li><a href="javascript:void(0);" class="stop-latest">停止作业</a></li>';
-                        }
-                        // Latest-run rerun is only meaningful when the workflow has at least one run record.
-                        var rerunLatestBtn = row.runWorkId
-                            ? '<li><a href="javascript:void(0);" class="rerun-latest">一键重跑</a></li>'
-                            : '';
-                        var rerunInitBtn = row.runWorkId
-                            ? '<li><a href="javascript:void(0);" class="rerun-init-turn">初始化重跑</a></li>'
-                            : '';
                         return '<div class="btn-group" data-work-id="' + escapeHtml(row.workId) + '">' +
                             '<button type="button" class="btn btn-primary btn-sm">' + I18n.system_opt + '</button>' +
                             '<button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-toggle="dropdown">' +
@@ -186,11 +187,7 @@ $(function () {
                             '<ul class="dropdown-menu" role="menu">' +
                             '<li><a href="javascript:void(0);" class="update">' + I18n.system_opt_edit + '</a></li>' +
                             '<li><a href="javascript:void(0);" class="delete">' + I18n.system_opt_del + '</a></li>' +
-                            rerunLatestBtn +
-                            rerunInitBtn +
-                            stopBtn +
-                            '<li><a href="javascript:void(0);" class="edit">依赖关系</a></li>' +
-                            recoverBtn +
+                            '<li><a href="javascript:void(0);" class="edit">作业管理</a></li>' +
                             '</ul></div>';
                     };
                 }
@@ -205,13 +202,6 @@ $(function () {
     // search btn
     $('#searchBtn').on('click', function () {
         jobWorkTable.fnDraw();
-    });
-
-    $('#job_work_list tbody').on('click', '.work-detail-toggle', function () {
-        var row = jobWorkTable.fnGetData($(this).closest('tr')[0]);
-        if (row && row.workId) {
-            openWorkDetail(row.workId);
-        }
     });
 
     // job operate
@@ -251,7 +241,7 @@ $(function () {
         var url = base_url + "/work/addModel";
         layer.open({
             type: 2,
-            area: getModalArea(860, 560),
+            area: getModalArea(980, 680),
             title: I18n.jobinfo_field_add,
             closeBtn: 1,
             shade: 0.6,
@@ -302,7 +292,7 @@ $(function () {
         var url = base_url + "/work/updateModel?workId=" + id;
         layer.open({
             type: 2,
-            area: getModalArea(860, 560),
+            area: getModalArea(980, 680),
             title: I18n.jobinfo_field_update,
             closeBtn: 1,
             shade: 0.6,
@@ -351,132 +341,9 @@ $(function () {
     $("#job_work_list").on('click', '.edit',function() {
         var id = $(this).closest('[data-work-id]').attr("data-work-id");
         var url = base_url + "/work/editModel?workId=" + id;
-        layer.open({
-            type: 2,
-            area: getModalArea(1180, 760),
-            title: '设置节点依赖关系',
-            closeBtn: 1,
-            shade: 0.6,
-            shadeClose: false,
-            maxmin: true,
-            anim: 0,
-            content: url
-        });
+        window.open(url, 'nbatch_work_flow_' + id,
+            'width=1440,height=900,top=60,left=120,resizable=yes,scrollbars=yes');
     });
 
-    // Rerun the latest run work from the beginning.
-    $("#job_work_list").on('click', '.rerun-latest', function () {
-        var workId = $(this).closest('[data-work-id]').attr('data-work-id');
-        layer.confirm('确认完整重跑该流程最新一次运行作业？所有节点都会重新执行。', {
-            icon: 3,
-            title: I18n.system_tips,
-            btn: [I18n.system_ok, I18n.system_cancel]
-        }, function (index) {
-            layer.close(index);
-            $.ajax({
-                type: 'POST',
-                url: base_url + '/work/rerunLatestRunWork',
-                data: {workId: workId},
-                dataType: 'json',
-                success: function (data) {
-                    if (data.code === 200) {
-                        layer.msg('重跑设置成功', {icon: 1});
-                        jobWorkTable.fnDraw(false);
-                    } else {
-                        layer.msg(data.msg || '重跑设置失败', {icon: 2});
-                    }
-                },
-                error: function () {
-                    layer.msg(I18n.system_fail, {icon: 2});
-                }
-            });
-        });
-    });
 
-    // Stop the latest run work.
-    $("#job_work_list").on('click', '.stop-latest', function () {
-        var workId = $(this).closest('[data-work-id]').attr('data-work-id');
-        layer.confirm('确认停止该流程最新一次运行作业？未完成节点将标记为已停止。', {
-            icon: 3,
-            title: I18n.system_tips,
-            btn: [I18n.system_ok, I18n.system_cancel]
-        }, function (index) {
-            layer.close(index);
-            $.ajax({
-                type: 'POST',
-                url: base_url + '/work/stopLatestRunWork',
-                data: {workId: workId},
-                dataType: 'json',
-                success: function (data) {
-                    if (data.code === 200) {
-                        layer.msg('停止成功', {icon: 1});
-                        jobWorkTable.fnDraw(false);
-                    } else {
-                        layer.msg(data.msg || '停止失败', {icon: 2});
-                    }
-                },
-                error: function () {
-                    layer.msg(I18n.system_fail, {icon: 2});
-                }
-            });
-        });
-    });
-
-    // Rerun from init turn date and remove later run records.
-    $("#job_work_list").on('click', '.rerun-init-turn', function () {
-        var workId = $(this).closest('[data-work-id]').attr('data-work-id');
-        layer.confirm('确认按初始化翻牌日期重跑？将保留该翻牌日期运行批次，删除之后的运行记录。', {
-            icon: 3,
-            title: I18n.system_tips,
-            btn: [I18n.system_ok, I18n.system_cancel]
-        }, function (index) {
-            layer.close(index);
-            $.ajax({
-                type: 'POST',
-                url: base_url + '/work/rerunFromInitTurnDate',
-                data: {workId: workId},
-                dataType: 'json',
-                success: function (data) {
-                    if (data.code === 200) {
-                        layer.msg('初始化重跑设置成功', {icon: 1});
-                        jobWorkTable.fnDraw(false);
-                    } else {
-                        layer.msg(data.msg || '初始化重跑设置失败', {icon: 2});
-                    }
-                },
-                error: function () {
-                    layer.msg(I18n.system_fail, {icon: 2});
-                }
-            });
-        });
-    });
-
-    // recover only failed/exception nodes in a run work
-    $("#job_work_list").on('click', '.recover', function () {
-        var runWorkId = $(this).attr('data-run-work-id');
-        layer.confirm('确认只恢复该运行作业中异常、停止或卡住的节点，并继续重跑？已完成和已跳过节点不会重跑。', {
-            icon: 3,
-            title: I18n.system_tips,
-            btn: [I18n.system_ok, I18n.system_cancel]
-        }, function (index) {
-            layer.close(index);
-            $.ajax({
-                type: 'POST',
-                url: base_url + '/work/recoverRunWork',
-                data: {runWorkId: runWorkId},
-                dataType: 'json',
-                success: function (data) {
-                    if (data.code === 200) {
-                        layer.msg('恢复成功', {icon: 1});
-                        jobWorkTable.fnDraw(false);
-                    } else {
-                        layer.msg(data.msg || '恢复失败', {icon: 2});
-                    }
-                },
-                error: function () {
-                    layer.msg(I18n.system_fail, {icon: 2});
-                }
-            });
-        });
-    });
 });

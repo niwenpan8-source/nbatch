@@ -8,12 +8,12 @@ import com.nbatch.job.handler.handler.JobHandlerHolder;
 import com.nbatch.job.handler.handler.RunNodeStopHandlerImpl;
 import com.nbatch.job.handler.handler.impl.*;
 import com.nbatch.job.handler.helper.DialectHelper;
-import com.nbatch.job.handler.utils.BatchThreadPoolUtil;
+import com.nbatch.job.handler.helper.YmlStringEncryptorHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
-import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,10 +30,11 @@ import static com.nbatch.job.core.enums.NodeTypeEnum.*;
 public class NbatchHandlerConfig {
 
     @Resource
+    @Lazy
     private DynamicRoutingDataSource dataSource;
 
     /**
-     * spring工具类
+     * Spring 工具类
      */
     @Bean
     public SpringUtil springUtil() {
@@ -90,14 +91,9 @@ public class NbatchHandlerConfig {
         return new RunNodeStopHandlerImpl();
     }
 
-
-
-    /**
-     * 销毁线程池
-     */
-    @PreDestroy
-    public void destroy() {
-        System.out.println("destroy thread pool");
-        BatchThreadPoolUtil.shutdownAllThreadPool();
+    @Bean
+    public YmlStringEncryptorHelper ymlStringEncryptorHelper() {
+        return new YmlStringEncryptorHelper();
     }
+
 }

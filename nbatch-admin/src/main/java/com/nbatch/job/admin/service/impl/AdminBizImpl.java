@@ -1,28 +1,20 @@
 package com.nbatch.job.admin.service.impl;
 
-import com.nbatch.job.admin.core.thread.JobCompleteHelper;
 import com.nbatch.job.admin.core.thread.JobRegistryHelper;
-import com.nbatch.job.admin.core.thread.JobRunNodeLogDetailHelper;
 import com.nbatch.job.core.biz.AdminBiz;
-import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.RegistryParam;
 import com.nbatch.job.core.biz.model.ReturnT;
-import com.nbatch.job.core.biz.model.RunNodeLogDetailParam;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 
 /**
- * @author Mr.ni 2017-07-27 21:54:20
+ * 管理端接口实现
+ *
+ * @author Mr.ni
  */
 @Service
 public class AdminBizImpl implements AdminBiz {
 
-
-    @Override
-    public ReturnT<String> callback(List<HandleCallbackParam> callbackParamList) {
-        return JobCompleteHelper.getInstance().callback(callbackParamList);
-    }
 
     @Override
     public ReturnT<String> registry(RegistryParam registryParam) {
@@ -33,13 +25,5 @@ public class AdminBizImpl implements AdminBiz {
     public ReturnT<String> registryRemove(RegistryParam registryParam) {
         return JobRegistryHelper.getInstance().registryRemove(registryParam);
     }
-
-    @Override
-    public ReturnT<String> callbackRunNodeLogDetail(List<RunNodeLogDetailParam> callbackParamList) {
-        return JobRunNodeLogDetailHelper.getInstance().callbackRunNodeLogDetail(callbackParamList);
-    }
-
-
-
 
 }

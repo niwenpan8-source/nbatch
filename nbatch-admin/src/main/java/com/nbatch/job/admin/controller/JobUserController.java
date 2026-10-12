@@ -11,7 +11,7 @@ import com.nbatch.job.admin.core.domain.param.JobUserParam;
 import com.nbatch.job.admin.core.domain.po.JobGroupPo;
 import com.nbatch.job.admin.core.domain.po.JobUserPo;
 import com.nbatch.job.admin.core.util.I18nUtil;
-import com.nbatch.job.admin.core.util.RsaPasswordUtil;
+import com.nbatch.job.admin.core.util.PasswordTransferUtil;
 import com.nbatch.job.admin.mapper.IJobGroupMapper;
 import com.nbatch.job.admin.mapper.IJobUserMapper;
 import com.nbatch.job.core.biz.model.ReturnT;
@@ -43,7 +43,7 @@ public class JobUserController {
     @Resource
     private IJobGroupMapper jobGroupMapper;
     @Resource
-    private RsaPasswordUtil rsaPasswordUtil;
+    private PasswordTransferUtil passwordTransferUtil;
 
     @RequestMapping
     @PermissionLimit(adminuser = true)
@@ -71,14 +71,14 @@ public class JobUserController {
                 .eq(role != -1, JobUserPo::getRole, role)
         );
 
-        // filter
+        // 过滤查询条件
         if (CollUtil.isNotEmpty(jobUserPoPage.getRecords())) {
             for (JobUserPo item : jobUserPoPage.getRecords()) {
                 item.setPassword(null);
             }
         }
 
-        // package result
+        // 封装返回结果
         Map<String, Object> maps = new HashMap<>();
         // 总记录数
         maps.put("recordsTotal", jobUserPoPage.getTotal());
@@ -94,13 +94,13 @@ public class JobUserController {
     @ResponseBody
     @PermissionLimit(adminuser = true)
     public ReturnT<String> add(JobUserParam param) {
-        ReturnT<String> passwordDecryptResult = rsaPasswordUtil.decryptPassword(param.getPassword());
+        ReturnT<String> passwordDecryptResult = passwordTransferUtil.decodePassword(param.getPassword());
         if (passwordDecryptResult.getCode() != HandleCodeConstant.HANDLE_CODE_SUCCESS) {
             return passwordDecryptResult;
         }
         param.setPassword(passwordDecryptResult.getContent());
 
-        // valid username
+        // 校验用户名
         if (!StringUtils.hasText(param.getUsername())) {
             return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, I18nUtil.getString("system_please_input") + I18nUtil.getString("user_username"));
         }
@@ -108,7 +108,7 @@ public class JobUserController {
         if (!(param.getUsername().length() >= 4 && param.getUsername().length() <= 20)) {
             return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, I18nUtil.getString("system_lengh_limit") + "[4-20]");
         }
-        // valid password
+        // 校验密码
         if (!StringUtils.hasText(param.getPassword())) {
             return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, I18nUtil.getString("system_please_input") + I18nUtil.getString("user_password"));
         }
@@ -116,7 +116,7 @@ public class JobUserController {
         if (!(param.getPassword().length() >= 4 && param.getPassword().length() <= 20)) {
             return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, I18nUtil.getString("system_lengh_limit") + "[4-20]");
         }
-        // md5 password
+        // 使用 MD5 处理密码
         param.setPassword(DigestUtils.md5DigestAsHex(param.getPassword().getBytes()));
         JobUserPo existUser = jobUserMapper.selectOne(Wrappers.lambdaQuery(JobUserPo.class)
                 .eq(JobUserPo::getUsername, param.getUsername()));
@@ -124,7 +124,7 @@ public class JobUserController {
             return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, I18nUtil.getString("user_username_repeat"));
         }
 
-        // write
+        // 写入用户信息
         jobUserMapper.insert(BeanUtil.toBean(param, JobUserPo.class));
         return ReturnT.SUCCESS;
     }
@@ -134,15 +134,15 @@ public class JobUserController {
     @PermissionLimit(adminuser = true)
     public ReturnT<String> update(HttpServletRequest request, JobUserParam param) {
 
-        // avoid opt login seft
+        // 不允许操作当前登录用户自身
         JobUserPo loginUser = PermissionInterceptor.getLoginUser(request);
         if (loginUser.getUsername().equals(param.getUsername())) {
             return new ReturnT<>(ReturnT.FAIL.getCode(), I18nUtil.getString("user_update_loginuser_limit"));
         }
 
-        // valid password
+        // 校验密码
         if (StringUtils.hasText(param.getPassword())) {
-            ReturnT<String> passwordDecryptResult = rsaPasswordUtil.decryptPassword(param.getPassword());
+            ReturnT<String> passwordDecryptResult = passwordTransferUtil.decodePassword(param.getPassword());
             if (passwordDecryptResult.getCode() != HandleCodeConstant.HANDLE_CODE_SUCCESS) {
                 return passwordDecryptResult;
             }
@@ -151,13 +151,13 @@ public class JobUserController {
             if (!(param.getPassword().length() >= 4 && param.getPassword().length() <= 20)) {
                 return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, I18nUtil.getString("system_lengh_limit") + "[4-20]");
             }
-            // md5 password
+            // 使用 MD5 处理密码
             param.setPassword(DigestUtils.md5DigestAsHex(param.getPassword().getBytes()));
         } else {
             param.setPassword(null);
         }
 
-        // update
+        // 更新用户信息
         jobUserMapper.updateById(BeanUtil.toBean(param, JobUserPo.class));
         return ReturnT.SUCCESS;
     }
@@ -167,7 +167,7 @@ public class JobUserController {
     @PermissionLimit(adminuser = true)
     public ReturnT<String> remove(HttpServletRequest request, String id) {
 
-        // avoid opt login seft
+        // 不允许操作当前登录用户自身
         JobUserPo loginUser = PermissionInterceptor.getLoginUser(request);
         if (StrUtil.equals(loginUser.getId(), id)) {
             return new ReturnT<>(ReturnT.FAIL.getCode(), I18nUtil.getString("user_update_loginuser_limit"));
@@ -180,18 +180,18 @@ public class JobUserController {
     @RequestMapping("/updatePwd")
     @ResponseBody
     public ReturnT<String> updatePwd(HttpServletRequest request, String password, String oldPassword) {
-        ReturnT<String> oldPasswordDecryptResult = rsaPasswordUtil.decryptPassword(oldPassword);
+        ReturnT<String> oldPasswordDecryptResult = passwordTransferUtil.decodePassword(oldPassword);
         if (oldPasswordDecryptResult.getCode() != HandleCodeConstant.HANDLE_CODE_SUCCESS) {
             return oldPasswordDecryptResult;
         }
-        ReturnT<String> passwordDecryptResult = rsaPasswordUtil.decryptPassword(password);
+        ReturnT<String> passwordDecryptResult = passwordTransferUtil.decodePassword(password);
         if (passwordDecryptResult.getCode() != HandleCodeConstant.HANDLE_CODE_SUCCESS) {
             return passwordDecryptResult;
         }
         oldPassword = oldPasswordDecryptResult.getContent();
         password = passwordDecryptResult.getContent();
 
-        // valid
+        // 校验参数
         if (StrUtil.isBlank(oldPassword)) {
             return new ReturnT<>(ReturnT.FAIL.getCode(), I18nUtil.getString("system_please_input") + I18nUtil.getString("change_pwd_field_oldpwd"));
         }
@@ -203,11 +203,11 @@ public class JobUserController {
             return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, I18nUtil.getString("system_lengh_limit") + "[4-20]");
         }
 
-        // md5 password
+        // 使用 MD5 处理密码
         String md5OldPassword = DigestUtils.md5DigestAsHex(oldPassword.getBytes());
         String md5Password = DigestUtils.md5DigestAsHex(password.getBytes());
 
-        // valid old pwd
+        // 校验旧密码
         JobUserPo loginUser = PermissionInterceptor.getLoginUser(request);
         //WHERE t.username = #{username}
         JobUserPo existUser = jobUserMapper.selectOne(Wrappers.lambdaQuery(JobUserPo.class)
@@ -218,7 +218,7 @@ public class JobUserController {
             return new ReturnT<>(ReturnT.FAIL.getCode(), I18nUtil.getString("change_pwd_field_oldpwd") + I18nUtil.getString("system_unvalid"));
         }
 
-        // write new
+        // 写入新密码
         existUser.setPassword(md5Password);
         jobUserMapper.updateById(existUser);
 

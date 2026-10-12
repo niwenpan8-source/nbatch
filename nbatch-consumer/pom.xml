@@ -37,7 +37,6 @@
             <artifactId>luaj-jse</artifactId>
         </dependency>
 
-
     </dependencies>
 
     <build>

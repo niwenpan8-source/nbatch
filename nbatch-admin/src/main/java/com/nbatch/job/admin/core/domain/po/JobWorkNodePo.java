@@ -19,7 +19,7 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("nbatch_job_work_node")
+@TableName("nbatch_work_node")
 public class JobWorkNodePo extends Model<JobWorkNodePo> {
 
 	/**
@@ -34,6 +34,11 @@ public class JobWorkNodePo extends Model<JobWorkNodePo> {
 	private String workId;
 
 	/**
+	 * 所属流程组，所有节点均归属一个组。
+	 */
+	private String groupId;
+
+	/**
 	 * 节点名称
 	 */
 	private String nodeName;
@@ -44,12 +49,7 @@ public class JobWorkNodePo extends Model<JobWorkNodePo> {
 	private String nodeDesc;
 
 	/**
-	 * 节点状态：0=停用、1=启用
-	 */
-	private Integer nodeStatus;
-
-	/**
-	 * scipt:脚本,store_procedure:存储过程,execute_sql:执行sql,file_to_db:文件导入到数据库,db_to_file:数据库导出到文件
+	 * 节点类型：script（脚本）、store_procedure（存储过程）、execute_sql（执行 SQL）、file_to_db（文件导入数据库）、db_to_file（数据库导出文件）
 	 */
 	private String nodeType;
 
@@ -92,5 +92,16 @@ public class JobWorkNodePo extends Model<JobWorkNodePo> {
 	 * 重试次数，如果归零则不再能够进行重试
 	 */
 	private Integer retryTimes;
+
+	/** 当前正式运行状态。 */
+	private Integer nodeRunStatus;
+
+	/** 当前运行翻牌日期。 */
+	private Date turnDate;
+
+	/**
+	 * 当前剩余重试次数，与模板 retryTimes 分离。
+	 */
+	private Integer currentRetryTimes;
 
 }

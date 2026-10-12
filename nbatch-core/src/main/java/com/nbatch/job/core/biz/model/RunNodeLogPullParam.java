@@ -12,6 +12,6 @@ public class RunNodeLogPullParam implements Serializable {
 
     private static final long serialVersionUID = 42L;
 
-    private Long offset;
     private Integer maxSize;
+    private String consumerId;
 }

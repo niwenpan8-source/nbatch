@@ -57,13 +57,17 @@ function fitCronPopovers() {
         if (!buttonOffset) {
             return;
         }
+        var $offsetParent = $popover.offsetParent();
+        var parentOffset = $offsetParent.length && !$offsetParent.is('body') && !$offsetParent.is('html')
+            ? $offsetParent.offset()
+            : {left: 0, top: 0};
         var left = Math.min(buttonOffset.left + $button.outerWidth() - popoverWidth, boundaryRight - popoverWidth);
         left = Math.max(boundaryLeft, left);
         var top = buttonOffset.top + $button.outerHeight() + 10;
         if ($modalBody.length) {
             top = Math.max(boundaryTop, Math.min(top, boundaryTop + $modalBody.outerHeight() - 80));
         }
-        $popover.css({width: popoverWidth, maxWidth: popoverWidth, left: left, top: top, display: 'block'});
+        $popover.css({width: popoverWidth, maxWidth: popoverWidth, left: left - parentOffset.left, top: top - parentOffset.top, display: 'block'});
         $popover.find('.arrow').css({left: Math.max(24, Math.min(popoverWidth - 24, buttonOffset.left + ($button.outerWidth() / 2) - left))});
     });
 }
@@ -172,7 +176,7 @@ $(function(){
 		'font-size': '',
 		'line-height': '40px',
 		'text-align': 'center',
-		'background-color': '#222d32',
+		'background-color': '#173f3e',
 		cursor: 'pointer',
 		'border-radius': '5px',
 		'z-index': '99999',
@@ -260,34 +264,39 @@ $(function(){
             element.parent('div').append(error);
         },
         submitHandler : function(form) {
-            RsaPassword.encryptForm($("#updatePwdModal .form"), ['oldPassword', 'password']).then(function (paramData) {
-                $.post(base_url + "/user/updatePwd",  paramData, function(data, status) {
-                if (data.code == 200) {
-                    $('#updatePwdModal').modal('hide');
+            try {
+                PasswordTransfer.encodeForm($("#updatePwdModal .form"), ['oldPassword', 'password']).then(function (paramData) {
+                    $.post(base_url + "/user/updatePwd",  paramData, function(data, status) {
+                    if (data.code == 200) {
+                        $('#updatePwdModal').modal('hide');
 
-                    layer.msg( I18n.change_pwd_suc_to_logout );
-                    setTimeout(function(){
-                        $.post(base_url + "/logout", function(data, status) {
-                            if (data.code == 200) {
-                                window.location.href = base_url + "/";
-                            } else {
-                                layer.open({
-                                    icon: '2',
-                                    content: (data.msg|| I18n.logout_fail)
-                                });
-                            }
+                        layer.msg( I18n.change_pwd_suc_to_logout );
+                        setTimeout(function(){
+                            $.post(base_url + "/logout", function(data, status) {
+                                if (data.code == 200) {
+                                    window.location.href = base_url + "/";
+                                } else {
+                                    layer.open({
+                                        icon: '2',
+                                        content: (data.msg|| I18n.logout_fail)
+                                    });
+                                }
+                            });
+                        }, 500);
+                    } else {
+                        layer.open({
+                            icon: '2',
+                            content: (data.msg|| I18n.change_pwd + I18n.system_fail )
                         });
-                    }, 500);
-                } else {
-                    layer.open({
-                        icon: '2',
-                        content: (data.msg|| I18n.change_pwd + I18n.system_fail )
+                    }
                     });
-                }
+                }, function (msg) {
+                    layer.msg(msg || I18n.change_pwd + I18n.system_fail, {icon: 2});
                 });
-            }, function (msg) {
-                layer.msg(msg || I18n.change_pwd + I18n.system_fail, {icon: 2});
-            });
+            } catch (e) {
+                layer.msg(I18n.change_pwd + I18n.system_fail, {icon: 2});
+            }
+            return false;
         }
     });
     $("#updatePwdModal").on('hide.bs.modal', function () {

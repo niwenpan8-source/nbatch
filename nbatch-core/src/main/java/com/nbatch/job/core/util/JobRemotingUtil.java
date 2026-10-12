@@ -16,6 +16,7 @@ import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.X509Certificate;
@@ -29,7 +30,7 @@ public class JobRemotingUtil {
     public static final String BATCH_JOB_ACCESS_TOKEN = "BATCH-JOB-ACCESS-TOKEN";
 
 
-    // trust-https start
+    // 信任 HTTPS 的开始标记
     private static void trustAllHosts(HttpsURLConnection connection) {
         try {
             SSLContext sc = SSLContext.getInstance("TLS");
@@ -54,11 +55,11 @@ public class JobRemotingUtil {
         public void checkServerTrusted(X509Certificate[] chain, String authType) {
         }
     }};
-    // trust-https end
+    // 信任 HTTPS 的结束标记
 
 
     /**
-     * post
+     * 发送 POST 请求
      *
      * @param url  url
      * @param accessToken       accessToken
@@ -70,18 +71,18 @@ public class JobRemotingUtil {
         HttpURLConnection connection = null;
         BufferedReader bufferedReader = null;
         try {
-            // connection
+            // 创建连接
             URL realUrl = new URL(url);
             connection = (HttpURLConnection) realUrl.openConnection();
 
-            // trust-https
+            // 配置 HTTPS 信任策略
             boolean useHttps = url.startsWith("https");
             if (useHttps) {
                 HttpsURLConnection https = (HttpsURLConnection) connection;
                 trustAllHosts(https);
             }
 
-            // connection setting
+            // 设置连接参数
             connection.setRequestMethod("POST");
             connection.setDoOutput(true);
             connection.setDoInput(true);
@@ -96,10 +97,10 @@ public class JobRemotingUtil {
                 connection.setRequestProperty(BATCH_JOB_ACCESS_TOKEN, accessToken);
             }
 
-            // do connection
+            // 建立连接
             connection.connect();
 
-            // write requestBody
+            // 写入请求体
             if (requestObj != null) {
                 String requestBody = GsonTool.toJson(requestObj);
 
@@ -109,13 +110,13 @@ public class JobRemotingUtil {
                 dataOutputStream.close();
             }
 
-            // valid StatusCode
+            // 校验响应状态码
             int statusCode = connection.getResponseCode();
             if (statusCode != 200) {
-                return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "job remoting fail, StatusCode(" + statusCode + ") invalid. for url : " + url);
+                return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "作业远程调用失败，响应状态码无效：" + statusCode + "，地址：" + url);
             }
 
-            // result
+            // 读取响应结果
             bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
             StringBuilder result = new StringBuilder();
             String line;
@@ -123,20 +124,28 @@ public class JobRemotingUtil {
                 result.append(line);
             }
             String resultJson = result.toString();
-            // parse returnT
+            // 解析返回结果
             try {
                 return GsonTool.fromJson(resultJson, ReturnT.class, returnTargClassOfT);
             } catch (Exception e) {
-                log.error("job remoting (url={}) response content invalid({}).", url, resultJson, e);
-                return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "job remoting (url="+url+") response content invalid("+ resultJson +").");
+            log.error("作业远程调用（url={}）响应内容无效（{}）。", url, resultJson, e);
+                return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "作业远程调用响应内容无效，地址：" + url + "，响应：" + resultJson);
             }
 
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            if (e instanceof ConnectException) {
-                return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_TIMEOUT, "job remoting timeout("+ ExceptionUtil.getRootCauseMessage(e) +"), for url : " + url);
+            if (e instanceof SocketTimeoutException) {
+                // 读取超时可能是请求已到达但响应未返回，交给管理端按“结果未知”处理。
+                String rootCauseMessage = ExceptionUtil.getRootCauseMessage(e);
+                String timeoutType = rootCauseMessage != null
+                        && rootCauseMessage.toLowerCase().contains("read timed out")
+                        ? "read timeout" : "timeout";
+                return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_TIMEOUT, "作业远程调用" + timeoutType + "，原因：" + rootCauseMessage + "，地址：" + url);
             }
-            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "job remoting error("+ ExceptionUtil.getRootCauseMessage(e) +"), for url : " + url);
+            if (e instanceof ConnectException) {
+                return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_TIMEOUT, "作业远程调用超时，原因：" + ExceptionUtil.getRootCauseMessage(e) + "，地址：" + url);
+            }
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "作业远程调用异常，原因：" + ExceptionUtil.getRootCauseMessage(e) + "，地址：" + url);
         } finally {
             try {
                 if (bufferedReader != null) {

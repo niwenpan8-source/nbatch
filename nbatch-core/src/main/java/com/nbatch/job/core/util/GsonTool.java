@@ -19,7 +19,7 @@ public class GsonTool {
     }
 
     /**
-     * Object 转成 json
+     * 将对象转换为 JSON 字符串
      *
      * @param src 源对象
      * @return String
@@ -29,7 +29,7 @@ public class GsonTool {
     }
 
     /**
-     * json 转成 特定的cls的Object
+     * 将 JSON 字符串转换为指定类型的对象
      *
      * @param json json字符串
      * @param classOfT 泛型类
@@ -39,7 +39,7 @@ public class GsonTool {
     }
 
     /**
-     * json 转成 特定的 rawClass<classOfT> 的Object
+     * 将 JSON 字符串转换为指定原始类型和泛型类型的对象
      *
      * @param json json字符串
      * @param classOfT 泛型类
@@ -70,7 +70,7 @@ public class GsonTool {
     }
 
     /**
-     * json 转成 特定的cls的list
+     * 将 JSON 字符串转换为指定元素类型的列表
      *
      * @param json json字符串
      * @param classOfT 泛型类

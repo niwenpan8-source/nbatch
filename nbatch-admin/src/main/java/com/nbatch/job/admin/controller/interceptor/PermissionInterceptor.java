@@ -34,11 +34,11 @@ public class PermissionInterceptor implements AsyncHandlerInterceptor {
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
 		
 		if (!(handler instanceof HandlerMethod)) {
-			// proceed with the next interceptor
+			// 交给下一个拦截器处理
 			return true;
 		}
 
-		// if need login
+		// 判断是否需要登录
 		boolean needLogin = true;
 		boolean needAdminuser = false;
 		HandlerMethod method = (HandlerMethod)handler;
@@ -58,10 +58,10 @@ public class PermissionInterceptor implements AsyncHandlerInterceptor {
 			if (needAdminuser && loginUser.getRole()!=1) {
 				throw new RuntimeException(I18nUtil.getString("system_permission_limit"));
 			}
-			// set loginUser, with request
+		// 将登录用户写入请求上下文
 			request.setAttribute(LoginService.LOGIN_IDENTITY_KEY, loginUser);
 		}
-		// proceed with the next interceptor
+		// 交给下一个拦截器处理
 		return true;
 	}
 
@@ -69,17 +69,17 @@ public class PermissionInterceptor implements AsyncHandlerInterceptor {
 	// -------------------- permission tool --------------------
 
 	/**
-	 * get loginUser
+	 * 获取登录用户
 	 *
 	 * @param request 请求
 	 */
 	public static JobUserPo getLoginUser(HttpServletRequest request){
-        // get loginUser, with request
+        // 从请求中获取登录用户
         return (JobUserPo) request.getAttribute(LoginService.LOGIN_IDENTITY_KEY);
 	}
 
 	/**
-	 * valid permission by JobGroup
+	 * 根据作业组校验权限
 	 *
 	 * @param request 请求
 	 * @param jobGroup 群组ID
@@ -92,7 +92,7 @@ public class PermissionInterceptor implements AsyncHandlerInterceptor {
 	}
 
 	/**
-	 * filter XxlJobGroup by role
+	 * 根据角色过滤作业组
 	 *
 	 * @param request 请求
 	 * @param jobGroupListAll 所有群组

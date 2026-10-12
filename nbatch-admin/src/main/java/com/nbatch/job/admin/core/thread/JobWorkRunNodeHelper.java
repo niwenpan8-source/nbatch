@@ -1,35 +1,22 @@
 package com.nbatch.job.admin.core.thread;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nbatch.job.admin.core.conf.JobAdminConfig;
-import com.nbatch.job.admin.core.domain.RunWorkExecuteContext;
-import com.nbatch.job.admin.core.domain.po.JobGroupPo;
-import com.nbatch.job.admin.core.domain.po.JobInfoPo;
-import com.nbatch.job.admin.core.domain.po.JobLogPo;
-import com.nbatch.job.admin.core.domain.po.JobWorkRunPo;
-import com.nbatch.job.admin.core.enums.ExecutorRouteStrategyEnum;
+import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.executor.ExecutorBizProxy;
-import com.nbatch.job.admin.core.helper.RunNodeHelper.NodeStatusContext;
-import com.nbatch.job.core.biz.model.ExecuteNodeParam;
 import com.nbatch.job.core.biz.model.ExecuteWorkParam;
 import com.nbatch.job.core.biz.model.ReturnT;
-import com.nbatch.job.core.biz.model.TriggerParam;
 import com.nbatch.job.core.constant.HandleCodeConstant;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
- * job work run node execute
+ * 作业运行节点执行线程
  *
  * @author Mr.ni
  */
@@ -42,9 +29,6 @@ public class JobWorkRunNodeHelper {
         return INSTANCE;
     }
 
-    public static final ConcurrentHashMap<String, RunWorkExecuteContext> RUN_WORK_ID_CACHE = new ConcurrentHashMap<>();
-
-
     // ---------------------- monitor ----------------------
 
     private Thread workThread;
@@ -52,16 +36,16 @@ public class JobWorkRunNodeHelper {
 
     public void start() {
 
-        // for monitor
+        // 启动监控线程
         workThread = new Thread(() -> {
 
-            // monitor
+            // 执行监控循环
             while (!toStop) {
                 try {
                     executeRunWork();
                 } catch (Throwable e) {
                     if (!toStop) {
-                        log.error(">>>>>>>>>>> job, job fail work thread error:", e);
+                        log.error(">>>>>>>>>>> 作业流程失败处理线程发生异常：", e);
                     }
                 }
 
@@ -75,7 +59,7 @@ public class JobWorkRunNodeHelper {
 
             }
 
-            log.info(">>>>>>>>>>> job, JobWorkMonitorHelper stop");
+            log.info(">>>>>>>>>>> 作业流程运行节点线程已停止。");
 
         });
         workThread.setDaemon(true);
@@ -88,11 +72,12 @@ public class JobWorkRunNodeHelper {
      */
     private void executeRunWork() {
         // 得到所有需要执行的work
-        // Scan Job
+        // 扫描待执行节点
 
         Connection conn = null;
         Boolean connAutoCommit = null;
         PreparedStatement preparedStatement = null;
+        List<RunWorkDispatchCommand> dispatchCommandList = new ArrayList<>();
 
         try {
 
@@ -100,11 +85,11 @@ public class JobWorkRunNodeHelper {
             connAutoCommit = conn.getAutoCommit();
             conn.setAutoCommit(false);
 
-            preparedStatement = conn.prepareStatement("select * from nbatch_job_lock where lock_name = 'schedule_lock' for update");
+            preparedStatement = conn.prepareStatement("select * from nbatch_lock where lock_name = 'schedule_lock' for update");
             preparedStatement.execute();
 
-            List<JobWorkRunPo> allNeedRunWorkList = JobAdminConfig.getAdminConfig().getRunWorkHelper().getAllNeedRunWorkList();
-            for (JobWorkRunPo jobRunWorkPo : allNeedRunWorkList) {
+            List<JobWorkPo> allNeedRunWorkList = JobAdminConfig.getAdminConfig().getRunWorkHelper().getAllNeedRunWorkList();
+            for (JobWorkPo jobRunWorkPo : allNeedRunWorkList) {
 
 
                 ExecuteWorkParam executeWorkParam
@@ -112,46 +97,22 @@ public class JobWorkRunNodeHelper {
                 if (executeWorkParam == null) {
                     continue;
                 }
-                RunWorkExecuteContext context = getRunWorkExecuteContext(jobRunWorkPo, executeWorkParam);
-                if (context == null || context.getTriggerParam() == null) {
-                    log.warn("runWorkId:{} 缺少运行上下文，跳过本次继续调度", executeWorkParam.getRunWorkId());
-                    continue;
-                }
-
-                TriggerParam triggerParam = context.getTriggerParam();
-                triggerParam.setExecuteWorkParam(executeWorkParam);
-                triggerParam.setTriggerKey(buildWorkTriggerKey(executeWorkParam));
-
-                String address = resolveExecutorAddress(context, triggerParam);
+                String address = resolveExecutorAddress(executeWorkParam.getWorkId());
                 if (StrUtil.isBlank(address)) {
-                    log.warn("runWorkId:{} 未找到可用执行器地址，跳过本次继续调度", executeWorkParam.getRunWorkId());
+                    log.warn("workId:{} 未找到可用执行器地址，跳过本次继续调度", executeWorkParam.getWorkId());
                     continue;
                 }
 
-                context.setAddress(address).setUpdateTime(System.currentTimeMillis());
-                RUN_WORK_ID_CACHE.put(executeWorkParam.getRunWorkId(), context);
                 executeWorkParam.setExecutorAddress(address);
-
-                ReturnT<String> runResult = ExecutorBizProxy.run(address, triggerParam);
-
-                // 如果存在网络问题，则将运行作业标记为异常
-                if (runResult.getCode() >= HandleCodeConstant.HANDLE_CODE_FAIL) {
-                    String handleMsg = runResult.getMsg();
-                    JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                            .markRunNodesDispatchFailed(executeWorkParam, handleMsg);
-                    if (runResult.getCode() >= HandleCodeConstant.HANDLE_CODE_TIMEOUT) {
-                        RUN_WORK_ID_CACHE.remove(jobRunWorkPo.getRunWorkId());
-                    }
-                } else {
-                    JobAdminConfig.getAdminConfig().getRunNodeHelper()
-                            .handleNodeStatus(NodeStatusContext.dispatched(executeWorkParam));
-                }
+                // 标记节点为已下发
+                JobAdminConfig.getAdminConfig().getRunNodeHelper().markRunNodesDispatched(executeWorkParam);
+                dispatchCommandList.add(new RunWorkDispatchCommand(address, executeWorkParam));
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         } finally {
 
-            // commit
+            // 提交事务
             if (conn != null) {
                 try {
                     conn.commit();
@@ -169,7 +130,7 @@ public class JobWorkRunNodeHelper {
                     log.error(e.getMessage(), e);
                 }
             }
-            // close PreparedStatement
+            // 关闭预编译语句
             if (null != preparedStatement) {
                 try {
                     preparedStatement.close();
@@ -179,169 +140,77 @@ public class JobWorkRunNodeHelper {
             }
         }
 
-    }
-
-    private String buildWorkTriggerKey(ExecuteWorkParam executeWorkParam) {
-        String turnDate = executeWorkParam.getTurnDate() == null ? "" : DateUtil.formatDate(executeWorkParam.getTurnDate());
-        String runNodeIds = CollUtil.isEmpty(executeWorkParam.getExecuteNodeParamList())
-                ? ""
-                : executeWorkParam.getExecuteNodeParamList().stream()
-                .map(ExecuteNodeParam::getRunNodeId)
-                .filter(StrUtil::isNotBlank)
-                .sorted()
-                .collect(Collectors.joining(","));
-        return "WORK:" + executeWorkParam.getRunWorkId() + ":" + turnDate + ":" + runNodeIds;
-    }
-
-    private RunWorkExecuteContext getRunWorkExecuteContext(JobWorkRunPo jobRunWorkPo, ExecuteWorkParam executeWorkParam) {
-        String runWorkId = executeWorkParam.getRunWorkId();
-        RunWorkExecuteContext context = RUN_WORK_ID_CACHE.get(runWorkId);
-        if (context != null) {
-            return context;
+        // 网络调用必须在数据库调度锁释放后执行，单个执行器变慢不会阻塞整轮调度。
+        for (RunWorkDispatchCommand command : dispatchCommandList) {
+            dispatchRunWork(command);
         }
 
-        context = rebuildRunWorkExecuteContext(jobRunWorkPo);
-        if (context != null) {
-            RUN_WORK_ID_CACHE.put(runWorkId, context);
-            log.info("runWorkId:{} 运行上下文缓存丢失，已从数据库重建", runWorkId);
-        }
-        return context;
     }
 
     /**
-     * 重建运行作业上下文
-     *
-     * @param jobRunWorkPo 运行作业
+     * 在调度锁释放后发送执行命令，并区分确定失败与响应未知。
      */
-    private RunWorkExecuteContext rebuildRunWorkExecuteContext(JobWorkRunPo jobRunWorkPo) {
-        if (jobRunWorkPo == null || StrUtil.isBlank(jobRunWorkPo.getWorkId())) {
+    private void dispatchRunWork(RunWorkDispatchCommand command) {
+        // 调用执行器执行作业
+        ReturnT<String> runResult = ExecutorBizProxy.runWork(command.address, command.executeWorkParam);
+        // 如果为成功则直接返回
+        if (runResult.getCode() < HandleCodeConstant.HANDLE_CODE_FAIL) {
+            return;
+        }
+        String handleMsg = runResult.getMsg();
+        // 未知结果，记录并跳过。
+        if (isDispatchUnknown(runResult)) {
+            JobAdminConfig.getAdminConfig().getRunNodeHelper()
+                    .markRunNodesDispatchUnknown(command.executeWorkParam, handleMsg);
+            return;
+        }
+        // 失败则标记为失败
+        JobAdminConfig.getAdminConfig().getRunNodeHelper()
+                .markRunNodesDispatchFailed(command.executeWorkParam, handleMsg);
+    }
+
+    /**
+     * 调度锁内生成的不可变命令快照，供锁外执行 RPC。
+     */
+    private static final class RunWorkDispatchCommand {
+        /**
+         * 一次锁外下发所需的完整参数。
+         */
+        private final String address;
+        private final ExecuteWorkParam executeWorkParam;
+
+        /**
+         * 固化调度锁内计算出的目标执行器和执行参数。
+         */
+        private RunWorkDispatchCommand(String address, ExecuteWorkParam executeWorkParam) {
+            this.address = address;
+            this.executeWorkParam = executeWorkParam;
+        }
+    }
+
+    /**
+     * 判断是否为“请求可能已到达执行器，但管理端未拿到响应”的未知结果。
+     */
+    private boolean isDispatchUnknown(ReturnT<String> runResult) {
+        if (runResult == null || StrUtil.isBlank(runResult.getMsg())) {
+            return false;
+        }
+        String msg = runResult.getMsg().toLowerCase();
+        return msg.contains("read timed out") || msg.contains("read timeout");
+    }
+
+    /**
+     * 按作业配置查询执行器，并按注册顺序选择第一个可用地址。
+     */
+    private String resolveExecutorAddress(String workId) {
+        if (StrUtil.isBlank(workId)) {
             return null;
         }
-
-        JobInfoPo jobInfo = JobAdminConfig.getAdminConfig().getJobInfoMapper().selectOne(Wrappers.lambdaQuery(JobInfoPo.class)
-                .eq(JobInfoPo::getWorkId, jobRunWorkPo.getWorkId())
-                .orderByDesc(JobInfoPo::getUpdateTime)
-                .last("limit 1"));
-        if (jobInfo == null) {
-            log.warn("workId:{} 未找到绑定任务，无法重建运行上下文", jobRunWorkPo.getWorkId());
+        JobWorkPo work = JobAdminConfig.getAdminConfig().getJobWorkMapper().selectById(workId);
+        if (work == null) {
             return null;
         }
-
-        JobLogPo jobLog = JobAdminConfig.getAdminConfig().getJobLogMapper().selectOne(Wrappers.lambdaQuery(JobLogPo.class)
-                .eq(JobLogPo::getJobId, jobInfo.getId())
-                .orderByDesc(JobLogPo::getTriggerTime)
-                .last("limit 1"));
-
-        TriggerParam triggerParam = buildTriggerParam(jobInfo, jobLog);
-        String address = jobLog == null ? null : jobLog.getExecutorAddress();
-        return new RunWorkExecuteContext()
-                .setRunWorkId(jobRunWorkPo.getRunWorkId())
-                .setAddress(address)
-                .setTriggerParam(triggerParam)
-                .setUpdateTime(System.currentTimeMillis());
-    }
-
-    /**
-     * 构建触发参数
-     */
-    private TriggerParam buildTriggerParam(JobInfoPo jobInfo, JobLogPo jobLog) {
-        TriggerParam triggerParam = new TriggerParam();
-        triggerParam.setJobId(jobInfo.getId());
-        triggerParam.setExecutorHandler(jobInfo.getExecutorHandler());
-        triggerParam.setExecutorParams(jobInfo.getExecutorParam());
-        triggerParam.setExecutorBlockStrategy(jobInfo.getExecutorBlockStrategy());
-        triggerParam.setExecutorTimeout(jobInfo.getExecutorTimeout() == null ? 0 : jobInfo.getExecutorTimeout());
-        triggerParam.setGlueType(jobInfo.getGlueType());
-        triggerParam.setGlueSource(jobInfo.getGlueSource());
-        triggerParam.setGlueUpdatetime(jobInfo.getGlueUpdatetime() == null ? 0 : jobInfo.getGlueUpdatetime().getTime());
-        triggerParam.setWorkId(jobInfo.getWorkId());
-
-        if (jobLog != null) {
-            triggerParam.setLogId(jobLog.getId());
-            Date triggerTime = jobLog.getTriggerTime();
-            triggerParam.setLogDateTime(triggerTime == null ? System.currentTimeMillis() : triggerTime.getTime());
-            int[] sharding = parseSharding(jobLog.getExecutorShardingParam());
-            triggerParam.setBroadcastIndex(sharding[0]);
-            triggerParam.setBroadcastTotal(sharding[1]);
-        } else {
-            triggerParam.setLogDateTime(System.currentTimeMillis());
-            triggerParam.setBroadcastIndex(0);
-            triggerParam.setBroadcastTotal(1);
-        }
-        return triggerParam;
-    }
-
-    /**
-     * 解析分片参数
-     */
-    private String resolveExecutorAddress(RunWorkExecuteContext context, TriggerParam triggerParam) {
-        if (StrUtil.isNotBlank(context.getAddress()) && isExecutorAlive(context.getAddress())) {
-            return context.getAddress();
-        }
-
-        JobInfoPo jobInfo = JobAdminConfig.getAdminConfig().getJobInfoMapper().selectById(triggerParam.getJobId());
-        if (jobInfo == null) {
-            return context.getAddress();
-        }
-        JobGroupPo group = JobAdminConfig.getAdminConfig().getJobGroupMapper().selectById(jobInfo.getJobGroup());
-        if (group == null || CollUtil.isEmpty(group.getRegistryList())) {
-            return context.getAddress();
-        }
-
-        ExecutorRouteStrategyEnum executorRouteStrategyEnum = ExecutorRouteStrategyEnum.match(jobInfo.getExecutorRouteStrategy(), ExecutorRouteStrategyEnum.FIRST);
-        if (ExecutorRouteStrategyEnum.SHARDING_BROADCAST == executorRouteStrategyEnum) {
-            int addressIndex = Math.min(triggerParam.getBroadcastIndex(), group.getRegistryList().size() - 1);
-            String routedAddress = group.getRegistryList().get(Math.max(addressIndex, 0));
-            return isExecutorAlive(routedAddress) ? routedAddress : findAliveExecutorAddress(group.getRegistryList());
-        }
-
-        ReturnT<String> routeResult = executorRouteStrategyEnum.getRouter().route(triggerParam, group.getRegistryList());
-        if (routeResult != null && routeResult.getCode() == HandleCodeConstant.HANDLE_CODE_SUCCESS) {
-            String routedAddress = routeResult.getContent();
-            return isExecutorAlive(routedAddress) ? routedAddress : findAliveExecutorAddress(group.getRegistryList());
-        }
-        return findAliveExecutorAddress(group.getRegistryList());
-    }
-
-    /**
-     * 寻找存活的节点
-     */
-    private String findAliveExecutorAddress(List<String> addressList) {
-        if (CollUtil.isEmpty(addressList)) {
-            return null;
-        }
-        for (String address : addressList) {
-            if (isExecutorAlive(address)) {
-                return address;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * 判断节点是否存活
-     */
-    private boolean isExecutorAlive(String address) {
-        ReturnT<String> beatResult = ExecutorBizProxy.beat(address);
-        return beatResult.getCode() == HandleCodeConstant.HANDLE_CODE_SUCCESS;
-    }
-
-    /**
-     * 解析分片参数
-     */
-    private int[] parseSharding(String shardingParam) {
-        if (StrUtil.isBlank(shardingParam)) {
-            return new int[]{0, 1};
-        }
-        String[] shardingArr = shardingParam.split("/");
-        if (shardingArr.length != 2) {
-            return new int[]{0, 1};
-        }
-        try {
-            return new int[]{Integer.parseInt(shardingArr[0]), Integer.parseInt(shardingArr[1])};
-        } catch (NumberFormatException e) {
-            return new int[]{0, 1};
-        }
+        return JobAdminConfig.getAdminConfig().getRegistryAddressHelper().getAddressByOrder(work.getJobGroup());
     }
 
     public void toStop() {
@@ -353,7 +222,6 @@ public class JobWorkRunNodeHelper {
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
         }
-        RUN_WORK_ID_CACHE.clear();
     }
 
 

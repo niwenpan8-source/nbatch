@@ -4,10 +4,23 @@
     <#import "../common/common.macro.ftl" as netCommon>
     <@netCommon.commonStyle />
     <link rel="stylesheet" href="${request.contextPath}/static/plugins/layui/css/layui.css">
+    <style>
+        html, body {height: 100%; overflow: hidden; background: #edf3f1;}
+        .work-form-modal {box-sizing: border-box; height: 100vh; padding: 20px 24px 34px; overflow-y: auto;}
+        .work-form-modal .form {max-width: 1120px; margin: 0 auto;}
+        .work-form-modal .form-group {margin-bottom: 18px;}
+        .work-form-modal .control-label {color: #4b5563;}
+        @media (max-width: 767px) {
+            .work-form-modal {padding: 16px 14px 28px;}
+            .work-form-modal .form-group {margin-bottom: 8px;}
+            .work-form-modal .control-label {text-align: left; padding-top: 7px;}
+        }
+    </style>
 </head>
 
+<body>
 <!-- job新增.模态框 -->
-<div class="modal-body">
+<div class="modal-body work-form-modal">
     <form class="form-horizontal form" role="form" id="addModel" action="/work/insert">
         <#-- 基础信息 -->
         <div class="form-group">
@@ -33,13 +46,14 @@
                 </select>
             </div>
 
-            <label class="col-sm-2 control-label">${I18n.job_work_field_status}<font color="red">*</font></label>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">执行器<font color="red">*</font></label>
             <div class="col-sm-4">
-                <select class="form-control" id="workStatus" name="workStatus">
-                    <option value="" >--请选择--</option>
-                    <#list workStatusEnum as worStatusItem>
-                        <option value="${worStatusItem.code}">${worStatusItem.value}</option>
-                    </#list>
+                <select class="form-control" name="jobGroup">
+                    <option value="">--请选择--</option>
+                    <#list jobGroupList as group><option value="${group.id}">${group.title}</option></#list>
                 </select>
             </div>
         </div>
@@ -48,11 +62,6 @@
             <label class="col-sm-2 control-label">${I18n.job_work_field_cron}</label>
             <div class="col-sm-4">
                 <input type="text" class="form-control" name="cronExpression" placeholder="0 0 0 * * ? *" maxlength="128">
-            </div>
-
-            <label class="col-sm-2 control-label">初始化翻牌日期</label>
-            <div class="col-sm-4">
-                <input type="text" class="form-control" id="initTurnDate" name="initTurnDate" placeholder="yyyy-MM-dd">
             </div>
         </div>
 
@@ -78,14 +87,11 @@
 <script src="${request.contextPath}/static/adminlte/bower_components/moment/moment.min.js"></script>
 <script src="${request.contextPath}/static/adminlte/bower_components/bootstrap-daterangepicker/daterangepicker.js"></script>
 <script src="${request.contextPath}/static/plugins/layui/layui.js"></script>
+<script src="${request.contextPath}/static/plugins/cronGen/cronGen_core.js"></script>
+<script src="${request.contextPath}/static/plugins/cronGen/cronGen<#if I18n.admin_i18n?default('')?length gt 0 >_${I18n.admin_i18n}</#if>.js"></script>
 <script>
-    layui.use(function(){
-        var laydate = layui.laydate;
-        // 渲染
-        laydate.render({
-            elem: '#initTurnDate',
-            max: 0
-        });
+    $(function () {
+        $("input[name='cronExpression']").cronGen({});
     });
 
 </script>

@@ -1,5 +1,6 @@
 package com.nbatch.job.handler.dialect;
 
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.nbatch.job.core.biz.model.ExecuteDbToFileParam;
@@ -17,7 +18,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_UPDATE_SQL_FAIL;
+import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_SQL_FAIL;
 
 /**
  * @description: Gauss数据库方言
@@ -31,7 +32,7 @@ public class OpenGaussDialect implements BaseDialect {
     public long fileToDb(Connection connection, ExecuteFileToDbParam param) throws Exception {
         // 这里使用连接代理关闭，重置线程池属性
         if (connection == null || connection.isClosed()) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "连接已关闭");
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), "连接已关闭");
         }
         boolean originalAutoCommit = connection.getAutoCommit();
         try (
@@ -103,14 +104,14 @@ public class OpenGaussDialect implements BaseDialect {
             CopyManager copyManager = new CopyManager(baseConnection);
             return copyManager.copyIn(copySql, batchStream);
         } catch (IOException e) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), e);
         }
     }
 
     @Override
     public boolean dbToFile(Connection connection, ExecuteDbToFileParam param) throws Exception {
         try (
-                FileOutputStream fileOutputStream = new FileOutputStream(param.getFilePath())
+                OutputStream fileOutputStream = FileUtil.getOutputStream(param.getFilePath())
         ) {
             // 使用 unwrap 获取底层 BaseConnection
             BaseConnection baseConnection = connection.unwrap(BaseConnection.class);
@@ -147,6 +148,12 @@ public class OpenGaussDialect implements BaseDialect {
     public int executeUpdate(Connection connection, String sql) throws Exception {
         log.info("执行 update sql：{}", sql);
         return SpecialSqlUtil.executeUpdate(connection, sql);
+    }
+
+    @Override
+    public int executeUpdate(Connection connection, String sql, int timeout) throws Exception {
+        log.info("执行 update 附带超时时间 sql ：{}", sql);
+        return SpecialSqlUtil.executeUpdate(connection, sql, timeout);
     }
 
     /**
@@ -194,16 +201,16 @@ public class OpenGaussDialect implements BaseDialect {
      */
     private String generateFileToDbExecuteSql(ExecuteFileToDbParam param) {
         if (param == null) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "gbase文件导入db,参数不能为空");
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), "gbase文件导入db,参数不能为空");
         }
         if (StrUtil.isBlank(param.getImportTableName())) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "gbase文件导入db,表名不能为空");
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), "gbase文件导入db,表名不能为空");
         }
         if (StrUtil.isBlank(param.getFileCode())) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "gbase文件导入db,文件编码不能为空");
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), "gbase文件导入db,文件编码不能为空");
         }
         if (StrUtil.isBlank(param.getImportTableFiled())) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "gbase文件导入db,表列属性不能为空");
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), "gbase文件导入db,表列属性不能为空");
         }
         String importSql = "COPY {tableName} ({tableField}) FROM STDIN ignore_extra_data " +
                 "fill_missing_fields 'multi' delimiter '{sep}' encoding" +
@@ -216,7 +223,7 @@ public class OpenGaussDialect implements BaseDialect {
         if (StrUtil.isNotEmpty(param.getSep())) {
             paramMap.put("sep", param.getSep());
         } else {
-            paramMap.put("sep", "|");
+            paramMap.put("sep", " | ");
         }
         importSql = StrUtil.format(importSql, paramMap);
 
@@ -228,28 +235,19 @@ public class OpenGaussDialect implements BaseDialect {
      */
     private String generateDbToFileExecuteSql(ExecuteDbToFileParam param) {
         if (param == null) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "gbasedb导入文件,参数不能为空");
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), "gbasedb导入文件,参数不能为空");
         }
         if (StrUtil.isBlank(param.getExportTableName())) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "gbasedb导入文件,表名不能为空");
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), "gbasedb导入文件,表名不能为空");
         }
         if (StrUtil.isBlank(param.getFileCode())) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "gbasedb导入文件,文件编码不能为空");
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), "gbasedb导入文件,文件编码不能为空");
         }
         StringBuilder executeSql = new StringBuilder();
         executeSql.append("select ");
         if (StrUtil.isNotBlank(param.getExportTableFiled())) {
             // 使用字符串替换函数去除字段中的换行符和分隔符 |
             executeSql.append(param.getExportTableFiled());
-//            String[] fields = param.getExportTableFiled().split(",");
-//            for (int i = 0; i < fields.length; i++) {
-//                String field = fields[i].trim();
-//                // 使用REPLACE函数去除换行符和分隔符 |
-//                executeSql.append("REPLACE(REPLACE(REPLACE(").append(field).append(", E'\\n', ''), E'\\r', ''), '|', '') AS ").append(field);
-//                if (i < fields.length - 1) {
-//                    executeSql.append(", ");
-//                }
-//            }
         } else {
             executeSql.append("*");
         }
@@ -257,12 +255,10 @@ public class OpenGaussDialect implements BaseDialect {
         if (StrUtil.isNotBlank(param.getExportTableCondition())) {
             executeSql.append(" where ").append(param.getExportTableCondition());
         }
+        String sep = StrUtil.isNotBlank(param.getSep()) ? param.getSep() : "|";
 
-        return "COPY (" + executeSql + ") TO STDOUT delimiter '" + (StrUtil.isEmpty(param.getSep()) ? "|" : param.getSep())
-                + "' encoding '"
+        return "COPY (" + executeSql + ") TO STDOUT delimiter '" + sep + "' encoding '"
                 + param.getFileCode() + "' csv;";
 
     }
-
-
 }

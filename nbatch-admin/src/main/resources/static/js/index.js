@@ -2,6 +2,7 @@
  * Created by nbatch on 17/4/24.
  */
 $(function () {
+    var lineChart;
 
     // filter Time
     var rangesConf = {};
@@ -36,6 +37,7 @@ $(function () {
         startDate: rangesConf[I18n.daterangepicker_ranges_recent_week][0] ,
         endDate: rangesConf[I18n.daterangepicker_ranges_recent_week][1]
     }, function (start, end, label) {
+        $('#filterTimeText').text(start.format('MM-DD') + ' - ' + end.format('MM-DD'));
         freshChartDate(start, end);
     });
     freshChartDate(rangesConf[I18n.daterangepicker_ranges_recent_week][0], rangesConf[I18n.daterangepicker_ranges_recent_week][1]);
@@ -57,8 +59,7 @@ $(function () {
             dataType : "json",
             success : function(data){
                 if (data.code == 200) {
-                    lineChartInit(data)
-                    pieChartInit(data);
+                    lineChartInit(data);
                 } else {
                     layer.open({
                         title: I18n.system_tips ,
@@ -76,9 +77,6 @@ $(function () {
      */
     function lineChartInit(data) {
         var option = {
-               title: {
-                   text: I18n.job_dashboard_date_report
-               },
                tooltip : {
                    trigger: 'axis',
                    axisPointer: {
@@ -118,90 +116,38 @@ $(function () {
                    {
                        name:I18n.joblog_status_suc,
                        type:'line',
-                       stack: 'Total',
-                       areaStyle: {normal: {}},
+                       smooth: true,
+                       symbolSize: 6,
                        data: data.content.triggerDayCountSucList
                    },
                    {
                        name:I18n.joblog_status_fail,
                        type:'line',
-                       stack: 'Total',
-                       label: {
-                           normal: {
-                               show: true,
-                               position: 'top'
-                           }
-                       },
-                       areaStyle: {normal: {}},
+                       smooth: true,
+                       symbolSize: 6,
                        data: data.content.triggerDayCountFailList
                    },
                    {
                        name:I18n.joblog_status_running,
                        type:'line',
-                       stack: 'Total',
-                       areaStyle: {normal: {}},
+                       smooth: true,
+                       symbolSize: 6,
                        data: data.content.triggerDayCountRunningList
                    }
                ],
                 color:['#00A65A', '#c23632', '#F39C12']
         };
 
-        var lineChart = echarts.init(document.getElementById('lineChart'));
+        if (!lineChart) {
+            lineChart = echarts.init(document.getElementById('lineChart'));
+        }
         lineChart.setOption(option);
     }
 
-    /**
-     * pie Chart Init
-     */
-    function pieChartInit(data) {
-        var option = {
-            title : {
-                text: I18n.job_dashboard_rate_report ,
-                /*subtext: 'subtext',*/
-                x:'center'
-            },
-            tooltip : {
-                trigger: 'item',
-                formatter: "{b} : {c} ({d}%)"
-            },
-            legend: {
-                orient: 'vertical',
-                left: 'left',
-                data: [I18n.joblog_status_suc, I18n.joblog_status_fail, I18n.joblog_status_running ]
-            },
-            series : [
-                {
-                    //name: '分布比例',
-                    type: 'pie',
-                    radius : '55%',
-                    center: ['50%', '60%'],
-                    data:[
-                        {
-                            name:I18n.joblog_status_suc,
-                            value:data.content.triggerCountSucTotal
-                        },
-                        {
-                            name:I18n.joblog_status_fail,
-                            value:data.content.triggerCountFailTotal
-                        },
-                        {
-                            name:I18n.joblog_status_running,
-                            value:data.content.triggerCountRunningTotal
-                        }
-                    ],
-                    itemStyle: {
-                        emphasis: {
-                            shadowBlur: 10,
-                            shadowOffsetX: 0,
-                            shadowColor: 'rgba(0, 0, 0, 0.5)'
-                        }
-                    }
-                }
-            ],
-            color:['#00A65A', '#c23632', '#F39C12']
-        };
-        var pieChart = echarts.init(document.getElementById('pieChart'));
-        pieChart.setOption(option);
-    }
+    $(window).on('resize', function () {
+        if (lineChart) {
+            lineChart.resize();
+        }
+    });
 
 });

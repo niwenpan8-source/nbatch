@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -18,25 +19,17 @@ import java.util.Date;
 @AllArgsConstructor
 public class RunNodeLogDetailParam {
 
-    /**
-     * 作业id
-     */
+    /** 详细日志标识。 */
+    private String detailLogId;
+
+    /** 作业标识 */
     private String workId;
 
-    /**
-     * 运行作业id
-     */
-    private String runWorkId;
+    /** 节点执行日志标识 */
+    private String nodeLogId;
 
-    /**
-     * 作业节点id
-     */
+    /** 步骤标识 */
     private String nodeId;
-
-    /**
-     * 运行作业节点id
-     */
-    private String runNodeId;
 
     /**
      * 翻牌日期
@@ -49,13 +42,13 @@ public class RunNodeLogDetailParam {
     private String handleMsg;
 
     /**
-     * 执行-时间
+     * 回调时间
      */
-    private Date executeTime;
+    private LocalDateTime executeTime;
 
     /**
      * 执行-时间
      */
-    private Date callBackTime;
+    private LocalDateTime callBackTime;
 
 }

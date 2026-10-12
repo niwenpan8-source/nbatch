@@ -1,334 +1,253 @@
 # nbatch
 
-nbatch is a Spring Boot based batch job scheduling and workflow orchestration platform. It extends the XXL-JOB scheduling model with workflow, job node, node dependency, node runtime status, and node-level log lifecycle capabilities. It is suitable for multi-node batch processing, cross-database data processing, script execution, and file import/export tasks.
+[中文](README.md)
 
-## Features
+`nbatch` is a Spring Boot batch scheduling and workflow orchestration platform. The admin center schedules, models, and controls workflows, while executors run SQL, scripts, stored procedures, and file tasks. It is suited to daily batches, data synchronization, file exchange, and other data-processing workloads that need explicit dependencies, traceable logs, and recoverable execution.
 
-- Admin center: job management, executor management, scheduling logs, GLUE code editing, and user management.
-- Workflow orchestration: batch workflow management, node management, dependency configuration, and runtime batch status tracking.
-- Node types: script, stored procedure, stored procedure returning string, SQL execution, file-to-database import, database-to-file export, and Bean mode.
-- Node statuses: waiting, dispatched, running, completed, failed, skipped, and stopped.
-- Rerun support: rerun latest batch, recover failed/stopped nodes, rerun a specific node and affected downstream nodes.
-- Stop support: stop the latest workflow run and send stop commands to executors for running nodes.
-- Execution lifecycle: executor registration, task dispatching, node log callback, node event pull and ACK, including `STARTED`, `SUCCESS`, `FAIL`, and `STOPPED` events.
-- Data source support: MySQL, OpenGauss/Gauss, GBase, ClickHouse, and related JDBC adapters on the executor side.
+## Contents
 
-## Modules
+- [Highlights](#highlights)
+- [Quick Start](#quick-start)
+- [Operating Guide](#operating-guide)
+- [Execution and Retries](#execution-and-retries)
+- [Logs and Troubleshooting](#logs-and-troubleshooting)
+- [Production Guidance](#production-guidance)
+
+## Highlights
+
+- **Visual workflow design**: Manage groups, nodes, and dependencies on a flow canvas with drag-and-drop, zoom, auto-layout, and dependency maintenance.
+- **Multiple node types**: Script, SQL, stored procedure, stored procedure with return value, file-to-database, database-to-file, and Spring Bean nodes.
+- **Execution control**: Stop workflows, rerun workflows or nodes, rerun a node with its downstream dependents, and recover failed or stopped workflows.
+- **Operational visibility**: Dashboard metrics, date trends, latest failed nodes, and logs filterable by workflow, group, node, and creation time.
+- **Bulk maintenance**: Import, export, and template download for workflows. Workbooks separate groups, each node type, and dependencies into sheets with example rows.
+- **Data sources and files**: Executor-side support for openGauss, GaussDB, ClickHouse, GBase, and common import/export and compression tasks.
+
+## Architecture
 
 ```text
-nbatch
-├── nbatch-core      # Scheduling core, executor communication, enums, callback models, thread models
-├── nbatch-handler   # Node handlers for SQL, scripts, stored procedures, file import/export, and stop handling
-├── nbatch-admin     # Web admin center, pages, APIs, scheduling threads, runtime job management
-├── nbatch-consumer  # Sample executor application that registers to admin and executes concrete jobs
-└── sql/init         # MySQL initialization script
+Browser
+  |
+  v
+nbatch-admin (8095/nbatch) <--- registration / dispatch / callback ---> nbatch-consumer (8097)
+  |                                                                       |
+  v                                                                       v
+MySQL metadata                                                     business data sources
+                                                                    files / scripts / beans
 ```
 
-## Tech Stack
-
-- JDK 8
-- Spring Boot 2.7.18
-- Spring Framework 5.3.31
-- MyBatis-Plus 3.5.15
-- Freemarker
-- Netty
-- Hutool
-- MySQL 8.x
-- OpenGauss / GBase / ClickHouse JDBC drivers
+| Module | Responsibility |
+| --- | --- |
+| `nbatch-core` | Scheduling, executor communication, shared models, and callbacks. |
+| `nbatch-handler` | Node handlers and file utilities. |
+| `nbatch-admin` | Admin UI, workflow design, scheduling, execution control, and log queries. |
+| `nbatch-consumer` | Sample executor that registers with the admin center and runs nodes. |
+| `sql` | Bootstrap and upgrade scripts. |
 
 ## Prerequisites
 
-1. Install JDK 8.
-2. Install Maven 3.6+.
-3. Prepare a MySQL database.
-4. Copy the environment variable sample file and update `.env` for your local environment:
+- JDK 8
+- Maven 3.6+
+- MySQL 8.x for admin metadata
+- Optional: openGauss, GaussDB, ClickHouse, and GBase as required by nodes
+
+The project uses Spring Boot 2.7.18, MyBatis-Plus, Freemarker, Netty, Hutool, and EasyExcel. GBase and GaussDB drivers may not be available from public Maven repositories. When using the bundled driver files, install them as described in [config/lib/mvn-add.txt](config/lib/mvn-add.txt), or resolve them from an internal repository.
+
+## Quick Start
+
+### 1. Create local configuration
+
+```powershell
+Copy-Item .env.example .env
+```
+
+On Linux/macOS:
 
 ```bash
 cp .env.example .env
 ```
 
-5. Import the initialization script:
+At minimum, verify these settings:
+
+- `NBATCH_ADMIN_DATASOURCE_URL`, `NBATCH_ADMIN_DATASOURCE_USERNAME`, and `NBATCH_ADMIN_DATASOURCE_PASSWORD`
+- `NBATCH_ACCESS_TOKEN`: it must match on the admin center and every executor; replace the default in production
+- `NBATCH_ADMIN_ADDRESSES`: the address of the running admin center
+- `NBATCH_EXECUTOR_IP` and `NBATCH_EXECUTOR_PORT`: an executor address reachable from the admin center
+
+See [.env.example](.env.example) for all settings. Do not commit `.env`, which contains credentials and tokens.
+
+### 2. Initialize the database
+
+Create a MySQL database and import the bootstrap script:
 
 ```bash
 mysql -u <username> -p <database> < sql/init/mysql.sql
 ```
 
-6. If you need to compile `nbatch-handler` or `nbatch-consumer`, make sure your local Maven repository can resolve `com.gbase:gbase-jdbc:9.5.0.7`. This driver is usually not available in Maven Central, so you may need to install it locally or publish it to a private repository.
+The bootstrap script drops and recreates tables, so use it only for a new environment. For an existing installation, back up the database and apply scripts from [sql/update](sql/update) in version order.
+
+### 3. Build and start
 
 ```bash
-mvn install:install-file \
-  -Dfile=/path/to/gbase-jdbc-9.5.0.7.jar \
-  -DgroupId=com.gbase \
-  -DartifactId=gbase-jdbc \
-  -Dversion=9.5.0.7 \
-  -Dpackaging=jar
-```
-
-## Configuration
-
-### Admin Center
-
-Configuration file: `nbatch-admin/src/main/resources/application.yml`
-
-Sensitive settings are loaded from the root `.env` file. Key variables:
-
-```properties
-NBATCH_ADMIN_DATASOURCE_URL=jdbc:mysql://localhost:3306/batch_dev?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
-NBATCH_ADMIN_DATASOURCE_USERNAME=<mysql-username>
-NBATCH_ADMIN_DATASOURCE_PASSWORD=<mysql-password>
-NBATCH_ACCESS_TOKEN=default_token
-```
-
-After startup, open: `http://localhost:8095/nbatch`
-
-### Login Password Encryption
-
-- The admin center generates a 2048-bit RSA key pair in memory on startup.
-- The frontend obtains the public key from `/rsaPublicKey` and encrypts password fields with `RSA-OAEP/SHA-256`.
-- The backend receives Base64 ciphertext, decrypts it with the private key, and then continues using the existing MD5 storage and verification logic.
-- Frontend encryption depends on the browser WebCrypto API. HTTPS is recommended for production. Local `localhost` development usually works directly.
-
-### Executor
-
-Configuration file: `nbatch-consumer/src/main/resources/application.yml`
-
-Sensitive settings are loaded from the root `.env` file. Key variables:
-
-```properties
-NBATCH_ADMIN_ADDRESSES=http://localhost:8095/nbatch
-NBATCH_ACCESS_TOKEN=default_token
-NBATCH_EXECUTOR_APP_NAME=nbatch-consumer
-NBATCH_EXECUTOR_PORT=9999
-NBATCH_GAUSS_DATASOURCE_URL=jdbc:opengauss://localhost:5432/postgres?currentSchema=public&serverTimezone=Asia/Shanghai
-NBATCH_GAUSS_DATASOURCE_USERNAME=<gauss-username>
-NBATCH_GAUSS_DATASOURCE_PASSWORD=<gauss-password>
-```
-
-`admin.addresses` and `accessToken` must match the admin center configuration.
-
-## Build and Run
-
-### Compile Admin Center Only
-
-```bash
-mvn -pl nbatch-admin -am -DskipTests compile
-```
-
-### Package Admin Center
-
-```bash
+# Admin center
 mvn -pl nbatch-admin -am -DskipTests package
-```
-
-Run:
-
-```bash
 java -jar nbatch-admin/target/nbatch-admin-2.5.0.jar
-```
 
-### Compile the Full Project
-
-```bash
-mvn -DskipTests compile
-```
-
-If the full build fails because `com.gbase:gbase-jdbc:9.5.0.7` is missing, install or configure the corresponding JDBC driver first.
-
-### Start Executor
-
-```bash
+# Sample executor
 mvn -pl nbatch-consumer -am -DskipTests package
 java -jar nbatch-consumer/target/nbatch-consumer-2.5.0.jar
 ```
 
-## Basic Usage
+> **Local sign-in**
+>
+> - Admin URL: `http://localhost:8095/nbatch`
+> - User: `admin`
+> - Password: `123456`
 
-1. Start `nbatch-admin`.
-2. Start `nbatch-consumer` and wait for automatic executor registration.
-3. Confirm that `nbatch-consumer` is online in executor management.
-4. Create nodes in job node management and configure node type, execution content, database type, retry policy, and other settings.
-5. Create a workflow in batch workflow management and configure node dependencies.
-6. Create a scheduled task in task management and bind it to the workflow.
-7. Start the task and inspect scheduling logs, runtime job status, and runtime node logs.
+Change the default administrator password after first sign-in. In production, also replace the access token and use HTTPS.
 
-## Workflow and Node Concepts
+## Configuration Reference
 
-- Workflow: a group of orchestrated job nodes.
-- Job node: the actual execution unit, such as SQL, script, stored procedure, file import, or file export.
-- Node dependency: `current node -> dependency node`; a node can run only after its dependency node is completed.
-- Runtime job: one workflow run batch.
-- Runtime node: a node instance in a specific runtime job.
+Applications read the repository-root `.env` at startup through `spring.config.import=optional:file:.env[.properties]`.
 
-## Rerun Semantics
+| Area | Variables | Purpose |
+| --- | --- | --- |
+| Admin data source | `NBATCH_ADMIN_DATASOURCE_*` | MySQL metadata connection. |
+| API authentication | `NBATCH_ACCESS_TOKEN` | Shared admin/executor token. |
+| Executor registration | `NBATCH_ADMIN_ADDRESSES`, `NBATCH_EXECUTOR_*` | Admin address, executor identity, address, port, and directories. |
+| File processing | `NBATCH_CONSUMER_FILE_*` | Executor temporary and remote-file directories. |
+| Business data sources | `NBATCH_OPEN_GAUSS_*`, `NBATCH_GAUSS_DB_*`, `NBATCH_CLICKHOUSE_*`, `NBATCH_GBASE_*` | Configure only those used by nodes. |
+| Mail and retention | `NBATCH_MAIL_*`, `NBATCH_*_LOG_RETENTION_DAYS` | Alert email and log cleanup. |
 
-- Full rerun: reset all nodes in the latest runtime batch and execute the whole batch again.
-- Recovery rerun: reset only failed, stopped, dispatched, or running nodes; completed and skipped nodes keep their original statuses.
-- Node rerun: reset a specific runtime node. If other nodes depend on it, all affected downstream nodes are reset together.
-- Initialization rerun: locate and reset the current runtime snapshot by the workflow initialization turn date. If the runtime snapshot does not exist, it is automatically initialized.
+After the executor starts, confirm in **Executor Management** that it is registered and at least one instance is online. Nodes cannot be dispatched to an offline executor.
 
-## Stop and Failure Strategies
+## Operating Guide
 
-- Stop workflow: stop the latest runtime job from the batch workflow list. Only waiting, dispatched, or running runtime jobs can be stopped.
-- Stop scope: the admin center marks the runtime job as stopped and marks waiting, dispatched, and running runtime nodes as stopped.
-- Executor stop: the admin center sends a `stopRunNode` command by executor address. The executor stops queued or running nodes by `nodeLogId` and reports a `STOPPED` event.
-- Skip strategy: when a node uses the `skip` failure strategy, a failed node is marked as skipped and downstream dependencies can continue.
-- Stop strategy: when a node uses `stop`, or when retries are exhausted, the node and runtime job enter the stopped status.
-- Retry strategy: when a node uses `retry`, the remaining retry count is decreased and the node returns to waiting. After retries are exhausted, stop handling is applied.
+### First-Use Path
 
-## Change Report: 2026-06-11
+1. Start the admin center and executor, then confirm at least one executor is online in **Executor Management**.
+2. Create a workflow in **Job Workflow** and configure its executor and schedule.
+3. Open **Workflow Configuration**, add groups and nodes, then create dependencies on the canvas.
+4. Start the schedule, or run an eligible rerun, and confirm the result in runtime logs.
 
-### Backend
+> **Start Schedule** allows future triggers only. Use **Stop Current Batch** to request a stop for dispatched or running nodes.
 
-- Added workflow initialization turn date field `init_turn_date`. The first run prioritizes this date and defaults to the current day when it is not configured.
-- Added rerun support based on initialization turn date for both workflow and node entries, while keeping existing full rerun, recovery rerun, and node rerun semantics unchanged.
-- Added workflow detail and job node detail APIs returning basic information, run count, and runtime history for frontend detail dialogs.
-- Changed job node deletion to cascade cleanup of related node data, including dependencies, runtime nodes, execution logs, detail logs, import configurations, and export configurations.
-- Added creation-time range query support for execution logs and detail logs. Added `create_time` to detail logs and populated it during callback writes.
-- Changed the node status lifecycle to executor local event-log pull mode. After successful dispatch, the server first marks nodes as `dispatched`; after actual executor start, a `STARTED` event updates them to `running`.
-- Removed old node status callback branches and kept normal task callback plus runtime node detail log callback.
-- Refactored `RunNodeHelper` to centralize runtime job status synchronization, runtime node log construction, and timeout constants.
+### Page Entry Points
 
-### Frontend
+| Page | Daily purpose |
+| --- | --- |
+| Operations Dashboard | Review running nodes, recent failures, completions, executor count, and latest failed nodes. |
+| Executor Management | Confirm that an executor is registered and has an online address. Check here first when a workflow cannot dispatch. |
+| Job Workflow | Create workflows, configure schedules, and enter the canvas and execution controls. |
 
-- Simplified the batch workflow list to key fields, added workflow-name search, and opened detail dialogs by clicking workflow names.
-- Simplified the job node list to key fields, added node-name search, and opened detail dialogs by clicking node names.
-- Added latest runtime status filtering on the job node list, supporting waiting, dispatched, running, completed, and failed.
-- Detail dialogs show basic information at the top and runtime history plus run-count statistics below.
-- Added creation-time range pickers to execution logs and detail logs. Long text logs are truncated by default and can be viewed fully from details.
-- Replaced dependency dropdowns with a node selection dialog, supporting search by node name or ID, single current node selection, multiple dependency selection, and selected-item echo.
-- Added node-name search on the dependency relation list for large workflows with hundreds of nodes.
+Create a workflow in **Job Workflow**, configure its executor and schedule type with a Cron/interval, then enter its **Workflow Configuration** page from the workflow list.
 
-### Database
+### Top Toolbar
 
-- `sql/init/mysql.sql` has been updated with new fields.
-- Added upgrade script: `sql/upgrade/20260611_add_init_turn_date.sql`.
-- Added upgrade script: `sql/upgrade/20260611_add_log_detail_create_time.sql`.
+Workflow configuration groups actions by use case:
 
-### Verification
+| Area | Actions | Description |
+| --- | --- | --- |
+| Objects | Add Node, Add Group | New objects are added to the current canvas. The default group can be renamed but cannot be deleted. |
+| Run | Rerun Workflow, Stop Current Batch, Recover Rerun | Only actions allowed by the current runtime state are shown; turn-card workflows can select a rerun date. |
+| Logs | Runtime Logs | Opens the current workflow by default. A selected group or node is used as the initial scope. |
+| Schedule | Start Schedule, Stop Schedule | Controls future scheduled triggers only; it does not stop dispatched nodes. |
+| Workflow Configuration | Download Template, Import Workflow Configuration, Export Workflow Configuration | Bulk-maintains groups, nodes, and dependencies. |
+| Canvas | Refresh and Auto-layout | Reloads workflow data and arranges the canvas by dependency. |
 
-- Verified with: `mvn -pl nbatch-admin -am -DskipTests compile`.
-- Full compilation still requires local Maven resolution for `com.gbase:gbase-jdbc:9.5.0.7`.
+Adding, editing, or deleting an object, and creating or deleting a dependency, is persisted after the operation succeeds. There is no separate workflow-save action.
 
-## Change Report: 2026-06-13
+### Canvas Operations
 
-### Backend
+1. Search the canvas by node or group name/ID. Selecting a result centers the canvas and selects the object.
+2. Click `[-]` or `[+]` in a group header to collapse or expand it. Dragging a group moves its contained nodes together; dragging a node changes only that node position, and the group expands as needed.
+3. Drag from the connection point on the right of a node or group to a target node or group to create a `predecessor -> successor` dependency. The successor can run only after its predecessor completes.
+4. Select a node, group, or dependency line to show the nearby action buttons. Nodes provide logs, rerun, edit, and delete; groups provide logs, edit, and delete; a dependency line can only be deleted.
+5. Use `-` and `+` to zoom, or the fit-canvas button to restore a useful view. For large workflows, use search and fit-to-canvas to navigate.
 
-- Added runtime statuses `skipped` and `stopped`; runtime job details now include skipped and stopped counts.
-- Added API for stopping the latest runtime job: `/work/stopLatestRunWork`. Only waiting, dispatched, and running latest runtime jobs can be stopped.
-- Added executor stop command chain: `StopRunNodeParam`, `ExecutorBiz.stopRunNode`, `/stopRunNode` RPC entry, and `RunNodeStopHandler`.
-- Executor thread pools can stop queued or running `BatchRunnable` instances by `nodeLogId` and write `STOPPED` local events.
-- Runtime node event pulling now handles `STOPPED`; the admin center updates runtime node logs, node end time, and runtime job status after receiving it.
-- Unified failure handling for `stop`, `skip`, and `retry`: skipped nodes satisfy downstream dependencies, while stopped nodes prevent the runtime job from continuing.
-- Recovery rerun now supports stopped status and resets only failed, stopped, dispatched, or running nodes.
+All deletion actions require confirmation. Deleting a group also removes its contained nodes, related dependencies, and node file configuration. Deleting a node removes its dependencies and file configuration. Groups can participate in dependencies.
 
-### Frontend
+![Workflow editor](docs/images/operation-flow-editor.png)
 
-- Added `Stop Workflow` to the batch workflow action menu for the latest runtime job.
-- Added `Skipped` and `Stopped` statistics columns to workflow runtime history.
-- Adapted workflow and node status labels for skipped and stopped statuses.
-- Updated recovery rerun confirmation text to cover failed, stopped, or stuck nodes; completed and skipped nodes are not rerun.
+### Import and Export
 
-### Verification
+The workflow import/export entry provides template download, definition export, and workbook import. Workbook sheets are ordered as follows:
 
-- This README update was prepared based on code changes in commit `406648e`.
-- Recommended verification before commit: `mvn -pl nbatch-admin -am -DskipTests compile`.
+1. `Groups`
+2. One sheet for each node type
+3. `Dependencies`
 
-## Change Report: 2026-06-27
+Each node-type sheet includes only its required fields, and templates include example rows. Before import, verify node IDs, group assignments, data-source names, executable content, and dependency references.
 
-### Frontend
+## Execution and Retries
 
-- Added workflow dependency preview on the dependency configuration page. It generates a node dependency flowchart from the current page state, including unsaved changes.
-- The flowchart uses the direction `dependency node → current node`, and supports mouse-wheel zoom, canvas dragging, and reset.
-- Node names are displayed in up to three lines to reduce truncation. Font size follows zoom changes while keeping a minimum readable size.
-- Right-clicking a node shows both upstream dependencies and downstream dependent nodes, and related nodes can be clicked for quick positioning.
-- Canvas dragging is bounded so the flowchart cannot be moved too far away from the visible area.
-- Fixed preview button initialization timing and context-menu JavaScript string composition issues to avoid frontend runtime errors such as `openFlowPreview is not defined`.
+Every node dispatch creates an independent execution log. Turn-card workflows advance by business date, while sequential workflows keep the current workflow execution state. When a node has multiple attempts, use `turnDate` with creation, start, and end times to identify the relevant attempt.
 
-### Executor and File Handling
+| Action | Purpose |
+| --- | --- |
+| Stop Current Batch | Sends stop requests to executors and waits for active nodes to close. Stop Schedule does not stop the current batch. |
+| Rerun Workflow | Runs from the top **Run** menu, resets current workflow execution state, and executes the current definition. A turn-card workflow can select a rerun date. |
+| Rerun Node | Runs from the selected-node action buttons after checking that downstream nodes are not active. |
+| Rerun Dependents | Select this option in the node-rerun dialog to reset the selected node and downstream dependents, preventing stale downstream results. |
+| Recover Rerun | Runs from the top **Run** menu and continues failed or stopped nodes without rerunning completed or skipped nodes. |
 
-- Refactored `JobHandlerHolder`, `BatchRunnable`, and thread-pool utilities to reduce coupling between node execution, latch release, and exception handling.
-- Optimized `NbatchFileUtil` compression and decompression logic, including directory compression support and less duplicated validation code.
-- Optimized CSV first-line reading and column-count detection in `NbatchCsvUtil`, `GBaseDialect`, and `MysqlDialect`, with compatibility for BOM, invisible characters, and blank lines.
-- Optimized the file import flow to reduce duplicated processing between first-line detection and actual import.
-- Adjusted `SpecialSqlUtil` special SQL handling and removed unnecessary execution-time output.
+Retry settings are interpreted as follows:
 
-### Verification
+- `-1`: retry indefinitely
+- `0`: do not retry
+- Greater than `0`: maximum number of retries
 
-- Verified FreeMarker template parsing and rendered JavaScript syntax.
-- Verified with: `mvn -pl nbatch-admin -am -DskipTests compile`.
-- Full compilation still requires local Maven resolution for `com.gbase:gbase-jdbc:9.5.0.7`.
+Ensure that nodes that write data, send files, or invoke external services are idempotent before rerunning them. Forced recovery bypasses confirmation that old tasks have exited; use it only after assessing the risk of concurrent execution.
 
-## Change Report: 2026-06-30
+### Common Actions
 
-### Runtime Snapshot and Rerun
+| Goal | Recommended action |
+| --- | --- |
+| Pause future scheduled triggers | Top **Schedule** -> **Stop Schedule**. |
+| Stop an active batch | Top **Run** -> **Stop Current Batch**. |
+| Run one node again | Select the node -> nearby action bar -> rerun. |
+| Run a node and downstream nodes again | Select the node -> rerun -> select **Rerun Dependents**. |
+| Continue failed or stopped nodes | Top **Run** -> **Recover Rerun**. |
 
-- Runtime jobs now reuse the current snapshot model. Turn-date workflows and sequence workflows no longer continuously create new `runwork` and `runnode` records after each run; the current runtime snapshot is reset after the previous run completes.
-- Runtime nodes are synchronized from template nodes. Newly added template nodes are backfilled into runtime nodes, while removed template nodes cascade cleanup of runtime nodes, node logs, and detail logs.
-- Full rerun, initialization-date rerun, recovery rerun, and specific-node rerun now reset the current snapshot consistently to avoid unbounded runtime-batch growth.
-- Rerun and retry still create a new `nodeLogId` execution log, preserving multiple execution attempts under the same `runNodeId`.
+## Logs and Troubleshooting
 
-### Logs and Scheduling
+### Query Logs
 
-- Runtime node logs and detail logs now include `turn_date`, allowing pages and queries to distinguish different turn dates.
-- `ExecuteNodeParam`, `RunNodeLogEventParam`, and `RunNodeLogDetailParam` now carry the turn date so dispatch, executor events, and detail logs stay consistent.
-- Executor duplicate-trigger detection now uses `triggerKey` instead of only `logId`. Workflow dispatch builds the key from `runWorkId + turnDate + runNodeId` to avoid false duplicate detection across node batches under the same schedule log.
-- Dispatch failures, executor event pulling, and unclosed-log handling continue to keep independent `nodeLogId` records for each dispatch attempt.
+Open **Runtime Logs** from the top toolbar. When a group or node is selected before opening it, that object becomes the initial scope. In the log dialog, search and select a scope from the **Log Scope** input:
 
-### Retry and Frontend
+- Select the current workflow to query all node logs for that workflow.
+- Select a group to query logs for nodes in that group.
+- Select a node to query only that node.
+- Clear **Log Scope** to return to all logs for the current workflow.
 
-- Node retry count now supports `-1` for unlimited retries, `0` for no retry, and positive values for a maximum retry count.
-- Job node add and update pages explain the `-1` unlimited-retry rule and allow `-1` as the minimum input value.
-- Dependency saving now uses an in-memory relation map on the frontend as the source of truth, avoiding lost relations caused by filtering, DOM cache, or render state.
-- The dependency save API now performs transactional diff updates: it deletes only removed relations, inserts only new relations, and filters duplicate, self-dependent, or invalid node relations.
+Creation time can be combined with the scope filter. Both execution and detail logs show node name, node ID, turn date, status, execution message, and actual execution times. Hover long messages to view their full content.
 
-### Database
+### Investigation Order
 
-- `sql/init/mysql.sql` now includes `nbatch_job_work_run_node_log.turn_date` and `nbatch_job_work_run_node_log_detail.turn_date`.
-- Added upgrade script: `sql/upgrade/20260630_add_run_node_log_turn_date.sql`.
+1. Check the Operations Dashboard for a latest failed node or running node.
+2. In Executor Management, confirm that the target executor is online and reachable from the admin center.
+3. Open the node runtime log and confirm the latest status, `turnDate`, creation time, and execution message.
+4. Then check target data-source connectivity, file-directory permissions, disk capacity, and network access.
 
-### Verification
+![Operations dashboard](docs/images/operation-dashboard.png)
 
-- Verified with: `mvn -pl nbatch-admin -am -DskipTests compile`.
-- Verified with: `git diff --check`; only Git line-ending warnings remain.
-
-## Common Development Commands
+## Development and Verification
 
 ```bash
-# Compile admin and dependencies
-mvn -pl nbatch-admin -am -DskipTests compile
+# Build all modules
+mvn clean package -DskipTests
 
-# Package admin
-mvn -pl nbatch-admin -am -DskipTests package
-
-# Compile core
-mvn -pl nbatch-core -DskipTests compile
-
-# Full compile
-mvn -DskipTests compile
+# Run admin tests; the root POM skips tests by default, so override it explicitly
+mvn -pl nbatch-admin -am -Dmaven.test.skip=false test
 ```
 
-## Directory Notes
+## Production Guidance
 
-```text
-nbatch-admin/src/main/java/com/nbatch/job/admin
-├── controller      # Web controllers
-├── service         # Business services
-├── core/helper     # Scheduling, runtime job, and runtime node helper logic
-├── core/thread     # Scheduling, registry, and log callback threads
-├── mapper          # MyBatis-Plus mappers
-└── core/domain     # PO, VO, Param, and other data models
+- Never use the default user, default access token, or example data-source passwords in production.
+- Use HTTPS and restrict network and operational access to the admin center, executors, databases, and file directories.
+- Back up MySQL metadata regularly. Validate upgrade scripts and rehearse upgrades in a test environment first.
+- Restrict file-task directories, capacity, and accepted sources. Do not pass untrusted paths directly to executors.
+- Use least-privilege accounts for SQL, scripts, and stored procedures, and implement business-level idempotency before enabling reruns.
 
-nbatch-admin/src/main/resources
-├── templates       # Freemarker pages
-├── static          # Frontend static assets
-├── sqlmap          # MyBatis XML mappings
-└── application.yml # Admin configuration
-```
+## License
 
-## Notes
-
-- Do not commit production database accounts, passwords, or internal IPs. The root `.env` file is ignored by `.gitignore`; keep only `.env.example` in commits.
-- `nbatch-admin` can be compiled and run independently. `nbatch-handler` and `nbatch-consumer` depend on several database drivers; resolve Maven dependencies first when drivers are missing.
-- The executor port `nbatch.job.executor.port` must be accessible from the admin center.
-- The admin center and executor must use the same `accessToken`.
-- The initialization SQL may contain demo data. Clean or replace it as needed for production environments.
+This project is released under the repository [LICENSE](LICENSE).

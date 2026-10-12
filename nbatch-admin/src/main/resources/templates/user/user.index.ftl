@@ -7,7 +7,7 @@
   	<link rel="stylesheet" href="${request.contextPath}/static/adminlte/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css">
     <title>${I18n.admin_name}</title>
 </head>
-<body class="hold-transition skin-blue sidebar-mini <#if cookieMap?exists && cookieMap["xxljob_adminlte_settings"]?exists && "off" == cookieMap["xxljob_adminlte_settings"].value >sidebar-collapse</#if>">
+<body class="hold-transition skin-blue sidebar-mini list-page <#if cookieMap?exists && cookieMap["xxljob_adminlte_settings"]?exists && "off" == cookieMap["xxljob_adminlte_settings"].value >sidebar-collapse</#if>">
 <div class="wrapper">
 	<!-- header -->
 	<@netCommon.commonHeader />
@@ -34,7 +34,7 @@
 							</div>
 						</div>
 						<div class="box-body">
-							<div class="row">
+							<div class="row list-filter-row">
 								<div class="col-xs-12 col-md-3">
 									<div class="input-group">
 										<span class="input-group-addon">${I18n.user_role}</span>
@@ -62,9 +62,10 @@
 	    	
 			<div class="row">
 				<div class="col-xs-12">
-					<div class="box">
-			            <div class="box-body" >
-			              	<table id="user_list" class="table table-bordered table-striped" width="100%" >
+					<div class="box list-table-box">
+						<div class="box-body" >
+							<div class="table-responsive-wrap">
+							<table id="user_list" class="table table-bordered table-striped" width="100%" >
 				                <thead>
 					            	<tr>
                                         <th name="id" >ID</th>
@@ -78,6 +79,7 @@
 				                <tbody></tbody>
 				                <tfoot></tfoot>
 							</table>
+							</div>
 						</div>
 					</div>
 				</div>

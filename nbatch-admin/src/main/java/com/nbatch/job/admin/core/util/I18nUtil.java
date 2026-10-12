@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * i18n util
+ * 国际化工具类
  *
  * @author Mr.ni
  */
@@ -28,11 +28,11 @@ public class I18nUtil {
             return prop;
         }
         try {
-            // build i18n prop
+            // 构建国际化属性文件路径
             String i18n = JobAdminConfig.getAdminConfig().getI18n();
             String i18nFile = MessageFormat.format("i18n/message_{0}.properties", i18n);
 
-            // load prop
+            // 加载属性文件
             Resource resource = new ClassPathResource(i18nFile);
             EncodedResource encodedResource = new EncodedResource(resource, "UTF-8");
             prop = PropertiesLoaderUtils.loadProperties(encodedResource);
@@ -43,7 +43,7 @@ public class I18nUtil {
     }
 
     /**
-     * get val of i18n key
+     * 根据国际化键获取文本
      *
      * @param key i18n key
      */
@@ -52,7 +52,7 @@ public class I18nUtil {
     }
 
     /**
-     * get mult val of i18n mult key, as json,该方法用于前端取配置
+     * 根据国际化多语言键获取 JSON 文本，供前端读取配置
      *
      * @param keys i18n keys
      */

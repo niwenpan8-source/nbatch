@@ -12,9 +12,15 @@ public class StopRunNodeParam implements Serializable {
 
     private static final long serialVersionUID = 42L;
 
-    private String runWorkId;
-
-    private List<String> runNodeIdList;
-
     private List<String> nodeLogIdList;
+
+    /**
+     * 执行器线程池 key，当前与节点类型保持一致；为空时兼容旧逻辑扫描所有线程池。
+     */
+    private String threadPoolKey;
+
+    /**
+     * 是否同时中断正在运行的任务；false 时只移除等待队列中的任务。
+     */
+    private Boolean stopRunning;
 }

@@ -9,9 +9,9 @@ import java.io.StringWriter;
 public class ThrowableUtil {
 
     /**
-     * parse error to string
+     * 将异常转换为字符串
      *
-     * @param e  error
+     * @param e 异常对象
      */
     public static String toString(Throwable e) {
         StringWriter stringWriter = new StringWriter();

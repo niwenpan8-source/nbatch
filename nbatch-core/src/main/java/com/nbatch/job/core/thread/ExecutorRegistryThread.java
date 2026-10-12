@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.concurrent.TimeUnit;
 
 /**
- * beat thread, send registry info.
+ * 心跳线程，定期发送执行器注册信息。
  * @author Mr.ni
  * @date 2025/11/05
  */
@@ -32,18 +32,18 @@ public class ExecutorRegistryThread {
     private volatile boolean toStop = false;
     public void start(final String appName, final String address){
 
-        // valid
+        // 校验配置
         if (StrUtil.isBlank(appName)) {
-            log.warn(">>>>>>>>>>> job, executor registry config fail, appName is null.");
+            log.warn(">>>>>>>>>>> 作业执行器注册配置失败，appName 为空。");
             return;
         }
         if (BatchJobExecutor.getAdminBizList() == null) {
-            log.warn(">>>>>>>>>>> job, executor registry config fail, adminAddresses is null.");
+            log.warn(">>>>>>>>>>> 作业执行器注册配置失败，管理端地址为空。");
             return;
         }
 
         registryThread = new Thread(() -> {
-            // registry
+            // 注册执行器
             while (!toStop) {
                 try {
                     RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), appName, address);
@@ -52,13 +52,13 @@ public class ExecutorRegistryThread {
                             ReturnT<String> registryResult = adminBiz.registry(registryParam);
                             if (registryResult!=null && HandleCodeConstant.HANDLE_CODE_SUCCESS == registryResult.getCode()) {
                                 registryResult = ReturnT.SUCCESS;
-                                log.debug(">>>>>>>>>>> job registry success, registryParam:{}, registryResult:{}", registryParam, registryResult);
+                                log.debug(">>>>>>>>>>> 作业注册成功，注册参数：{}，注册结果：{}", registryParam, registryResult);
                                 break;
                             } else {
-                                log.info(">>>>>>>>>>> job registry fail, registryParam:{}, registryResult:{}", registryParam, registryResult);
+                                log.info(">>>>>>>>>>> 作业注册失败，注册参数：{}，注册结果：{}", registryParam, registryResult);
                             }
                         } catch (Throwable e) {
-                            log.info(">>>>>>>>>>> job registry error, registryParam:{}", registryParam, e);
+                            log.info(">>>>>>>>>>> 作业注册异常，注册参数：{}", registryParam, e);
                         }
 
                     }
@@ -75,12 +75,12 @@ public class ExecutorRegistryThread {
                     }
                 } catch (Throwable e) {
                     if (!toStop) {
-                        log.warn(">>>>>>>>>>> job, executor registry thread interrupted, error msg:{}", ExceptionUtil.getRootCauseMessage(e));
+                        log.warn(">>>>>>>>>>> 作业执行器注册线程被中断，错误信息：{}", ExceptionUtil.getRootCauseMessage(e));
                     }
                 }
             }
 
-            // registry remove
+            // 注销执行器
             try {
                 RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), appName, address);
                 for (AdminBiz adminBiz: BatchJobExecutor.getAdminBizList()) {
@@ -88,14 +88,14 @@ public class ExecutorRegistryThread {
                         ReturnT<String> registryResult = adminBiz.registryRemove(registryParam);
                         if (registryResult!=null && HandleCodeConstant.HANDLE_CODE_SUCCESS == registryResult.getCode()) {
                             registryResult = ReturnT.SUCCESS;
-                            log.info(">>>>>>>>>>> job registry-remove success, registryParam:{}, registryResult:{}", registryParam, registryResult);
+                            log.info(">>>>>>>>>>> 作业注销成功，注册参数：{}，注销结果：{}", registryParam, registryResult);
                             break;
                         } else {
-                            log.info(">>>>>>>>>>> job registry-remove fail, registryParam:{}, registryResult:{}", registryParam, registryResult);
+                            log.info(">>>>>>>>>>> 作业注销失败，注册参数：{}，注销结果：{}", registryParam, registryResult);
                         }
                     } catch (Throwable e) {
                         if (!toStop) {
-                            log.info(">>>>>>>>>>> job registry-remove error, registryParam:{}", registryParam, e);
+                            log.info(">>>>>>>>>>> 作业注销异常，注册参数：{}", registryParam, e);
                         }
 
                     }
@@ -106,7 +106,7 @@ public class ExecutorRegistryThread {
                     log.error(e.getMessage(), e);
                 }
             }
-            log.info(">>>>>>>>>>> job, executor registry thread destroy.");
+            log.info(">>>>>>>>>>> 作业执行器注册线程已销毁。");
 
         });
         registryThread.setDaemon(true);
@@ -117,7 +117,7 @@ public class ExecutorRegistryThread {
     public void toStop() {
         toStop = true;
 
-        // interrupt and wait
+        // 中断线程并等待结束
         if (registryThread != null) {
             registryThread.interrupt();
             try {

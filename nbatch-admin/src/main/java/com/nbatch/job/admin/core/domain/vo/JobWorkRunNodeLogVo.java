@@ -28,13 +28,17 @@ public class JobWorkRunNodeLogVo {
      * 作业id
      */
     private String workId;
-    private String runWorkId;
 
     /**
      * 作业节点id
      */
     private String nodeId;
-    private String runNodeId;
+
+    /**
+     * 节点名称，仅用于日志展示。
+     */
+    private String nodeName;
+
     private Date turnDate;
 
     /**
@@ -51,6 +55,16 @@ public class JobWorkRunNodeLogVo {
      * 创建时间
      */
     private LocalDateTime createTime;
+
+    /**
+     * 实际开始执行时间
+     */
+    private LocalDateTime executeStartTime;
+
+    /**
+     * 实际结束执行时间
+     */
+    private LocalDateTime executeEndTime;
 
     /**
      * 回调时间

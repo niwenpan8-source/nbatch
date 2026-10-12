@@ -33,12 +33,12 @@ public interface JobHandlerConstant {
     String TODAY_TABLE_SUFFIX = "_today";
 
     /**
-     * sql字段替换正则
+     * SQL 字段替换正则表达式
      */
     String SQL_FIELD_REPLACE_REGEX = "#\\{([^}]+)\\}";
 
     /**
-     * sql字段字符
+     * SQL 字段占位符
      */
     String SQL_FIELD_REPLACE_CHAR = "?";
 

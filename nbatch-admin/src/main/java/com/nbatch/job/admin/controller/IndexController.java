@@ -2,9 +2,9 @@ package com.nbatch.job.admin.controller;
 
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.admin.controller.annotation.PermissionLimit;
-import com.nbatch.job.admin.core.util.RsaPasswordUtil;
+import com.nbatch.job.admin.core.util.PasswordTransferUtil;
 import com.nbatch.job.admin.service.impl.LoginService;
-import com.nbatch.job.admin.service.IJobService;
+import com.nbatch.job.admin.service.IJobWorkService;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.constant.HandleCodeConstant;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
@@ -26,22 +26,21 @@ import java.util.Date;
 import java.util.Map;
 
 /**
- * index controller
+ * 首页控制器
  * @author Mr.ni 2015-12-19 16:13:16
  */
 @Controller
 public class IndexController {
 
 	@Resource
-	private IJobService jobService;
+	private IJobWorkService jobService;
 	@Resource
 	private LoginService loginService;
 	@Resource
-	private RsaPasswordUtil rsaPasswordUtil;
+	private PasswordTransferUtil passwordTransferUtil;
 
 	@RequestMapping("/")
 	public String index(Model model) {
-
 		Map<String, Object> dashboardMap = jobService.dashboardInfo();
 		model.addAllAttributes(dashboardMap);
 		return "index";
@@ -67,7 +66,7 @@ public class IndexController {
 	@ResponseBody
 	@PermissionLimit(limit=false)
 	public ReturnT<String> loginDo(HttpServletRequest request, HttpServletResponse response, String userName, String password, String ifRemember){
-		ReturnT<String> decryptResult = rsaPasswordUtil.decryptPassword(password);
+		ReturnT<String> decryptResult = passwordTransferUtil.decodePassword(password);
 		if (decryptResult.getCode() != HandleCodeConstant.HANDLE_CODE_SUCCESS) {
 			return decryptResult;
 		}
@@ -75,13 +74,6 @@ public class IndexController {
 		return loginService.login(request, response, userName, decryptResult.getContent(), ifRem);
 	}
 
-	@RequestMapping(value="rsaPublicKey", method=RequestMethod.GET)
-	@ResponseBody
-	@PermissionLimit(limit=false)
-	public ReturnT<Map<String, String>> rsaPublicKey(){
-		return ReturnT.success(rsaPasswordUtil.publicKeyInfo());
-	}
-	
 	@RequestMapping(value="logout", method=RequestMethod.POST)
 	@ResponseBody
 	@PermissionLimit(limit=false)

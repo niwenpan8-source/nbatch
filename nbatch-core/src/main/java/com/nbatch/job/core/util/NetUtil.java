@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 
 /**
- * net util
+ * 网络工具类
  *
  * @author Mr.ni 2017-11-29 17:00:25
  */
@@ -14,7 +14,7 @@ import java.net.ServerSocket;
 public class NetUtil {
 
     /**
-     * find avaliable port
+     * 查找可用端口
      *
      * @param defaultPort default port
      */
@@ -39,7 +39,7 @@ public class NetUtil {
     }
 
     /**
-     * check port used
+     * 检查端口是否已被占用
      *
      * @param port  端口
      */
@@ -48,7 +48,7 @@ public class NetUtil {
         try (ServerSocket ignored = new ServerSocket(port)) {
             used = false;
         } catch (IOException e) {
-            log.info(">>>>>>>>>>> job, port[{}] is in use.", port);
+            log.info(">>>>>>>>>>> 作业端口 [{}] 已被占用。", port);
             used = true;
         }
         return used;

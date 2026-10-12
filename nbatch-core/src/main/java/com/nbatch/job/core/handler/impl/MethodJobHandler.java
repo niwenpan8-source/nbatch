@@ -27,7 +27,7 @@ public class MethodJobHandler extends IJobHandler {
     public void execute() throws Exception {
         Class<?>[] paramTypes = method.getParameterTypes();
         if (paramTypes.length > 0) {
-            // method-param can not be primitive-types
+            // 方法参数不能使用基本类型
             method.invoke(target, new Object[paramTypes.length]);
         } else {
             method.invoke(target);

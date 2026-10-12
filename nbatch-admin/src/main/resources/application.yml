@@ -99,8 +99,14 @@ mybatis-plus:
     use-generated-keys: true
     #是否开启驼峰命名转换
     map-underscore-to-camel-case: true
+jasypt:
+  encryptor:
+    property:
+      prefix: ENC(
+      suffix: )
+    bean: ymlStringEncryptorHelper
 
-xxl:
+nbatch:
   job:
     accessToken: ${NBATCH_ACCESS_TOKEN:default_token}
     timeout: ${NBATCH_ADMIN_TIMEOUT:3}
@@ -110,4 +116,3 @@ xxl:
         max: 200
       slow:
         max: 100
-    logretentiondays: ${NBATCH_ADMIN_LOG_RETENTION_DAYS:30}

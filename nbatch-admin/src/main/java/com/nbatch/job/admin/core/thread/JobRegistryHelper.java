@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
- * job registry instance
+ * 作业注册管理线程
  * @author Mr.ni 2016-10-02 19:10:24
  */
 @Slf4j
@@ -44,7 +44,7 @@ public class JobRegistryHelper {
 
     public void start() {
 
-        // for registry or remove
+        // 处理注册和注销
         registryOrRemoveThreadPool = new ThreadPoolExecutor(
                 2,
                 10,
@@ -54,87 +54,28 @@ public class JobRegistryHelper {
                 r -> new Thread(r, "job, admin JobRegistryMonitorHelper-registryOrRemoveThreadPool-" + r.hashCode()),
                 (r, executor) -> {
                     r.run();
-                    log.warn(">>>>>>>>>>> job, registry or remove too fast, match threadpool rejected handler(run now).");
+                    log.warn(">>>>>>>>>>> 作业注册或注销请求过快，线程池已满，立即执行当前请求。");
                 });
 
-        // for monitor
+        // 处理注册监控
         registryMonitorThread = new Thread(() -> {
             while (!toStop) {
                 try {
-                    // auto registry group
-                    List<JobGroupPo> groupList = JobAdminConfig.getAdminConfig().getJobGroupMapper()
-                            .selectList(Wrappers.lambdaQuery(JobGroupPo.class)
-                                    .eq(JobGroupPo::getAddressType, 0)
-                                    .orderByDesc(JobGroupPo::getAppName)
-                                    .orderByDesc(JobGroupPo::getTitle)
-                                    .orderByAsc(JobGroupPo::getId));
-                    if (groupList != null && !groupList.isEmpty()) {
-
-                        // remove dead address (admin/executor)
-                        List<JobRegistryPo> jobRegistryList = JobAdminConfig.getAdminConfig().getJobRegistryMapper()
-                                .selectList(Wrappers.lambdaQuery(JobRegistryPo.class)
-                                        .lt(JobRegistryPo::getUpdateTime, DateUtil.offsetSecond(DateUtil.date(), -RegistryConfig.DEAD_TIMEOUT)));
-                        if (CollUtil.isNotEmpty(jobRegistryList)) {
-                            List<String> ids = jobRegistryList.stream().map(JobRegistryPo::getId).collect(Collectors.toList());
-                            JobAdminConfig.getAdminConfig().getJobRegistryMapper().deleteBatchIds(ids);
-                        }
-
-                        // fresh online address (admin/executor)
-                        HashMap<String, List<String>> appAddressMap = new HashMap<>();
-
-                        List<JobRegistryPo> list = JobAdminConfig.getAdminConfig().getJobRegistryMapper()
-                                .selectList(Wrappers.lambdaQuery(JobRegistryPo.class)
-                                        .ge(JobRegistryPo::getUpdateTime, DateUtil.offsetSecond(DateUtil.date(), -RegistryConfig.DEAD_TIMEOUT)));
-                        if (list != null) {
-                            for (JobRegistryPo item : list) {
-                                if (RegistryConfig.RegistType.EXECUTOR.name().equals(item.getRegistryGroup())) {
-                                    String appName = item.getRegistryKey();
-                                    List<String> registryList = appAddressMap.get(appName);
-                                    if (registryList == null) {
-                                        registryList = new ArrayList<>();
-                                    }
-
-                                    if (!registryList.contains(item.getRegistryValue())) {
-                                        registryList.add(item.getRegistryValue());
-                                    }
-                                    appAddressMap.put(appName, registryList);
-                                }
-                            }
-                        }
-
-                        // fresh group address
-                        for (JobGroupPo group : groupList) {
-                            List<String> registryList = appAddressMap.get(group.getAppName());
-                            String addressListStr = null;
-                            if (registryList != null && !registryList.isEmpty()) {
-                                Collections.sort(registryList);
-                                StringBuilder addressList = new StringBuilder();
-                                for (String item : registryList) {
-                                    addressList.append(item).append(StrPool.COMMA);
-                                }
-                                addressListStr = addressList.toString();
-                                addressListStr = addressListStr.substring(0, addressListStr.length() - 1);
-                            }
-                            group.setAddressList(addressListStr);
-                            group.setUpdateTime(new Date());
-
-                            JobAdminConfig.getAdminConfig().getJobGroupMapper().updateById(group);
-                        }
-                    }
+                    JobAdminConfig.getAdminConfig().getRegistryAddressHelper().refreshGroupRegistryAddress();
                 } catch (Throwable e) {
                     if (!toStop) {
-                        log.error(">>>>>>>>>>> job, job registry monitor thread error:", e);
+                        log.error(">>>>>>>>>>> 作业注册监控线程发生异常：", e);
                     }
                 }
                 try {
                     TimeUnit.SECONDS.sleep(RegistryConfig.BEAT_TIMEOUT);
                 } catch (Throwable e) {
                     if (!toStop) {
-                        log.error(">>>>>>>>>>> job, job registry monitor thread error:", e);
+                        log.error(">>>>>>>>>>> 作业注册监控线程发生异常：", e);
                     }
                 }
             }
-            log.info(">>>>>>>>>>> job, job registry monitor thread stop");
+            log.info(">>>>>>>>>>> 作业注册监控线程已停止。");
         });
         registryMonitorThread.setDaemon(true);
         registryMonitorThread.setName("job, admin JobRegistryMonitorHelper-registryMonitorThread");
@@ -144,10 +85,10 @@ public class JobRegistryHelper {
     public void toStop() {
         toStop = true;
 
-        // stop registryOrRemoveThreadPool
+        // 停止注册和注销线程池
         registryOrRemoveThreadPool.shutdownNow();
 
-        // stop monitir (interrupt and wait)
+        // 停止监控线程并等待结束
         registryMonitorThread.interrupt();
         try {
             registryMonitorThread.join();
@@ -161,35 +102,16 @@ public class JobRegistryHelper {
 
     public ReturnT<String> registry(RegistryParam registryParam) {
 
-        // valid
+        // 校验注册参数
         if (!StringUtils.hasText(registryParam.getRegistryGroup())
                 || !StringUtils.hasText(registryParam.getRegistryKey())
                 || !StringUtils.hasText(registryParam.getRegistryValue())) {
-            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "Illegal Argument.");
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "注册参数不合法。");
         }
 
-        // async execute
+        // 异步执行注册
         registryOrRemoveThreadPool.execute(() -> {
-            // 0-fail; 1-save suc; 2-update suc;
-            JobRegistryPo jobRegistryPo = new JobRegistryPo().setRegistryGroup(registryParam.getRegistryGroup())
-                    .setRegistryKey(registryParam.getRegistryKey())
-                    .setRegistryValue(registryParam.getRegistryValue())
-                    .setUpdateTime(new Date());
-            LambdaQueryWrapper<JobRegistryPo> jobRegistryWrapper = Wrappers.lambdaQuery(JobRegistryPo.class)
-                    .eq(JobRegistryPo::getRegistryKey, registryParam.getRegistryKey())
-                    .eq(JobRegistryPo::getRegistryValue, registryParam.getRegistryValue())
-                    .eq(JobRegistryPo::getRegistryGroup, registryParam.getRegistryGroup());
-            Long registryNum = JobAdminConfig.getAdminConfig().getJobRegistryMapper().selectCount(jobRegistryWrapper);
-            int ret;
-            if (registryNum > 0) {
-                ret = JobAdminConfig.getAdminConfig().getJobRegistryMapper().update(jobRegistryPo, jobRegistryWrapper);
-            } else {
-                ret = JobAdminConfig.getAdminConfig().getJobRegistryMapper().insert(jobRegistryPo);
-            }
-            if (ret == 1) {
-                // fresh (add)
-                freshGroupRegistryInfo(registryParam);
-            }
+            JobAdminConfig.getAdminConfig().getRegistryAddressHelper().executeRegistry(registryParam);
         });
 
         return ReturnT.SUCCESS;
@@ -197,31 +119,19 @@ public class JobRegistryHelper {
 
     public ReturnT<String> registryRemove(RegistryParam registryParam) {
 
-        // valid
+        // 校验注册参数
         if (!StringUtils.hasText(registryParam.getRegistryGroup())
                 || !StringUtils.hasText(registryParam.getRegistryKey())
                 || !StringUtils.hasText(registryParam.getRegistryValue())) {
-            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "Illegal Argument.");
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "注册参数不合法。");
         }
 
-        // async execute
+        // 异步执行注册操作
         registryOrRemoveThreadPool.execute(() -> {
-            int ret = JobAdminConfig.getAdminConfig().getJobRegistryMapper().delete(Wrappers.lambdaQuery(JobRegistryPo.class)
-                    .eq(JobRegistryPo::getRegistryGroup, registryParam.getRegistryGroup())
-                    .eq(JobRegistryPo::getRegistryKey, registryParam.getRegistryKey())
-                    .eq(JobRegistryPo::getRegistryValue, registryParam.getRegistryValue()));
-            if (ret > 0) {
-                // fresh (delete)
-                freshGroupRegistryInfo(registryParam);
-            }
+            JobAdminConfig.getAdminConfig().getRegistryAddressHelper().executeRemoveRegistry(registryParam);
         });
 
         return ReturnT.SUCCESS;
     }
-
-    private void freshGroupRegistryInfo(RegistryParam registryParam) {
-        // Under consideration, prevent affecting core tables
-    }
-
 
 }

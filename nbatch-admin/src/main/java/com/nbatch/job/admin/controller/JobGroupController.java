@@ -12,14 +12,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nbatch.job.admin.controller.annotation.PermissionLimit;
 import com.nbatch.job.admin.core.domain.param.JobGroupParam;
 import com.nbatch.job.admin.core.domain.po.JobGroupPo;
-import com.nbatch.job.admin.core.domain.po.JobInfoPo;
 import com.nbatch.job.admin.core.domain.po.JobRegistryPo;
+import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.admin.mapper.IJobGroupMapper;
-import com.nbatch.job.admin.mapper.IJobInfoMapper;
+import com.nbatch.job.admin.mapper.IJobWorkMapper;
 import com.nbatch.job.admin.mapper.IJobRegistryMapper;
 import com.nbatch.job.core.biz.model.ReturnT;
-import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.enums.RegistryConfig;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * job group controller
+ * 作业组控制器
  *
  * @author Mr.ni
  */
@@ -44,7 +43,7 @@ import java.util.Map;
 public class JobGroupController {
 
     @Resource
-    public IJobInfoMapper jobInfoMapper;
+    public IJobWorkMapper jobWorkMapper;
     @Resource
     public IJobGroupMapper jobGroupMapper;
     @Resource
@@ -70,7 +69,7 @@ public class JobGroupController {
         Page<JobGroupPo> jobGroupPage = new Page<>((start / length) + 1, length);
         Page<JobGroupPo> list = jobGroupMapper.selectPage(jobGroupPage, jobGroupQuery);
 
-        // package result
+        // 封装返回结果
         Map<String, Object> maps = new HashMap<>();
         // 总记录数
         maps.put("recordsTotal", list.getTotal());
@@ -85,7 +84,7 @@ public class JobGroupController {
     @ResponseBody
     @PermissionLimit(adminuser = true)
     public ReturnT<String> save(JobGroupParam jobGroupParam) {
-        // valid
+        // 校验参数
         if (StrUtil.isBlank(jobGroupParam.getAppName())) {
             return new ReturnT<>(500, (I18nUtil.getString("system_please_input") + "AppName"));
         }
@@ -117,7 +116,7 @@ public class JobGroupController {
             }
         }
 
-        // process
+        // 处理请求
         jobGroupParam.setUpdateTime(new Date());
         JobGroupPo jobGroupPo = BeanUtil.toBean(jobGroupParam, JobGroupPo.class);
         int ret = jobGroupMapper.insert(jobGroupPo);
@@ -129,7 +128,7 @@ public class JobGroupController {
     @ResponseBody
     @PermissionLimit(adminuser = true)
     public ReturnT<String> update(JobGroupParam jobGroupParam) {
-        // valid
+        // 校验参数
         if (StrUtil.isBlank(jobGroupParam.getAppName())) {
             return new ReturnT<>(500, (I18nUtil.getString("system_please_input") + "AppName"));
         }
@@ -165,7 +164,7 @@ public class JobGroupController {
             }
         }
 
-        // process
+        // 处理请求
         jobGroupParam.setUpdateTime(new Date());
         JobGroupPo jobGroupPo = BeanUtil.toBean(jobGroupParam, JobGroupPo.class);
         int ret = jobGroupMapper.updateById(jobGroupPo);
@@ -201,10 +200,9 @@ public class JobGroupController {
     @ResponseBody
     @PermissionLimit(adminuser = true)
     public ReturnT<String> remove(int id) {
-        // valid
-        Long count = jobInfoMapper.selectCount(Wrappers.lambdaQuery(JobInfoPo.class)
-                .eq(JobInfoPo::getJobGroup, id)
-                .eq(JobInfoPo::getTriggerStatus, -1));
+        // 校验参数
+        Long count = jobWorkMapper.selectCount(Wrappers.lambdaQuery(JobWorkPo.class)
+                .eq(JobWorkPo::getJobGroup, id));
         if (count > 0) {
             return new ReturnT<>(500, I18nUtil.getString("jobgroup_del_limit_0"));
         }
@@ -216,14 +214,6 @@ public class JobGroupController {
 
         int ret = jobGroupMapper.deleteById(id);
         return (ret > 0) ? ReturnT.SUCCESS : ReturnT.FAIL;
-    }
-
-    @RequestMapping("/loadById")
-    @ResponseBody
-    @PermissionLimit(adminuser = true)
-    public ReturnT<JobGroupPo> loadById(int id) {
-        JobGroupPo jobGroup = jobGroupMapper.selectById(id);
-        return jobGroup != null ? new ReturnT<>(jobGroup) : new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, null);
     }
 
 }

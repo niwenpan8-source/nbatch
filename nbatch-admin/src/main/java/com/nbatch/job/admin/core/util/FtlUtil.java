@@ -7,7 +7,7 @@ import freemarker.template.TemplateHashModel;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * ftl util
+ * Freemarker 模板工具类
  *
  * @author Mr.ni
  */

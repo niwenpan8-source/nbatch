@@ -1,5 +1,7 @@
 package com.nbatch.job.handler.handler.impl;
 
+import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -12,19 +14,21 @@ import com.nbatch.job.handler.handler.JobNodeHandlerAdapter;
 import com.nbatch.job.handler.helper.DialectHelper;
 import com.nbatch.job.handler.utils.NbatchFileUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.java.Log;
 
 import java.io.File;
 
 import static com.nbatch.job.core.enums.NodeTypeEnum.NODE_TYPE_DB_TO_FILE;
 import static com.nbatch.job.handler.constant.JobHandlerConstant.FILE_TYPE_SUFFIX_EXECUTE;
-import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_UPDATE_SQL_FAIL;
+import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_SQL_FAIL;
 
 /**
- * @description: 文件导入数据库处理
+ * @description: 数据库导出文件处理
  * @author: Mr.ni
  * @date: 2025/11/19
  */
 @RequiredArgsConstructor
+@Log
 public class DbToFileHandler implements JobNodeHandlerAdapter {
 
     private final DialectHelper dialectHelper;
@@ -38,9 +42,28 @@ public class DbToFileHandler implements JobNodeHandlerAdapter {
 
     @Override
     public void execute(ExecuteNodeParam nodeParam) throws Exception {
+
+        log.info("\n\n======================开始执行数据库导出文件节点，表名称【"+nodeParam.getExecuteDbToFileParam().getExportTableName()+"】======================\n\n");
+        long startTime = System.currentTimeMillis();
+
         ExecuteDbToFileParam param = nodeParam.getExecuteDbToFileParam();
-        // 数据库导入到文件操作文件夹
-        String dbToFilePath = handlerPropertiesConstant.getTempPath();
+        // 数据库导出到文件操作文件夹
+        String dbToFilePath = handlerPropertiesConstant.getPath();
+
+        String exportTableCondition;
+        if (nodeParam.getExecuteDbToFileParam().getAllUpdate() == 0 && StrUtil.contains(param.getExportTableCondition(), "#{date}")) {
+            exportTableCondition = param.getExportTableCondition();
+            if (nodeParam.getTurnDate() == null) {
+                throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), "导出SQL包含#{date}占位符，但turnDate为空");
+            }
+            String formattedDate = DateUtil.format(nodeParam.getTurnDate(), DatePattern.NORM_DATE_FORMAT);
+            exportTableCondition = StrUtil.replace(exportTableCondition, "#{date}", "'" + formattedDate + "'");
+            param.setExportTableCondition(exportTableCondition);
+            log.info("导出SQL条件替换#{date}后：" + exportTableCondition);
+        } else {
+            param.setExportTableCondition(param.getExportTableCondition());
+        }
+
         JSONObject replaceObj;
         if (StrUtil.isBlank(param.getFileName())) {
             replaceObj = JSONUtil.parseObj(param.getFileNameParam());
@@ -53,12 +76,9 @@ public class DbToFileHandler implements JobNodeHandlerAdapter {
         // 生成最终文件的中间文件
         String executeFinishGenerateFileName = finishGenerateFileName + FILE_TYPE_SUFFIX_EXECUTE;
 
-        // 创建文件
         setFilePath(param, executeFinishGenerateFileName);
-        // gauss 数据库没有文件的话他会报错
-        // FileUtil.touch(param.getFilePath());
         // 导出相关文件
-        boolean flag = dialectHelper.getDialect(nodeParam.getDbType())
+        dialectHelper.getDialect(nodeParam.getDbType())
                 .dbToFile(dialectHelper.getConnection(nodeParam.getDbType()), param);
 
         File file = new File(dbToFilePath, executeFinishGenerateFileName);
@@ -68,18 +88,19 @@ public class DbToFileHandler implements JobNodeHandlerAdapter {
         if (param.getIsGzip() == 1) {
             NbatchFileUtil.gzipFile(dbToFilePath + File.separator + finishGenerateFileName);
         }
-        if (!flag) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "数据库导出文件失败");
-        }
+
+        long endTime = System.currentTimeMillis();
+        nodeParam.pushRunNodeLogDetailCallback(StrUtil.format("【数据库导出文件节点执行耗时】：{}ms", endTime - startTime));
+        log.info("\n\n======================结束执行数据库导出文件节点，文件名称【"+file.getName()+"】======================\n\n");
     }
 
     /**
      * 对于正在导出的文件
      */
     private void setFilePath(ExecuteDbToFileParam param, String executeFinishGenerateFilePath) {
-        String dbExportFilePath = handlerPropertiesConstant.getTempPath()
+        String dbExportFilePath = handlerPropertiesConstant.getPath()
                 + File.separator + executeFinishGenerateFilePath;
-        String remoteDbExportFilePath = handlerPropertiesConstant.getRemoteTempPath()
+        String remoteDbExportFilePath = handlerPropertiesConstant.getRemotePath()
                 + File.separator + executeFinishGenerateFilePath;
         param.setFilePath(dbExportFilePath);
         param.setRemoteFilePath(remoteDbExportFilePath);

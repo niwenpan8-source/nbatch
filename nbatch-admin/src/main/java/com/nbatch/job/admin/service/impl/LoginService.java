@@ -38,7 +38,7 @@ public class LoginService {
     private JobUserPo parseToken(String tokenHex){
         JobUserPo jobUserPo = null;
         if (tokenHex != null) {
-            // username_password(md5)
+            // 用户名和密码（MD5）
             String tokenJson = new String(new BigInteger(tokenHex, 16).toByteArray());
             jobUserPo = JacksonUtil.readValue(tokenJson, JobUserPo.class);
         }
@@ -50,12 +50,12 @@ public class LoginService {
 
     public ReturnT<String> login(HttpServletRequest request, HttpServletResponse response, String username, String password, boolean ifRemember){
 
-        // param
+        // 校验参数
         if (StrUtil.isBlank(username) || StrUtil.isBlank(password)){
             return new ReturnT<>(500, I18nUtil.getString("login_param_empty"));
         }
 
-        // valid passowrd
+        // 校验密码
         JobUserPo jobUser = jobUserMapper.selectOne(Wrappers.lambdaQuery(JobUserPo.class)
                 .eq(JobUserPo::getUsername, username));
         if (jobUser == null) {
@@ -68,13 +68,13 @@ public class LoginService {
 
         String loginToken = makeToken(jobUser);
 
-        // do login
+        // 执行登录
         CookieUtil.set(response, LOGIN_IDENTITY_KEY, loginToken, ifRemember);
         return ReturnT.SUCCESS;
     }
 
     /**
-     * logout
+     * 退出登录
      *
      * @param request request
      * @param response response
@@ -85,7 +85,7 @@ public class LoginService {
     }
 
     /**
-     * logout
+     * 退出登录
      *
      * @param request request
      */

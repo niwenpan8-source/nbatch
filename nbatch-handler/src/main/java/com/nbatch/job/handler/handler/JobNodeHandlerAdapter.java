@@ -22,4 +22,10 @@ public interface JobNodeHandlerAdapter {
      */
     void execute(ExecuteNodeParam nodeParam) throws Exception;
 
+    /**
+     * 请求停止节点占用的外部资源，普通 Bean 默认依赖线程中断协作退出。
+     */
+    default void stop(ExecuteNodeParam nodeParam) {
+    }
+
 }

@@ -14,14 +14,14 @@ public class JobHandlerPropertiesConstant {
     /**
      * 文件临时路径
      */
-    @Value("${nbatch.job.file.tempPath}")
-    private String tempPath;
+    @Value("${nbatch.job.file.path}")
+    private String path;
 
     /**
      * 文件远程临时路径
      */
-    @Value("${nbatch.job.file.remoteTempPath}")
-    private String remoteTempPath;
+    @Value("${nbatch.job.file.remotePath}")
+    private String remotePath;
 
 
 }

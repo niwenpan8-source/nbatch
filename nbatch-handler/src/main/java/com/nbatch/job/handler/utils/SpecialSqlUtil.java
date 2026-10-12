@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 
 import static com.nbatch.job.handler.constant.JobHandlerConstant.SQL_FIELD_REPLACE_CHAR;
 import static com.nbatch.job.handler.constant.JobHandlerConstant.SQL_FIELD_REPLACE_REGEX;
-import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_UPDATE_SQL_FAIL;
+import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_SQL_FAIL;
 
 /**
  * @description: 特殊sql运行处理
@@ -41,7 +41,7 @@ public class SpecialSqlUtil {
         try (PreparedStatement preparedStatement = conn.prepareStatement(boundSql)) {
             executeFlag = preparedStatement.execute();
         } catch (SQLException e) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), e);
         } finally {
             // 这里使用连接代理关闭，重置线程池属性
             if (conn != null && !conn.isClosed()) {
@@ -60,23 +60,26 @@ public class SpecialSqlUtil {
             executeFlag = preparedStatement.execute();
         } catch (SQLException e) {
             conn.close();
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), e);
         }
         return executeFlag;
     }
 
     /**
-     * 执行更新sql
+     * 执行更新sql,带有超时时间
      */
-    public static int executeUpdate(Connection conn, String boundSql) throws SQLException {
+    public static int executeUpdate(Connection conn, String boundSql, Integer timeout) throws SQLException {
         int executeNum;
         log.info("执行更新sql：{}", boundSql);
         try (PreparedStatement preparedStatement = conn.prepareStatement(boundSql)) {
             // 设置查询超时时间，避免长时间挂起
+            if (timeout != null) {
+                preparedStatement.setQueryTimeout(timeout);
+            }
             executeNum = preparedStatement.executeUpdate();
         } catch (SQLException e) {
             log.error("执行更新SQL失败: {}", e.getMessage());
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), e);
         } finally {
             // 这里使用连接代理关闭，重置线程池属性
             if (conn != null && !conn.isClosed()) {
@@ -84,6 +87,13 @@ public class SpecialSqlUtil {
             }
         }
         return executeNum;
+    }
+
+    /**
+     * 执行更新sql
+     */
+    public static int executeUpdate(Connection conn, String boundSql) throws SQLException {
+        return executeUpdate(conn, boundSql, null);
     }
 
     /**
@@ -114,7 +124,7 @@ public class SpecialSqlUtil {
 
                 result.add(lineResult);
                 if (total.addAndGet(1L) >= rowsLimit) {
-                    throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "查询记录数超过上限");
+                    throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), "查询记录数超过上限");
                 }
             }
         } catch (Exception e) {
@@ -150,6 +160,7 @@ public class SpecialSqlUtil {
     public static String executeStoreProcedureReturnStr(Connection conn, String sql, JSONObject paramMap) throws SQLException {
         List<Object> params = new ArrayList<>();
         sql = replacePlaceholders(sql, paramMap, params);
+        log.info("存储过程作业节点执行存储过程名称【{}】", sql);
         sql = "call " + sql;
         try (
                 CallableStatement call = conn.prepareCall(sql);
@@ -166,7 +177,7 @@ public class SpecialSqlUtil {
             return call.getString(params.size() + 1);
         } catch (Exception e) {
             log.error("执行函数SQL发生异常");
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), e);
         } finally {
             // 这里使用连接代理关闭，重置线程池属性
             if (conn != null && !conn.isClosed()) {
@@ -194,7 +205,7 @@ public class SpecialSqlUtil {
             call.execute();
         } catch (Exception e) {
             log.error("执行存储过程SQL发生异常");
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), e);
         } finally {
             // 这里使用连接代理关闭，重置线程池属性
             if (conn != null && !conn.isClosed()) {
@@ -218,6 +229,5 @@ public class SpecialSqlUtil {
         return result.toString();
     }
 
-
-
 }
+

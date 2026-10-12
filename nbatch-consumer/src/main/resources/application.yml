@@ -14,16 +14,30 @@ spring:
   datasource:
     dynamic:
       # 配置默认数据库,及没有注解指定时走的数据库
-      primary: gauss
+      primary: gaussDB
       #严格匹配数据源,默认false. true未匹配到指定数据源时抛异常,false使用默认数据源
       strict: false
       lazy:  true
       datasource:
-        gauss:
-          url: ${NBATCH_GAUSS_DATASOURCE_URL:jdbc:opengauss://localhost:5432/postgres?currentSchema=public&serverTimezone=Asia/Shanghai}
-          username: ${NBATCH_GAUSS_DATASOURCE_USERNAME:}
-          password: ${NBATCH_GAUSS_DATASOURCE_PASSWORD:}
-          driver-class-name: ${NBATCH_GAUSS_DATASOURCE_DRIVER:org.opengauss.Driver}
+        openGauss:
+          url: ${NBATCH_OPEN_GAUSS_DATASOURCE_URL:jdbc:opengauss://localhost:5432/postgres?currentSchema=public&serverTimezone=Asia/Shanghai}
+          username: ${NBATCH_OPEN_GAUSS_DATASOURCE_USERNAME:}
+          password: ${NBATCH_OPEN_GAUSS_DATASOURCE_PASSWORD:}
+          driver-class-name: ${NBATCH_OPEN_GAUSS_DATASOURCE_DRIVER:org.opengauss.Driver}
+          hikari:
+            min-idle: 1
+            max-pool-size: 1
+            is-auto-commit: true
+            idle-timeout: 30000
+            max-lifetime: 900000
+            connection-timeout: 10000
+            connection-test-query: SELECT 1
+            validation-timeout: 1000
+        gaussDB:
+          url: ${NBATCH_GAUSS_DB_DATASOURCE_URL:jdbc:gaussdb://localhost:5432/postgres?currentSchema=public&serverTimezone=Asia/Shanghai}
+          username: ${NBATCH_GAUSS_DB_DATASOURCE_USERNAME:}
+          password: ${NBATCH_GAUSS_DB_DATASOURCE_PASSWORD:}
+          driver-class-name: ${NBATCH_GAUSS_DB_DATASOURCE_DRIVER:com.huawei.gaussdb.jdbc.Driver}
           hikari:
             min-idle: 1
             max-pool-size: 1
@@ -63,7 +77,12 @@ spring:
             validation-timeout: 1000
   jackson:
     time-zone: GMT+8
-# xxl-job configuration
+jasypt:
+  encryptor:
+    property:
+      prefix: ENC(
+      suffix: )
+    bean: ymlStringEncryptorHelper
 nbatch:
   job:
     admin:
@@ -75,10 +94,8 @@ nbatch:
       address: ${NBATCH_EXECUTOR_ADDRESS:}
       ip: ${NBATCH_EXECUTOR_IP:}
       port: ${NBATCH_EXECUTOR_PORT:9999}
-      logpath: ${NBATCH_EXECUTOR_LOG_PATH:/log/nbatch/jobhandler}
       datapath: ${NBATCH_EXECUTOR_DATA_PATH:/data/nbatch/jobhandler}
-      logretentiondays: ${NBATCH_EXECUTOR_LOG_RETENTION_DAYS:30}
     file:
-      tempPath: ${NBATCH_FILE_TEMP_PATH:./file/temp}
-      remoteTempPath: ${NBATCH_FILE_REMOTE_TEMP_PATH:./file/temp}
+      path: ${NBATCH_CONSUMER_FILE_PATH:./file/temp}
+      remotePath: ${NBATCH_CONSUMER_FILE_REMOTE_PATH:./file/temp}
 

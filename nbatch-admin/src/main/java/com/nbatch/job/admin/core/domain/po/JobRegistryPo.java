@@ -18,7 +18,7 @@ import java.util.Date;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
-@TableName("nbatch_job_registry")
+@TableName("nbatch_registry")
 public class JobRegistryPo extends Model<JobRegistryPo> {
 
     /**

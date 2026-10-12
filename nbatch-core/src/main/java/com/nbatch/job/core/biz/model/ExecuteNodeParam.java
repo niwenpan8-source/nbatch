@@ -2,11 +2,12 @@ package com.nbatch.job.core.biz.model;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
-import com.nbatch.job.core.thread.RunNodeLogDetailCallbackThread;
+import com.nbatch.job.core.files.RunNodeLogDetailLog;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
+import java.time.LocalDateTime;
 import java.util.Date;
-import java.util.List;
 
 /**
  * @description: 执行节点参数
@@ -14,27 +15,25 @@ import java.util.List;
  * @date: 2025/11/20
  */
 @Data
+@Accessors(chain = true)
 public class ExecuteNodeParam {
 
-    /**
-     * 运行作业id
-     */
+    /** 作业标识 */
     private String workId;
-    private String runWorkId;
 
-    /**
-     * 作业节点id
-     */
+    /** 步骤标识 */
     private String nodeId;
-    private String runNodeId;
 
     /**
-     * 运行节点日志id
+     * 节点所属流程组，仅由管理端调度使用。
      */
+    private String groupId;
+
+    /** 节点执行日志标识 */
     private String nodeLogId = IdUtil.getSnowflakeNextIdStr();
 
     /**
-     * script:脚本,store_procedure:存储过程,execute_sql:执行sql,file_to_db:文件导入到数据库,db_to_file:数据库导出到文件
+     * 节点类型：script（脚本）、store_procedure（存储过程）、execute_sql（执行 SQL）、file_to_db（文件导入数据库）、db_to_file（数据库导出文件）
      */
     private String nodeType;
 
@@ -109,22 +108,16 @@ public class ExecuteNodeParam {
     private Integer nodeRunStatus;
 
     /**
-     * 节点关系id列表
-     */
-    private List<String> nodeRelationIdList;
-
-    /**
      * 推送运行节点日志详细回调
      */
     public void pushRunNodeLogDetailCallback(String msg) {
         RunNodeLogDetailParam runNodeLogDetailParam = new RunNodeLogDetailParam();
-        runNodeLogDetailParam.setWorkId(workId).setRunWorkId(runWorkId)
-                .setNodeId(nodeId).setRunNodeId(runNodeId)
+        runNodeLogDetailParam.setDetailLogId(IdUtil.getSnowflakeNextIdStr())
+                .setWorkId(workId).setNodeLogId(nodeLogId)
+                .setNodeId(nodeId)
                 .setTurnDate(turnDate)
-                .setExecuteTime(DateUtil.date()).setHandleMsg(msg);
-        RunNodeLogDetailCallbackThread.pushRunNodeLogDetailCallback(runNodeLogDetailParam);
+                .setExecuteTime(LocalDateTime.now()).setHandleMsg(msg);
+        RunNodeLogDetailLog.getInstance().append(runNodeLogDetailParam);
     }
-
-
 
 }

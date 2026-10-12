@@ -1,11 +1,7 @@
 package com.nbatch.job.core.biz;
 
-import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.RegistryParam;
 import com.nbatch.job.core.biz.model.ReturnT;
-import com.nbatch.job.core.biz.model.RunNodeLogDetailParam;
-
-import java.util.List;
 
 /**
  * @author Mr.ni 2017-07-27 21:52:49
@@ -13,47 +9,24 @@ import java.util.List;
 public interface AdminBiz {
 
 
-    // ---------------------- callback ----------------------
-
-    /**
-     * callback
-     *
-     * @param callbackParamList callbackParamList
-     */
-    ReturnT<String> callback(List<HandleCallbackParam> callbackParamList);
-
-
     // ---------------------- registry ----------------------
 
     /**
-     * registry
+     * 注册执行器
      *
      * @param registryParam registryParam
      */
     ReturnT<String> registry(RegistryParam registryParam);
 
     /**
-     * registry remove
+     * 注销执行器
      *
      * @param registryParam registryParam
      */
     ReturnT<String> registryRemove(RegistryParam registryParam);
 
 
-
-
-
-    // ---------------------- callback run node log detail ----------------------
-
-    /**
-     * callbackRunNodeLogDetail
-     *
-     * @param callbackParamList callbackParamList
-     */
-    ReturnT<String> callbackRunNodeLogDetail(List<RunNodeLogDetailParam> callbackParamList);
-
-
     // ---------------------- biz (custome) ----------------------
-    // group、job ... manage
+    // 作业组、作业等管理接口
 
 }

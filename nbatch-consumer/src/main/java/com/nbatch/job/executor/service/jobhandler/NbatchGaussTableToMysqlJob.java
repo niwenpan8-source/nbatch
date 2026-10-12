@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_UPDATE_SQL_FAIL;
+import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_SQL_FAIL;
 
 /**
  * 通过表名将高斯数据库表迁移到MySQL
@@ -31,15 +31,15 @@ public class NbatchGaussTableToMysqlJob {
     public void gaussTableToMysql() {
         ExecuteNodeParam param = BeanHandlerContext.getBeanThreadLocal();
         if (param == null || StrUtil.isEmpty(param.getExecuteContentParam())) {
-            log.warn("Lua script path is empty.");
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "Lua 脚本路径为空");
+            log.warn("Lua 脚本路径为空。");
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), "Lua 脚本路径为空");
         }
         try {
             String tableName = param.getExecuteContentParam();
             gaussTableToMysqlHelper.syncTableStructure(tableName);
         } catch (Exception e) {
             param.pushRunNodeLogDetailCallback(e.getMessage());
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), e);
         }
     }
 

@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 
 /**
- * Jackson util
+ * Jackson 工具类
  * 1、obj need private and set/get；
  * 2、do not support inner class；
  *
@@ -24,7 +24,7 @@ public class JacksonUtil {
     }
 
     /**
-     * bean、array、List、Map --> json
+     * Bean、数组、List、Map 转换为 JSON
      *
      * @param obj 源对象
      * @return json string
@@ -39,7 +39,7 @@ public class JacksonUtil {
     }
 
     /**
-     * string --> bean、Map、List(array)
+     * 字符串转换为 Bean、Map 或 List（数组）
      *
      * @param jsonStr json string
      * @param clazz  class

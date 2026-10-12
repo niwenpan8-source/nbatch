@@ -18,7 +18,7 @@ import org.springframework.util.StringUtils;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
-@TableName("nbatch_job_user")
+@TableName("nbatch_user")
 public class JobUserPo extends Model<JobUserPo> {
 
     /**

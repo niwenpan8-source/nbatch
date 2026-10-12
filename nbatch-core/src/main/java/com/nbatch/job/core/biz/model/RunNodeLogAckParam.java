@@ -13,4 +13,6 @@ public class RunNodeLogAckParam implements Serializable {
     private static final long serialVersionUID = 42L;
 
     private Long offset;
+    private String consumerId;
+    private String leaseToken;
 }

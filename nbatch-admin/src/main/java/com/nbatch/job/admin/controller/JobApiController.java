@@ -4,10 +4,8 @@ import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.admin.controller.annotation.PermissionLimit;
 import com.nbatch.job.admin.core.conf.JobAdminConfig;
 import com.nbatch.job.core.biz.AdminBiz;
-import com.nbatch.job.core.biz.model.HandleCallbackParam;
 import com.nbatch.job.core.biz.model.RegistryParam;
 import com.nbatch.job.core.biz.model.ReturnT;
-import com.nbatch.job.core.biz.model.RunNodeLogDetailParam;
 import com.nbatch.job.core.constant.HandleCodeConstant;
 import com.nbatch.job.core.util.GsonTool;
 import com.nbatch.job.core.util.JobRemotingUtil;
@@ -19,11 +17,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 
 
 /**
- * api
+ * API 接口控制器
  * @author Mr.ni
  * @date 2025/11/05
  */
@@ -35,7 +32,7 @@ public class JobApiController {
     private AdminBiz adminBiz;
 
     /**
-     * api
+     * API 请求入口
      *
      * @param uri 地址
      * @param data 数据
@@ -45,33 +42,30 @@ public class JobApiController {
     @PermissionLimit(limit=false)
     public ReturnT<String> api(HttpServletRequest request, @PathVariable("uri") String uri, @RequestBody(required = false) String data) {
 
-        // valid
+        // 校验请求
         if (!"POST".equalsIgnoreCase(request.getMethod())) {
-            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "invalid request, HttpMethod not support.");
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "无效请求，不支持该 HTTP 方法。");
         }
         if (StrUtil.isBlank(uri)) {
-            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "invalid request, uri-mapping empty.");
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "无效请求，URI 映射不能为空。");
         }
         if (StrUtil.isNotBlank(JobAdminConfig.getAdminConfig().getAccessToken())
                 && !JobAdminConfig.getAdminConfig().getAccessToken().equals(request.getHeader(JobRemotingUtil.BATCH_JOB_ACCESS_TOKEN))) {
-            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "The access token is wrong.");
+            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "访问令牌错误。");
         }
 
-        // services mapping
-        if ("callback".equals(uri)) {
-            List<HandleCallbackParam> callbackParamList = GsonTool.fromJson(data, List.class, HandleCallbackParam.class);
-            return adminBiz.callback(callbackParamList);
-        } else if ("registry".equals(uri)) {
-            RegistryParam registryParam = GsonTool.fromJson(data, RegistryParam.class);
-            return adminBiz.registry(registryParam);
-        } else if ("registryRemove".equals(uri)) {
-            RegistryParam registryParam = GsonTool.fromJson(data, RegistryParam.class);
-            return adminBiz.registryRemove(registryParam);
-        } else if ("callbackRunNodeLogDetail".equals(uri)) {
-            List<RunNodeLogDetailParam> callbackParamList = GsonTool.fromJson(data, List.class, RunNodeLogDetailParam.class);
-            return adminBiz.callbackRunNodeLogDetail(callbackParamList);
-        } else {
-            return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "invalid request, uri-mapping(" + uri + ") not found.");
+        // 根据 URI 映射服务
+        switch (uri) {
+            case "registry": {
+                RegistryParam registryParam = GsonTool.fromJson(data, RegistryParam.class);
+                return adminBiz.registry(registryParam);
+            }
+            case "registryRemove": {
+                RegistryParam registryParam = GsonTool.fromJson(data, RegistryParam.class);
+                return adminBiz.registryRemove(registryParam);
+            }
+            default:
+                return new ReturnT<>(HandleCodeConstant.HANDLE_CODE_FAIL, "无效请求，未找到 URI 映射：" + uri);
         }
 
     }

@@ -42,7 +42,7 @@ public class NbatchExecuteLuaJob {
     public void executeLuaScript() {
         ExecuteNodeParam param = BeanHandlerContext.getBeanThreadLocal();
         if (param == null || StrUtil.isEmpty(param.getExecuteContentParam())) {
-            log.warn("Lua script path is empty.");
+            log.warn("Lua 脚本路径为空。");
             throw new HandlerException(LUA_SCRIPT_FAIL.getCode(), "Lua 脚本路径为空");
         }
         try {
@@ -51,7 +51,7 @@ public class NbatchExecuteLuaJob {
 
             // 获取项目根目录
             String projectRoot = System.getProperty("user.dir");
-            log.info("Project root: {}", projectRoot);
+            log.info("项目根目录：{}", projectRoot);
 
             // 将项目根目录传入Lua环境
             globals.set("projectRoot", CoerceJavaToLua.coerce(projectRoot));
@@ -73,8 +73,12 @@ public class NbatchExecuteLuaJob {
             // 加载并执行文件（相对路径或绝对路径）
             LuaValue chunk = globals.loadfile(scriptPath);
             if (chunk.isnil()) {
-                log.error("Failed to load Lua script from path: {}", scriptPath);
+                log.error("加载 Lua 脚本失败，路径：{}", scriptPath);
                 return;
+            }
+            for (int i = 0; i < 70; i++) {
+                log.info("Lua 脚本分块：{}", i);
+                Thread.sleep(1000);
             }
             chunk.call();
 

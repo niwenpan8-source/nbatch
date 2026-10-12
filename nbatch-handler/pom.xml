@@ -96,6 +96,11 @@
 			<artifactId>opengauss-jdbc</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>com.gauss</groupId>
+			<artifactId>gauss-jdbc</artifactId>
+		</dependency>
+
 		<!-- mysql -->
 		<dependency>
 			<groupId>com.mysql</groupId>

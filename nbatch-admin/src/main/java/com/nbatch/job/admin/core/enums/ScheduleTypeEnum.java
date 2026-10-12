@@ -12,17 +12,17 @@ public enum ScheduleTypeEnum {
     NONE(I18nUtil.getString("schedule_type_none")),
 
     /**
-     * schedule by cron
+     * 按 Cron 表达式调度
      */
     CRON(I18nUtil.getString("schedule_type_cron")),
 
     /**
-     * schedule by fixed rate (in seconds)
+     * 按固定频率调度（单位：秒）
      */
     FIX_RATE(I18nUtil.getString("schedule_type_fix_rate")),
 
     /**
-     * schedule by fix delay (in seconds)， after the last time
+     * 按固定延迟调度（单位：秒），以上次执行结束时间为基准
      */
     /*FIX_DELAY(I18nUtil.getString("schedule_type_fix_delay"))*/;
 

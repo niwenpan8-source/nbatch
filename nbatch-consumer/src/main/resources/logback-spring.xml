@@ -3,10 +3,9 @@
 <!-- scan：程序运行时配置文件被修改，是否重新加载。true=重新加载；false=不重新加载；默认为true; -->
 <!-- scanPeriod：监测配置文件被修改的时间间隔，scan属性必须设置为true才可生效；默认为1分钟，默认单位是毫秒； -->
 <!-- debug：是否打印logback程序运行的日志信息。true=打印；false=不打印；默认为false; -->
-<configuration scan="true" scanPeriod="60" debug="false">
+<configuration scan="false" debug="true">
     <property name="LOG_PATH" value="log/nbatch"/>
     <property name="LOG_FILE_NAME" value="consumer.log"/>
-    <property name="LOG_LEVEL" value="info"/>
 
     <!-- 定义日志格式（复用变量） -->
     <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg %n"/>

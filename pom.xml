@@ -1,5 +1,5 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.nbatch</groupId>
 	<artifactId>nbatch</artifactId>
@@ -13,7 +13,7 @@
 		<module>nbatch-handler</module>
 		<module>nbatch-admin</module>
 		<module>nbatch-consumer</module>
-    </modules>
+	</modules>
 
 	<properties>
 		<!-- env -->
@@ -44,7 +44,7 @@
 		<nbatch.version>2.5.0</nbatch.version>
 		<hutool.version>5.8.41</hutool.version>
 		<junit.version>4.13.2</junit.version>
-		<lombok.version>1.18.12</lombok.version>
+		<lombok.version>1.18.24</lombok.version>
 		<mybatisplus.version>3.5.15</mybatisplus.version>
 		<dynamic-mybatisplus.version>3.4.1</dynamic-mybatisplus.version>
 		<gbase.version>9.5.0.7</gbase.version>
@@ -53,6 +53,12 @@
 		<luaj.version>3.0.1</luaj.version>
 		<httpclient5.version>5.2.1</httpclient5.version>
 		<httpcore5.version>5.2.2</httpcore5.version>
+		<easyexcel.version>4.0.3</easyexcel.version>
+		<gauss.version>1.0.0</gauss.version>
+		<slf4j.version>1.7.32</slf4j.version>
+		<jaspy.version>3.0.3</jaspy.version>
+		<bcprov-jdk15to18.version>1.78.1</bcprov-jdk15to18.version>
+
 	</properties>
 
 	<dependencyManagement>
@@ -94,12 +100,12 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-starter-test</artifactId>
 				<version>${spring-boot.version}</version>
-				<exclusions>
-					<exclusion>
-						<artifactId>slf4j-api</artifactId>
-						<groupId>org.slf4j</groupId>
-					</exclusion>
-				</exclusions>
+			</dependency>
+
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>${slf4j.version}</version>
 			</dependency>
 
 			<!-- freemarker-starter -->
@@ -175,12 +181,6 @@
 				<groupId>com.baomidou</groupId>
 				<artifactId>mybatis-plus-boot-starter</artifactId>
 				<version>${mybatisplus.version}</version>
-				<exclusions>
-					<exclusion>
-						<artifactId>slf4j-api</artifactId>
-						<groupId>org.slf4j</groupId>
-					</exclusion>
-				</exclusions>
 			</dependency>
 
 			<dependency>
@@ -223,6 +223,12 @@
 			<dependency>
 				<groupId>cn.hutool</groupId>
 				<artifactId>hutool-extra</artifactId>
+				<version>${hutool.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>cn.hutool</groupId>
+				<artifactId>hutool-crypto</artifactId>
 				<version>${hutool.version}</version>
 			</dependency>
 
@@ -282,6 +288,44 @@
 				<version>${httpcore5.version}</version>
 			</dependency>
 
+			<dependency>
+				<groupId>com.alibaba</groupId>
+				<artifactId>easyexcel</artifactId>
+				<version>${easyexcel.version}</version>
+				<exclusions>
+					<exclusion>
+						<artifactId>slf4j-api</artifactId>
+						<groupId>org.slf4j</groupId>
+					</exclusion>
+					<exclusion>
+						<artifactId>commons-codec</artifactId>
+						<groupId>commons-codec</groupId>
+					</exclusion>
+					<exclusion>
+						<artifactId>log4j-api</artifactId>
+						<groupId>org.apache.logging.log4j</groupId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+
+			<dependency>
+				<groupId>com.gauss</groupId>
+				<artifactId>gauss-jdbc</artifactId>
+				<version>${gauss.version}</version>
+			</dependency>
+
+			<!--加密账号密码-->
+			<dependency>
+				<groupId>com.github.ulisesbocchio</groupId>
+				<artifactId>jasypt-spring-boot-starter</artifactId>
+				<version>${jaspy.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.bouncycastle</groupId>
+				<artifactId>bcprov-jdk15to18</artifactId>
+				<version>${bcprov-jdk15to18.version}</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 

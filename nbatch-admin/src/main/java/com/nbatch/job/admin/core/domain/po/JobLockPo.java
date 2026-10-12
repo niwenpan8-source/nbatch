@@ -16,7 +16,7 @@ import java.util.Date;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Accessors(chain = true)
-@TableName("nbatch_job_lock")
+@TableName("nbatch_lock")
 public class JobLockPo extends Model<JobLockPo> {
 
     /**

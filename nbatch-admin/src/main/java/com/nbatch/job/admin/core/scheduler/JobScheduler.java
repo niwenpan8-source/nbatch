@@ -1,21 +1,17 @@
 package com.nbatch.job.admin.core.scheduler;
 
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.admin.core.conf.JobAdminConfig;
-import com.nbatch.job.admin.core.thread.JobCompleteHelper;
-import com.nbatch.job.admin.core.thread.JobFailMonitorHelper;
-import com.nbatch.job.admin.core.thread.JobLogReportHelper;
 import com.nbatch.job.admin.core.thread.JobRegistryHelper;
 import com.nbatch.job.admin.core.thread.JobRunNodeLogPullHelper;
-import com.nbatch.job.admin.core.thread.JobRunNodeLogDetailHelper;
+import com.nbatch.job.admin.core.thread.JobRunNodeLogDetailPullHelper;
 import com.nbatch.job.admin.core.thread.JobScheduleHelper;
 import com.nbatch.job.admin.core.thread.JobTriggerPoolHelper;
 import com.nbatch.job.admin.core.thread.JobWorkMonitorHelper;
 import com.nbatch.job.admin.core.thread.JobWorkRunNodeHelper;
-import com.nbatch.job.admin.core.util.I18nUtil;
 import com.nbatch.job.core.biz.ExecutorBiz;
 import com.nbatch.job.core.biz.client.ExecutorBizClient;
-import com.nbatch.job.core.enums.ExecutorBlockStrategyEnum;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,102 +25,73 @@ import java.util.concurrent.ConcurrentMap;
 public class JobScheduler {
 
     public void init() throws Exception {
-        // init i18n
-        initI18n();
-
-        // admin trigger pool start
+        // 启动管理端触发线程池
         JobTriggerPoolHelper.toStart();
 
-        // admin registry monitor run
+        // 启动管理端注册监控
         JobRegistryHelper.getInstance().start();
 
-        // admin fail-monitor run
-        JobFailMonitorHelper.getInstance().start();
-
-        // admin lose-monitor run ( depend on JobTriggerPoolHelper )
-        JobCompleteHelper.getInstance().start();
-
-        // admin log report start
-        JobLogReportHelper.getInstance().start();
-
-        // start-schedule  ( depend on JobTriggerPoolHelper )
+        // 启动作业调度
         JobScheduleHelper.getInstance().start();
 
-        // start-work-monitor
+        // 启动作业监控
         JobWorkMonitorHelper.getInstance().start();
 
-        // start-run node log detail-monitor
-        JobRunNodeLogDetailHelper.getInstance().start();
+        // 启动运行节点详细日志拉取
+        JobRunNodeLogDetailPullHelper.getInstance().start();
 
-        // start-run node event log pull
+        // 启动运行节点事件日志拉取
         JobRunNodeLogPullHelper.getInstance().start();
 
-        // start-work-run node execute
+        // 启动运行节点执行
         JobWorkRunNodeHelper.getInstance().start();
 
-        log.info(">>>>>>>>> init job admin success.");
+        log.info(">>>>>>>>> 作业管理端初始化成功。");
     }
 
     
     public void destroy() {
 
-        // stop-schedule
+        // 停止作业调度
         JobScheduleHelper.getInstance().toStop();
 
-        // admin log report stop
-        JobLogReportHelper.getInstance().toStop();
-
-        // admin lose-monitor stop
-        JobCompleteHelper.getInstance().toStop();
-
-        // admin fail-monitor stop
-        JobFailMonitorHelper.getInstance().toStop();
-
-        // admin registry stop
+        // 停止管理端注册监控
         JobRegistryHelper.getInstance().toStop();
 
-        // admin trigger pool stop
+        // 停止管理端触发线程池
         JobTriggerPoolHelper.toStop();
 
-        // admin work monitor stop
+        // 停止作业监控
         JobWorkMonitorHelper.getInstance().toStop();
 
-        // admin run node log detail stop
-        JobRunNodeLogDetailHelper.getInstance().toStop();
+        // 停止运行节点详细日志拉取
+        JobRunNodeLogDetailPullHelper.getInstance().toStop();
 
-        // admin run node event log pull stop
+        // 停止运行节点事件日志拉取
         JobRunNodeLogPullHelper.getInstance().toStop();
 
-        // admin work run node stop
+        // 停止运行节点执行
         JobWorkRunNodeHelper.getInstance().toStop();
 
-    }
-
-    // ---------------------- I18n ----------------------
-
-    private void initI18n(){
-        for (ExecutorBlockStrategyEnum item : ExecutorBlockStrategyEnum.values()) {
-            item.setTitle(I18nUtil.getString("jobconf_block_".concat(item.name())));
-        }
     }
 
     // ---------------------- executor-client ----------------------
     private static final ConcurrentMap<String, ExecutorBiz> EXECUTOR_BIZ_REPOSITORY = new ConcurrentHashMap<>();
 
     public static ExecutorBiz getExecutorBiz(String address) {
-        // valid
+        // 校验执行器地址
         if (StrUtil.isBlank(address)) {
             return null;
         }
 
-        // load-cache
+        // 加载缓存
         address = address.trim();
         ExecutorBiz executorBiz = EXECUTOR_BIZ_REPOSITORY.get(address);
         if (executorBiz != null) {
             return executorBiz;
         }
 
-        // set-cache
+        // 设置缓存
         executorBiz = new ExecutorBizClient(address,
                 JobAdminConfig.getAdminConfig().getAccessToken(),
                 JobAdminConfig.getAdminConfig().getTimeout());

@@ -190,25 +190,30 @@ $(function() {
                 "permission": permissionArr.join(',')
 			};
 
-            RsaPassword.encryptFields(paramData, ['password']).then(function (encryptedData) {
-                $.post(base_url + "/user/add", encryptedData, function(data, status) {
-    			if (data.code == "200") {
-					$('#addModal').modal('hide');
+            try {
+                PasswordTransfer.encodeFields(paramData, ['password']).then(function (encodedData) {
+                    $.post(base_url + "/user/add", encodedData, function(data, status) {
+                    if (data.code == "200") {
+                        $('#addModal').modal('hide');
 
-                    layer.msg( I18n.system_add_suc );
-                    userListTable.fnDraw();
-    			} else {
-					layer.open({
-						title: I18n.system_tips ,
-                        btn: [ I18n.system_ok ],
-						content: (data.msg || I18n.system_add_fail),
-						icon: '2'
-					});
-    			}
-    		});
-            }, function (msg) {
-                layer.msg(msg || I18n.system_add_fail, {icon: 2});
-            });
+                        layer.msg( I18n.system_add_suc );
+                        userListTable.fnDraw();
+                    } else {
+                        layer.open({
+                            title: I18n.system_tips ,
+                            btn: [ I18n.system_ok ],
+                            content: (data.msg || I18n.system_add_fail),
+                            icon: '2'
+                        });
+                    }
+                });
+                }, function (msg) {
+                    layer.msg(msg || I18n.system_add_fail, {icon: 2});
+                });
+            } catch (e) {
+                layer.msg(I18n.system_add_fail, {icon: 2});
+            }
+            return false;
 		}
 	});
 	$("#addModal").on('hide.bs.modal', function () {
@@ -286,25 +291,30 @@ $(function() {
                 "permission": permissionArr.join(',')
             };
 
-            RsaPassword.encryptFields(paramData, ['password']).then(function (encryptedData) {
-            $.post(base_url + "/user/update", encryptedData, function(data, status) {
-                if (data.code == "200") {
-                    $('#updateModal').modal('hide');
+            try {
+                PasswordTransfer.encodeFields(paramData, ['password']).then(function (encodedData) {
+                $.post(base_url + "/user/update", encodedData, function(data, status) {
+                    if (data.code == "200") {
+                        $('#updateModal').modal('hide');
 
-                    layer.msg( I18n.system_update_suc );
-                    userListTable.fnDraw();
-                } else {
-                    layer.open({
-                        title: I18n.system_tips ,
-                        btn: [ I18n.system_ok ],
-                        content: (data.msg || I18n.system_update_fail),
-                        icon: '2'
-                    });
-                }
-            });
-            }, function (msg) {
-                layer.msg(msg || I18n.system_update_fail, {icon: 2});
-            });
+                        layer.msg( I18n.system_update_suc );
+                        userListTable.fnDraw();
+                    } else {
+                        layer.open({
+                            title: I18n.system_tips ,
+                            btn: [ I18n.system_ok ],
+                            content: (data.msg || I18n.system_update_fail),
+                            icon: '2'
+                        });
+                    }
+                });
+                }, function (msg) {
+                    layer.msg(msg || I18n.system_update_fail, {icon: 2});
+                });
+            } catch (e) {
+                layer.msg(I18n.system_update_fail, {icon: 2});
+            }
+            return false;
 		}
 	});
 	$("#updateModal").on('hide.bs.modal', function () {

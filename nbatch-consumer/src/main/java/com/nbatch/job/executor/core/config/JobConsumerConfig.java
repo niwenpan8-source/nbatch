@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * job config
+ * 作业执行器配置
  *
  * @author Mr.ni
  */
@@ -36,19 +36,12 @@ public class JobConsumerConfig {
     @Value("${nbatch.job.executor.port}")
     private int port;
 
-    @Value("${nbatch.job.executor.logpath}")
-    private String logPath;
-
     @Value("${nbatch.job.executor.datapath:}")
     private String dataPath;
 
-    @Value("${nbatch.job.executor.logretentiondays}")
-    private int logRetentionDays;
-
-
     @Bean
     public BatchJobSpringExecutor jobExecutor() {
-        log.info(">>>>>>>>>>> job config init.");
+        log.info(">>>>>>>>>>> 作业配置初始化。");
         BatchJobSpringExecutor jobSpringExecutor = new BatchJobSpringExecutor();
         jobSpringExecutor.setAdminAddresses(adminAddresses);
         jobSpringExecutor.setAppName(appName);
@@ -57,9 +50,7 @@ public class JobConsumerConfig {
         jobSpringExecutor.setPort(port);
         jobSpringExecutor.setAccessToken(accessToken);
         jobSpringExecutor.setTimeout(timeout);
-        jobSpringExecutor.setLogPath(logPath);
         jobSpringExecutor.setDataPath(dataPath);
-        jobSpringExecutor.setLogRetentionDays(logRetentionDays);
 
         return jobSpringExecutor;
     }

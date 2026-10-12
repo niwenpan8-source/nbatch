@@ -12,7 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * csv工具类
+ * CSV 工具类
  *
  * @author: Mr.ni
  * @date: 2026/06/26
@@ -38,24 +38,24 @@ public class NbatchCsvUtil {
         Charset charset = resolveCharset(charsetName);
         try {
             if (StrUtil.isBlank(filePath)) {
-                log.warn("read csv first line column size failed, file path is blank");
+                log.warn("读取 CSV 首行字段数量失败，文件路径为空。");
                 return 0;
             }
             Path path = Paths.get(filePath);
             if (!Files.isRegularFile(path)) {
-                log.warn("read csv first line column size failed, file not found: {}", filePath);
+                log.warn("读取 CSV 首行字段数量失败，文件不存在：{}", filePath);
                 return 0;
             }
             try (BufferedReader reader = Files.newBufferedReader(path, charset)) {
                 String firstLine = reader.readLine();
                 if (firstLine == null) {
-                    log.warn("read csv first line column size failed, file is empty: {}", filePath);
+                    log.warn("读取 CSV 首行字段数量失败，文件为空：{}", filePath);
                     return 0;
                 }
                 return countColumns(firstLine, actualSeparator);
             }
         } catch (Exception e) {
-            log.error("read csv first line column size error, filePath:{}, separator:{}, charset:{}",
+            log.error("读取 CSV 首行字段数量异常，文件路径：{}，分隔符：{}，字符集：{}",
                     filePath, actualSeparator, charset, e);
         }
         return 0;

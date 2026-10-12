@@ -8,6 +8,7 @@ import com.nbatch.job.core.biz.model.ReturnT;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Date;
 
 /**
  * @description: 作业
@@ -17,14 +18,19 @@ import java.util.Map;
 public interface IJobWorkService {
 
     /**
+     * 首页统计信息
+     */
+    Map<String, Object> dashboardInfo();
+
+    /**
+     * 首页统计信息
+     */
+    ReturnT<Map<String, Object>> chartInfo(Date startDate, Date endDate);
+
+    /**
      * 分页列表
      */
     Map<String, Object> pageList(JobWorkPageParam param);
-
-    /**
-     * 获取作业列表
-     */
-    List<JobWorkPo> getWorkList();
 
     /**
      * 插入
@@ -37,37 +43,23 @@ public interface IJobWorkService {
     int update(JobWorkParam param);
 
     /**
+     * 启动调度
+     */
+    ReturnT<String> startSchedule(String workId);
+
+    /**
+     * 停止调度
+     */
+    ReturnT<String> stopSchedule(String workId);
+
+    /**
      * 通过得到id得到对象
      */
     JobWorkVo getModel(String id);
-
-    /**
-     * 获取作业详情和运行历史
-     */
-    ReturnT<Map<String, Object>> detail(String workId);
 
     /**
      * 删除
      */
     int delete(String id);
 
-    /**
-     * 恢复运行作业重跑
-     */
-    ReturnT<String> recoverRunWork(String runWorkId);
-
-    /**
-     * 停止最新运行作业
-     */
-    ReturnT<String> stopLatestRunWork(String workId);
-
-    /**
-     * 重跑最新运行作业
-     */
-    ReturnT<String> rerunLatestRunWork(String workId);
-
-    /**
-     * 按初始化翻牌日期重跑
-     */
-    ReturnT<String> rerunFromInitTurnDate(String workId);
 }

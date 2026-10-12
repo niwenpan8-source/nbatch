@@ -37,11 +37,13 @@ public class JobWorkParam {
      */
     private Integer workType;
 
-    /**
-     * 作业状态：0=停用、1=启用
-     */
-    private Integer workStatus;
-
+    private String jobGroup;
+    private String scheduleType;
+    private String scheduleConf;
+    private Integer scheduleStatus;
+    private String misfireStrategy;
+    private Long triggerLastTime;
+    private Long triggerNextTime;
     private String cronExpression;
 
     private Integer timeout;
@@ -49,12 +51,6 @@ public class JobWorkParam {
     private String notifyEmail;
 
     private Integer version;
-
-    /**
-     * 初始化翻牌日期
-     */
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private Date initTurnDate;
 
     private Date createTime;
 

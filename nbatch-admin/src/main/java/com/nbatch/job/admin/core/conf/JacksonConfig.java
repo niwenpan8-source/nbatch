@@ -27,7 +27,7 @@ import static cn.hutool.core.date.DatePattern.NORM_DATE_PATTERN;
 import static cn.hutool.core.date.DatePattern.NORM_TIME_PATTERN;
 
 /**
- * Jackson的默认配置
+ * Jackson 默认配置
  *
  * @author: zzy
  * @date: 2025-12-10

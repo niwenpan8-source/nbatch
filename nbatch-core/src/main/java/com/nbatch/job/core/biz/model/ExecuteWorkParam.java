@@ -20,25 +20,14 @@ import java.util.List;
 public class ExecuteWorkParam {
 
     /**
-     * 任务id
-     */
-    private String jobId;
-
-    /**
      * 作业id
      */
     private String workId;
-    private String runWorkId;
 
     /**
      * 作业类型
      */
     private Integer workType;
-
-    /**
-     * 日志
-     */
-    private String jobLogId;
 
     /**
      * 执行器地址
@@ -49,11 +38,6 @@ public class ExecuteWorkParam {
      * 作业翻牌时间
      */
     private Date turnDate;
-
-    /**
-     * 流程上下文变量（JSON格式）
-     */
-    private String contextJson;
 
     /**
      * 执行节点参数列表

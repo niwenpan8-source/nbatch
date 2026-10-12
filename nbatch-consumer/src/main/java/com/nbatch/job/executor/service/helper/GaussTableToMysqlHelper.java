@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -17,6 +16,7 @@ import java.util.List;
 
 /**
  * GaussDB 表数据复制到 MySQL
+ *
  * @author: Mr.ni
  * @date: 2026/1/14
  */
@@ -37,7 +37,7 @@ public class GaussTableToMysqlHelper {
             // 1. 从 GaussDB 获取表结构
             List<ColumnMeta> columns = getTableColumns(gaussConnection, tableName);
             if (columns.isEmpty()) {
-                log.info("❌ 表 {} 不存在或无字段", tableName);
+                log.info("表 {} 不存在或无字段", tableName);
                 return;
             }
 
@@ -45,7 +45,7 @@ public class GaussTableToMysqlHelper {
             createClickHouseTable(tableName, columns);
 
         } catch (Exception e) {
-            // Table already exists
+            // 表已存在
             if (e instanceof SQLException) {
                 SQLException sqlException = (SQLException) e;
                 if (sqlException.getErrorCode() == 1050) {
@@ -122,43 +122,54 @@ public class GaussTableToMysqlHelper {
 
     /**
      * GaussDB 类型 → ClickHouse 类型映射
-     * @param gaussType GaussDB 类型
-     * @param size 列大小
+     *
+     * @param gaussType     GaussDB 类型
+     * @param size          列大小
      * @param decimalDigits 小数位数
-     * @param notNull 是否为非空
+     * @param notNull       是否为非空
      */
     private static String convertGaussTypeToClickHouse(String gaussType, int size, int decimalDigits, boolean notNull) {
         gaussType = gaussType.toUpperCase();
         String baseType;
 
         switch (gaussType) {
-            case "INT4": case "INTEGER":
+            case "INT4":
+            case "INTEGER":
                 baseType = "Int32";
                 break;
-            case "INT8": case "BIGINT":
+            case "INT8":
+            case "BIGINT":
                 baseType = "Int64";
                 break;
-            case "INT2": case "SMALLINT":
+            case "INT2":
+            case "SMALLINT":
                 baseType = "Int16";
                 break;
-            case "NUMERIC": case "DECIMAL":
+            case "NUMERIC":
+            case "DECIMAL":
                 baseType = "Decimal(" + (size > 0 ? size : 10) + ", " + decimalDigits + ")";
                 break;
-            case "FLOAT4": case "REAL":
+            case "FLOAT4":
+            case "REAL":
                 baseType = "Float32";
                 break;
-            case "FLOAT8": case "DOUBLE PRECISION":
+            case "FLOAT8":
+            case "DOUBLE PRECISION":
                 baseType = "Float64";
                 break;
-            case "CHAR": case "VARCHAR": case "TEXT":
+            case "CHAR":
+            case "VARCHAR":
+            case "TEXT":
                 // ClickHouse 不区分长度
                 baseType = "String";
                 break;
-            case "BYTEA": case "BLOB":
+            case "BYTEA":
+            case "BLOB":
                 // 或用 FixedString，但 String 更通用
                 baseType = "String";
                 break;
-            case "TIMESTAMP": case "TIMESTAMP WITHOUT TIME ZONE":
+            case "TIMESTAMP":
+            case "TIMESTAMP WITHOUT TIME ZONE":
                 // 默认 UTC
                 baseType = "DateTime";
                 break;
@@ -173,7 +184,8 @@ public class GaussTableToMysqlHelper {
                 // ClickHouse 无原生 TIME 类型
                 baseType = "String";
                 break;
-            case "BOOLEAN": case "BOOL":
+            case "BOOLEAN":
+            case "BOOL":
                 // 0/1 表示 false/true
                 baseType = "UInt8";
                 break;
@@ -200,8 +212,6 @@ public class GaussTableToMysqlHelper {
             this.notNull = notNull;
         }
     }
-
-
 
 
 }

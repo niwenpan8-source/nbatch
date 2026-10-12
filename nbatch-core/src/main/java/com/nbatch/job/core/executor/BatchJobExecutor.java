@@ -1,23 +1,20 @@
 package com.nbatch.job.core.executor;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.StrPool;
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.core.biz.AdminBiz;
 import com.nbatch.job.core.biz.client.AdminBizClient;
 import com.nbatch.job.core.handler.IJobHandler;
+import com.nbatch.job.core.handler.RunNodeStopHandler;
 import com.nbatch.job.core.handler.annotation.BatchJob;
 import com.nbatch.job.core.handler.impl.MethodJobHandler;
-import com.nbatch.job.core.log.JobFileAppender;
-import com.nbatch.job.core.log.RunNodeEventDataPath;
+import com.nbatch.job.core.files.RunNodeFilePath;
 import com.nbatch.job.core.server.EmbedServer;
-import com.nbatch.job.core.thread.JobLogFileCleanThread;
-import com.nbatch.job.core.thread.JobThread;
-import com.nbatch.job.core.thread.RunNodeLogEventLog;
-import com.nbatch.job.core.thread.RunNodeLogDetailCallbackThread;
-import com.nbatch.job.core.thread.TriggerCallbackThread;
+import com.nbatch.job.core.files.RunNodeLogEventLog;
+import com.nbatch.job.core.files.RunNodeLogDetailLog;
 import com.nbatch.job.core.util.IpUtil;
 import com.nbatch.job.core.util.NetUtil;
+import com.nbatch.job.core.util.SpringUtil;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -25,18 +22,17 @@ import lombok.extern.slf4j.Slf4j;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * job executor
+ * 作业执行器
  * @author Mr.ni
  */
 @Slf4j
 public class BatchJobExecutor {
 
-    // ---------------------- param ----------------------
+    // ---------------------- 参数 ----------------------
     @Setter
     private String adminAddresses;
     @Setter
@@ -52,75 +48,73 @@ public class BatchJobExecutor {
     @Setter
     private int port;
     @Setter
-    private String logPath;
-    @Setter
     private String dataPath;
-    @Setter
-    private int logRetentionDays;
+
+    /** 启动阶段保存关闭处理器，避免销毁阶段再从 Spring 容器查找 Bean。 */
+    private RunNodeStopHandler runNodeStopHandler;
 
 
     // ---------------------- start + stop ----------------------
     public void start() throws Exception {
 
-        // init logpath
-        JobFileAppender.initLogPath(logPath);
+        // 初始化运行节点数据与脚本目录
+        RunNodeFilePath.initDataPath(dataPath);
 
-        // init data path
-        RunNodeEventDataPath.initDataPath(dataPath);
-
-        // init invoker, admin-client
+        // 初始化管理端客户端
         initAdminBizList(adminAddresses, accessToken, timeout);
 
-        // init JobLogFileCleanThread
-        JobLogFileCleanThread.getInstance().start(logRetentionDays);
+        initRunNodeStopHandler();
 
-        // init run node event log
+        // 初始化运行节点事件日志
         RunNodeLogEventLog.getInstance().start();
 
-        // init TriggerCallbackThread
-        TriggerCallbackThread.getInstance().start();
+        // 初始化运行节点详细日志本地队列
+        RunNodeLogDetailLog.getInstance().start();
 
-        // init RunNodeLogDetailCallbackThread
-        RunNodeLogDetailCallbackThread.getInstance().start();
-
-        // init executor-server
+        // 初始化执行器服务
         initEmbedServer(address, ip, port, appName, accessToken);
     }
 
     public void destroy() {
-        // destroy executor-server
+        // 先停止节点任务；RPC 服务保持可用，管理端可以继续查询节点是否已退出。
+        shutdownRunNodes();
+
+        // 所有停止请求已发出并完成有限等待后，再停止执行器服务。
         stopEmbedServer();
 
-        // destroy jobThreadRepository
-        if (CollUtil.isNotEmpty(JOB_THREAD_REPOSITORY)) {
-            for (Map.Entry<String, JobThread> item : JOB_THREAD_REPOSITORY.entrySet()) {
-                JobThread oldJobThread = removeJobThread(item.getKey(), "web container destroy and kill the job.");
-                // wait for job thread push result to callback queue
-                if (oldJobThread != null) {
-                    try {
-                        oldJobThread.join();
-                    } catch (InterruptedException e) {
-                        log.error(">>>>>>>>>>> job, JobThread destroy(join) error, jobId:{}", item.getKey(), e);
-                    }
-                }
-            }
-            JOB_THREAD_REPOSITORY.clear();
-        }
         JOB_HANDLER_REPOSITORY.clear();
 
-        // destroy JobLogFileCleanThread
-        JobLogFileCleanThread.getInstance().toStop();
+        // 停止运行节点详细日志本地队列
+        RunNodeLogDetailLog.getInstance().toStop();
 
-        // destroy TriggerCallbackThread
-        TriggerCallbackThread.getInstance().toStop();
-
-        // destroy RunNodeLogDetailCallbackThread
-        RunNodeLogDetailCallbackThread.getInstance().toStop();
+        // 关闭事件日志刷盘线程，确保剩余闭环事件落盘。
+        RunNodeLogEventLog.getInstance().toStop();
 
     }
 
+    private void shutdownRunNodes() {
+        try {
+            if (runNodeStopHandler != null) {
+                runNodeStopHandler.shutdownRunNodes();
+            }
+        } catch (Throwable e) {
+            log.error("停止运行节点时发生错误。", e);
+        } finally {
+            runNodeStopHandler = null;
+        }
+    }
 
-    // ---------------------- admin-client (rpc invoker) ----------------------
+    private void initRunNodeStopHandler() {
+        try {
+            runNodeStopHandler = SpringUtil.getBean(RunNodeStopHandler.class);
+        } catch (Throwable e) {
+            // 未启用作业节点模块时不存在该 Bean，不影响普通任务执行器启动。
+            log.debug("运行节点停止处理器不可用。", e);
+        }
+    }
+
+
+    // ---------------------- 管理端客户端 ----------------------
     @Getter
     private static List<AdminBiz> adminBizList;
 
@@ -140,34 +134,34 @@ public class BatchJobExecutor {
         }
     }
 
-    // ---------------------- executor-server (rpc provider) ----------------------
+    // ---------------------- 执行器服务 ----------------------
     private EmbedServer embedServer = null;
 
     private void initEmbedServer(String address, String ip, int port, String appName, String accessToken) {
 
-        // fill ip port
+        // 补充 IP 和端口
         port = port > 0 ? port : NetUtil.findAvailablePort(9999);
         ip = StrUtil.isNotBlank(ip) ? ip : IpUtil.getIp();
 
-        // generate address
+        // 生成服务地址
         if (StrUtil.isBlank(address)) {
-            // registry-address：default use address to registry , otherwise use ip:port if address is null
+            // 未配置地址时使用 IP 和端口生成注册地址
             String ipPortAddress = IpUtil.getIpPort(ip, port);
             address = "http://{ip_port}/".replace("{ip_port}", ipPortAddress);
         }
 
-        // accessToken
+        // 校验访问令牌
         if (StrUtil.isBlank(accessToken)) {
-            log.warn(">>>>>>>>>>> job accessToken is empty. To ensure system security, please set the accessToken.");
+            log.warn(">>>>>>>>>>> 作业 accessToken 为空，为保证系统安全，请配置 accessToken。");
         }
 
-        // start
+        // 启动服务
         embedServer = new EmbedServer();
         embedServer.start(address, port, appName, accessToken);
     }
 
     private void stopEmbedServer() {
-        // stop provider factory
+        // 停止服务
         if (embedServer != null) {
             try {
                 embedServer.stop();
@@ -178,7 +172,7 @@ public class BatchJobExecutor {
     }
 
 
-    // ---------------------- job handler repository ----------------------
+    // ---------------------- 作业处理器仓库 ----------------------
     private static final ConcurrentMap<String, IJobHandler> JOB_HANDLER_REPOSITORY = new ConcurrentHashMap<>();
 
     public static IJobHandler loadJobHandler(String name) {
@@ -186,7 +180,7 @@ public class BatchJobExecutor {
     }
 
     public static IJobHandler registerJobHandler(String name, IJobHandler jobHandler) {
-        log.info(">>>>>>>>>>> job register jobHandler success, name:{}, jobHandler:{}", name, jobHandler);
+        log.info(">>>>>>>>>>> 作业处理器注册成功，名称：{}，处理器：{}", name, jobHandler);
         return JOB_HANDLER_REPOSITORY.put(name, jobHandler);
     }
 
@@ -196,7 +190,7 @@ public class BatchJobExecutor {
         }
 
         String name = batchJob.value();
-        //make and simplify the variables since they'll be called several times later
+        // 提取后续会多次使用的变量
         Class<?> clazz = bean.getClass();
         String methodName = executeMethod.getName();
         if (StrUtil.isBlank(name)) {
@@ -208,7 +202,7 @@ public class BatchJobExecutor {
 
         executeMethod.setAccessible(true);
 
-        // init and destroy
+        // 查找初始化和销毁方法
         Method initMethod = null;
         Method destroyMethod = null;
 
@@ -229,41 +223,10 @@ public class BatchJobExecutor {
             }
         }
 
-        // registry jobHandler
+        // 注册作业处理器
         registerJobHandler(name, new MethodJobHandler(bean, executeMethod, initMethod, destroyMethod));
 
     }
 
 
-    // ---------------------- job thread repository ----------------------
-    private static final ConcurrentMap<String, JobThread> JOB_THREAD_REPOSITORY = new ConcurrentHashMap<>();
-
-    public static JobThread registerJobThread(String jobId, IJobHandler handler, String removeOldReason) {
-        JobThread newJobThread = new JobThread(jobId, handler);
-        newJobThread.start();
-        log.info(">>>>>>>>>>> job regist JobThread success, jobId:{}, handler:{}", jobId, handler);
-        // putIfAbsent | oh my god, map's put method return the old value!!!
-        JobThread oldJobThread = JOB_THREAD_REPOSITORY.put(jobId, newJobThread);
-        if (oldJobThread != null) {
-            oldJobThread.toStop(removeOldReason);
-            oldJobThread.interrupt();
-        }
-
-        return newJobThread;
-    }
-
-    public static JobThread removeJobThread(String jobId, String removeOldReason) {
-        JobThread oldJobThread = JOB_THREAD_REPOSITORY.remove(jobId);
-        if (oldJobThread != null) {
-            oldJobThread.toStop(removeOldReason);
-            oldJobThread.interrupt();
-
-            return oldJobThread;
-        }
-        return null;
-    }
-
-    public static JobThread loadJobThread(String jobId) {
-        return JOB_THREAD_REPOSITORY.get(jobId);
-    }
 }

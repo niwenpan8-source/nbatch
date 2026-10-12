@@ -47,9 +47,9 @@ public class NbatchFileUtil {
     public static void main(String[] args) throws IOException {
         long startTime = System.currentTimeMillis();
         gzipFile("C:\\disk\\project\\study\\2025.zip", "C:\\disk\\project\\study\\2025.gz");
-        log.info("gzip cost time:{}", System.currentTimeMillis() - startTime);
+        log.info("压缩耗时：{}", System.currentTimeMillis() - startTime);
         unGzipFile("C:\\disk\\project\\study\\2025.gz", "C:\\disk\\project\\study\\2025.zip");
-        log.info("ungzip cost time:{}", System.currentTimeMillis() - startTime);
+        log.info("解压耗时：{}", System.currentTimeMillis() - startTime);
 
     }
 
@@ -111,7 +111,7 @@ public class NbatchFileUtil {
         Path importPath = Paths.get(importFilePath);
         Path exportPath = Paths.get(exportFilePath);
         if (!Files.exists(importPath)) {
-            log.info("file does not exist:{}", importFilePath);
+            log.info("文件不存在：{}", importFilePath);
             return;
         }
         validateRegularFile(importPath, "ungzip source");

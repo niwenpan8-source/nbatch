@@ -15,16 +15,54 @@ public class RunNodeLogEventParam implements Serializable {
 
     private static final long serialVersionUID = 42L;
 
+    /**
+     * 事件偏移量
+     */
     private Long offset;
+
+    /**
+     * 事件时间戳
+     */
     private Long timestamp;
+
+    /**
+     * 事件类型
+     */
     private String eventType;
+
+    /**
+     * 作业ID
+     */
     private String workId;
-    private String runWorkId;
+
+    /**
+     * 节点ID
+     */
     private String nodeId;
-    private String runNodeId;
+
+    /**
+     * 节点日志ID
+     */
     private String nodeLogId;
+
+    /**
+     * 翻牌时间
+     */
     private Date turnDate;
+
+    /**
+     * 作业类型
+     */
     private Integer workType;
+
+    /**
+     * 处理码
+     */
     private Integer handleCode;
+
+    /**
+     * 处理信息
+     */
     private String handleMsg;
+
 }

@@ -14,7 +14,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 
-import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_UPDATE_SQL_FAIL;
+import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_SQL_FAIL;
 
 /**
  * @description: 数据库方言配置
@@ -41,9 +41,9 @@ public class DialectHelper {
      * @return 数据库连接
      */
     public Connection getConnection(String dbType) {
-        DataSource gbaseDataSource = dataSource.getDataSource(dbType);
+        DataSource gbaseDataSource = dataSource.getDataSource(DbType.getDbType(dbType).getDb());
         if (gbaseDataSource == null) {
-            return null;
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), StrUtil.format("不存在该类型的dbType:{}", dbType));
         }
         try {
             Connection connection = gbaseDataSource.getConnection();
@@ -55,7 +55,7 @@ public class DialectHelper {
             connection.setNetworkTimeout(batchThreadPoolExecutor, 200000);
             return connection;
         } catch (SQLException e) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), "获取数据库连接失败");
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), "获取数据库连接失败");
         }
     }
 

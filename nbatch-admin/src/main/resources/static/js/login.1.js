@@ -46,25 +46,30 @@ $(function(){
             element.parent('div').append(error);  
         },
         submitHandler : function(form) {
-            RsaPassword.encryptForm($("#loginForm"), ['password']).then(function (paramData) {
-                $.post(base_url + "/login", paramData, function(data, status) {
-				if (data.code == "200") {
-                    layer.msg( I18n.login_success );
-                    setTimeout(function(){
-                        window.location.href = base_url + "/";
-                    }, 500);
-				} else {
-                    layer.open({
-                        title: I18n.system_tips,
-                        btn: [ I18n.system_ok ],
-                        content: (data.msg || I18n.login_fail ),
-                        icon: '2'
+            try {
+                PasswordTransfer.encodeForm($("#loginForm"), ['password']).then(function (paramData) {
+                    $.post(base_url + "/login", paramData, function(data, status) {
+                    if (data.code == "200") {
+                        layer.msg( I18n.login_success );
+                        setTimeout(function(){
+                            window.location.href = base_url + "/";
+                        }, 500);
+                    } else {
+                        layer.open({
+                            title: I18n.system_tips,
+                            btn: [ I18n.system_ok ],
+                            content: (data.msg || I18n.login_fail ),
+                            icon: '2'
+                        });
+                    }
                     });
-				}
-			    });
-            }, function (msg) {
-                layer.msg(msg || I18n.login_fail, {icon: 2});
-            });
+                }, function (msg) {
+                    layer.msg(msg || I18n.login_fail, {icon: 2});
+                });
+            } catch (e) {
+                layer.msg(I18n.login_fail, {icon: 2});
+            }
+            return false;
 		}
 	});
 });

@@ -1,338 +1,253 @@
 # nbatch
 
-nbatch 是一个基于 Spring Boot 的批量作业调度与流程编排平台。项目在 XXL-JOB 调度模型基础上扩展了“作业流程 / 作业节点 / 节点依赖 / 节点运行状态 / 节点级日志闭环”等能力，适合用来管理多节点批处理、跨库数据处理、脚本执行和文件导入导出任务。
+[English](README_EN.md)
 
-## 功能特性
+`nbatch` 是基于 Spring Boot 的批量作业调度与流程编排平台。管理端负责调度、编排和运行管控；执行器负责实际执行 SQL、脚本、存储过程及文件任务。平台适用于日批、数据同步、文件交换和需要依赖控制、可观测日志与可恢复执行的数据处理场景。
 
-- 调度中心：任务管理、执行器管理、调度日志、GLUE 代码编辑、用户管理。
-- 作业流程：支持批次流程管理、节点管理、节点依赖配置、运行批次状态跟踪。
-- 节点类型：支持脚本、存储过程、返回字符串存储过程、SQL 执行、文件入库、数据库导出文件、Bean 模式。
-- 节点状态：支持待执行、已下发、进行中、执行完毕、执行异常、已跳过、已停止。
-- 重跑能力：支持最新运行批次一键重跑、异常/停止节点恢复重跑、指定节点及其后继节点重跑。
-- 停止能力：支持停止流程最新一次运行作业，并向执行器下发运行节点停止指令。
-- 执行闭环：执行器注册、任务下发、运行节点日志回传、运行节点事件拉取与 ACK，支持 STARTED、SUCCESS、FAIL、STOPPED 事件。
-- 数据源能力：执行端支持 MySQL、OpenGauss/Gauss、GBase、ClickHouse 等数据源适配。
+## 目录
 
-## 模块结构
+- [核心能力](#核心能力)
+- [快速开始](#快速开始)
+- [操作说明](#操作说明)
+- [运行与重试](#运行与重试)
+- [日志与排障](#日志与排障)
+- [生产建议](#生产建议)
+
+## 核心能力
+
+- **可视化流程编排**：使用流程图管理组、节点和依赖；支持节点拖拽、画布缩放、自动布局和依赖维护。
+- **丰富节点类型**：支持脚本、SQL、存储过程、带返回值的存储过程、文件导入数据库、数据库导出文件和 Spring Bean。
+- **可靠运行控制**：支持停止、作业重跑、节点重跑、连同下游节点重跑和异常/停止后的恢复重跑。
+- **运行可观测性**：首页展示运行概览、日期趋势和最新异常节点；节点日志可按作业、组、节点和创建时间筛选。
+- **批量维护**：流程配置支持导入、导出与模板下载。工作簿按“组、各节点类型、依赖关系”分 Sheet 管理，并提供示例数据。
+- **多数据源与文件处理**：执行器可配置 openGauss、GaussDB、ClickHouse 与 GBase 数据源，支持常见文件导入、导出和压缩场景。
+
+## 架构
 
 ```text
-nbatch
-├── nbatch-core      # 调度核心、执行器通信、枚举、回调模型、线程模型
-├── nbatch-handler   # 节点处理器，包含 SQL、脚本、存储过程、文件导入导出等执行逻辑
-├── nbatch-admin     # 调度中心 Web 管理端，包含页面、接口、调度线程、运行作业管理
-├── nbatch-consumer  # 示例执行器应用，注册到 admin 并执行具体任务
-└── sql/init         # MySQL 初始化脚本
+Browser
+  |
+  v
+nbatch-admin (8095/nbatch) <--- registration / dispatch / callback ---> nbatch-consumer (8097)
+  |                                                                       |
+  v                                                                       v
+MySQL metadata                                                     business data sources
+                                                                    files / scripts / beans
 ```
 
-## 技术栈
+| 模块 | 职责 |
+| --- | --- |
+| `nbatch-core` | 调度、执行器通信、公共模型和回调协议。 |
+| `nbatch-handler` | 节点处理器与文件工具。 |
+| `nbatch-admin` | 管理端、流程编排、调度、运行控制和日志查询。 |
+| `nbatch-consumer` | 示例执行器，注册到管理端并执行节点。 |
+| `sql` | 新环境初始化脚本和存量环境升级脚本。 |
+
+## 运行要求
 
 - JDK 8
-- Spring Boot 2.7.18
-- Spring Framework 5.3.31
-- MyBatis-Plus 3.5.15
-- Freemarker
-- Netty
-- Hutool
-- MySQL 8.x
-- OpenGauss / GBase / ClickHouse JDBC 驱动
+- Maven 3.6+
+- MySQL 8.x，用于管理端元数据
+- 可选：openGauss、GaussDB、ClickHouse、GBase，按节点实际使用情况配置
 
-## 环境准备
+项目使用 Spring Boot 2.7.18、MyBatis-Plus、Freemarker、Netty、Hutool 与 EasyExcel。GBase 和 GaussDB 驱动可能不在公共 Maven 仓库中；仓库已提供本地驱动文件时，可按 [config/lib/mvn-add.txt](config/lib/mvn-add.txt) 安装到本地 Maven 仓库，或改为从企业私服获取。
 
-1. 安装 JDK 8。
-2. 安装 Maven 3.6+。
-3. 准备 MySQL 数据库。
-4. 复制环境变量示例文件，并按本地环境修改 `.env`：
+## 快速开始
+
+### 1. 创建本地配置
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Linux/macOS：
 
 ```bash
 cp .env.example .env
 ```
 
-5. 导入初始化脚本：
+至少确认以下配置：
+
+- `NBATCH_ADMIN_DATASOURCE_URL`、`NBATCH_ADMIN_DATASOURCE_USERNAME`、`NBATCH_ADMIN_DATASOURCE_PASSWORD`
+- `NBATCH_ACCESS_TOKEN`：管理端与所有执行器必须完全一致；生产环境必须替换默认值
+- `NBATCH_ADMIN_ADDRESSES`：指向实际管理端地址
+- `NBATCH_EXECUTOR_IP`、`NBATCH_EXECUTOR_PORT`：管理端可访问的执行器地址
+
+完整配置项和说明见 [.env.example](.env.example)。`.env` 包含凭据和令牌，不应提交到版本库。
+
+### 2. 初始化数据库
+
+创建 MySQL 数据库后导入初始化脚本：
 
 ```bash
 mysql -u <username> -p <database> < sql/init/mysql.sql
 ```
 
-6. 如需编译 `nbatch-handler` 或 `nbatch-consumer`，确保本地 Maven 仓库可解析 `com.gbase:gbase-jdbc:9.5.0.7`。该驱动通常不是中央仓库依赖，可能需要手工安装到本地仓库或私服。
+初始化脚本仅用于新环境，包含表删除与重建操作。已有环境升级前先备份数据库，再按版本顺序执行 [sql/update](sql/update) 中的脚本。
+
+### 3. 构建并启动
 
 ```bash
-mvn install:install-file \
-  -Dfile=/path/to/gbase-jdbc-9.5.0.7.jar \
-  -DgroupId=com.gbase \
-  -DartifactId=gbase-jdbc \
-  -Dversion=9.5.0.7 \
-  -Dpackaging=jar
-```
-
-## 配置说明
-
-### 调度中心
-
-配置文件：`nbatch-admin/src/main/resources/application.yml`
-
-敏感配置从根目录 `.env` 读取，关键变量：
-
-```properties
-NBATCH_ADMIN_DATASOURCE_URL=jdbc:mysql://localhost:3306/batch_dev?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
-NBATCH_ADMIN_DATASOURCE_USERNAME=<mysql-username>
-NBATCH_ADMIN_DATASOURCE_PASSWORD=<mysql-password>
-NBATCH_ACCESS_TOKEN=default_token
-```
-
-启动后访问：`http://localhost:8095/nbatch`
-
-### 登录密码加密
-
-- 调度中心启动时会在内存中生成 2048 位 RSA 密钥对。
-- 前端通过 `/rsaPublicKey` 获取公钥，使用 `RSA-OAEP/SHA-256` 加密登录、用户新增/修改、个人改密等密码字段。
-- 后端收到 Base64 密文后用私钥解密，再沿用原有 MD5 存储与校验逻辑。
-- 前端加密依赖浏览器 WebCrypto API，生产环境建议使用 HTTPS；本地 `localhost` 开发环境通常可直接使用。
-
-### 执行器
-
-配置文件：`nbatch-consumer/src/main/resources/application.yml`
-
-敏感配置从根目录 `.env` 读取，关键变量：
-
-```properties
-NBATCH_ADMIN_ADDRESSES=http://localhost:8095/nbatch
-NBATCH_ACCESS_TOKEN=default_token
-NBATCH_EXECUTOR_APP_NAME=nbatch-consumer
-NBATCH_EXECUTOR_PORT=9999
-NBATCH_GAUSS_DATASOURCE_URL=jdbc:opengauss://localhost:5432/postgres?currentSchema=public&serverTimezone=Asia/Shanghai
-NBATCH_GAUSS_DATASOURCE_USERNAME=<gauss-username>
-NBATCH_GAUSS_DATASOURCE_PASSWORD=<gauss-password>
-```
-
-`admin.addresses` 和 `accessToken` 必须与调度中心配置保持一致。
-
-## 构建与启动
-
-### 只编译调度中心
-
-```bash
-mvn -pl nbatch-admin -am -DskipTests compile
-```
-
-### 打包调度中心
-
-```bash
+# 管理端
 mvn -pl nbatch-admin -am -DskipTests package
-```
-
-运行：
-
-```bash
 java -jar nbatch-admin/target/nbatch-admin-2.5.0.jar
-```
 
-### 编译全量项目
-
-```bash
-mvn -DskipTests compile
-```
-
-如果全量编译失败并提示 `com.gbase:gbase-jdbc:9.5.0.7` 缺失，请先安装或配置对应 JDBC 驱动。
-
-### 启动执行器
-
-```bash
+# 示例执行器
 mvn -pl nbatch-consumer -am -DskipTests package
 java -jar nbatch-consumer/target/nbatch-consumer-2.5.0.jar
 ```
 
-## 使用流程
+> **本地登录**
+>
+> - 管理端：`http://localhost:8095/nbatch`
+> - 账号：`admin`
+> - 密码：`123456`
 
-1. 启动 `nbatch-admin`。
-2. 启动 `nbatch-consumer`，等待执行器自动注册。
-3. 在执行器管理中确认 `nbatch-consumer` 在线。
-4. 在作业节点管理中创建节点，配置节点类型、执行内容、数据库类型、重试策略等。
-5. 在批次流程管理中创建作业流程，并配置节点依赖关系。
-6. 在任务管理中创建调度任务并绑定作业流程。
-7. 启动任务，查看调度日志、运行作业状态和运行节点日志。
+首次登录后请立即修改默认管理员密码。生产环境还应替换访问令牌并使用 HTTPS。
 
-## 作业与节点概念
+## 配置参考
 
-- 作业流程：一组可编排的作业节点。
-- 作业节点：实际执行单元，例如 SQL、脚本、存储过程、文件导入导出。
-- 节点依赖：`当前节点 -> 依赖节点`，当前节点只有在依赖节点完成后才可执行。
-- 运行作业：一次作业流程运行批次。
-- 运行节点：某次运行作业中的节点实例。
+应用启动时通过 `spring.config.import=optional:file:.env[.properties]` 读取仓库根目录的 `.env`。
 
-## 重跑语义
+| 配置分组 | 关键变量 | 说明 |
+| --- | --- | --- |
+| 管理端数据源 | `NBATCH_ADMIN_DATASOURCE_*` | MySQL 元数据连接。 |
+| 接口认证 | `NBATCH_ACCESS_TOKEN` | 管理端与执行器共享令牌。 |
+| 执行器注册 | `NBATCH_ADMIN_ADDRESSES`、`NBATCH_EXECUTOR_*` | 管理端地址、执行器标识、地址、端口和目录。 |
+| 文件处理 | `NBATCH_CONSUMER_FILE_*` | 执行器临时文件与远程文件落地目录。 |
+| 业务数据源 | `NBATCH_OPEN_GAUSS_*`、`NBATCH_GAUSS_DB_*`、`NBATCH_CLICKHOUSE_*`、`NBATCH_GBASE_*` | 按节点实际使用情况配置。 |
+| 邮件和保留期 | `NBATCH_MAIL_*`、`NBATCH_*_LOG_RETENTION_DAYS` | 告警邮件和日志清理策略。 |
 
-- 一键重跑：重置最新运行批次的所有节点，整批重新执行。
-- 恢复重跑：只重置异常、停止、已下发或运行中的节点，已完成和已跳过节点保持原状态。
-- 节点重跑：重置指定运行节点；如果该节点被其他节点依赖，则所有后继受影响节点也会一起重跑。
-- 初始化重跑：按作业配置的初始化翻牌日期定位当前运行快照并重置；如果运行快照不存在，会自动初始化。
+执行器启动后，在“执行器管理”中确认它已注册且至少有一台机器在线。未注册或不在线时，节点无法下发。
 
-## 停止与失败策略
+## 操作说明
 
-- 停止作业：在批次流程列表中对最新一次运行作业执行“停止作业”，仅允许待执行、已下发或进行中的运行作业停止。
-- 停止范围：调度中心会将运行作业标记为已停止，并把待执行、已下发、进行中的运行节点标记为已停止。
-- 执行器停止：调度中心按执行器地址下发 `stopRunNode` 指令，执行端根据 `nodeLogId` 停止队列中或运行中的节点，并上报 `STOPPED` 事件。
-- 跳过策略：节点失败策略为 `skip` 时，失败节点标记为已跳过，后继依赖可以继续满足。
-- 停止策略：节点失败策略为 `stop`，或重试次数耗尽且无法继续重试时，节点和运行作业会进入已停止状态。
-- 重试策略：节点失败策略为 `retry` 时优先扣减剩余重试次数并回到待执行；重试耗尽后进入停止处理。
+### 首次使用路径
 
-## 2026-06-11 修改报告
+1. 启动管理端和执行器，在“执行器管理”确认至少有一台执行器在线。
+2. 在“作业流程”新增作业，设置执行器和调度方式。
+3. 进入“作业配置”，增加组和节点，再在流程图上创建依赖。
+4. 启动定时，或在满足运行条件后执行重跑；通过运行日志确认执行结果。
 
-### 后端能力
+> `启动定时`只允许后续时间点触发，`停止当前批次`才会请求停止已下发或运行中的节点。
 
-- 新增作业初始化翻牌日期字段 `init_turn_date`，首次运行优先使用该日期，没有配置时默认使用当天。
-- 新增按初始化翻牌日期重跑能力，覆盖批次流程和作业节点两个入口，并保持原有一键重跑、恢复重跑、节点重跑语义不变。
-- 新增批次流程详情接口和作业节点详情接口，返回基础信息、运行次数和运行历史，支撑前端详情弹窗。
-- 作业节点删除改为级联清理节点相关数据，包括依赖关系、运行节点、执行日志、详细日志、导入配置和导出配置。
-- 执行日志和详细日志支持按创建时间范围查询，详细日志新增 `create_time` 字段并在回调写入时填充。
-- 节点状态闭环改为执行器本地事件日志拉取模式，服务端下发成功后先标记为 `已下发`，执行端真正开始执行后再通过 `STARTED` 事件更新为 `进行中`。
-- 清理旧节点状态回调分支，仅保留普通任务回调和运行节点详细日志回调。
-- `RunNodeHelper` 完成结构整理，集中运行作业状态同步、运行节点日志构建和超时常量配置。
+### 页面入口
 
-### 前端交互
+| 页面 | 日常用途 |
+| --- | --- |
+| 运行报表 | 查看运行中节点、近期异常、完成量、执行器数量和异常节点。 |
+| 执行器管理 | 确认执行器已注册且有在线地址；作业无法下发时优先检查此处。 |
+| 作业流程 | 创建作业、配置调度，并进入流程图编排和运行控制。 |
 
-- 批次流程列表精简为关键字段展示，支持按作业名称查询，点击作业名称打开详情弹窗。
-- 作业节点列表精简为关键字段展示，支持按节点名称查询，点击节点名称打开详情弹窗。
-- 作业节点列表新增按最新运行状态筛选，支持待执行、已下发、进行中、执行完毕、执行异常。
-- 详情弹窗上方展示基础信息，下方展示运行历史列表和运行次数统计。
-- 执行日志和详细日志增加创建时间范围选择器，长文本日志默认截断，点击“详情”查看完整内容。
-- 节点依赖配置页由普通下拉升级为节点选择弹窗，支持按节点名称或 ID 搜索、当前节点单选、依赖节点多选和已选回显。
-- 依赖关系列表支持按节点名称查询，适配几百个节点的大流程配置场景。
+在“作业流程”创建作业时，先配置执行器、调度类型和 Cron/周期；随后从列表进入该作业的“作业配置”页面。
 
-### 数据库变更
+### 顶部工具栏
 
-- `sql/init/mysql.sql` 已同步新增字段。
-- 新增升级脚本：`sql/upgrade/20260611_add_init_turn_date.sql`。
-- 新增升级脚本：`sql/upgrade/20260611_add_log_detail_create_time.sql`。
+作业配置页将操作按使用场景分组：
 
-### 验证结果
+| 区域 | 操作 | 说明 |
+| --- | --- | --- |
+| 对象 | 增加节点、增加组 | 新对象会加入当前流程图；默认组只能修改名称，不能删除。 |
+| 运行 | 重跑作业、停止当前批次、恢复重跑 | 按当前运行状态显示可执行操作；翻牌作业重跑时可选择日期。 |
+| 日志 | 运行日志 | 默认查看当前作业；选中组或节点后会自动带入对应范围。 |
+| 调度 | 启动定时、停止定时 | 只控制后续定时触发，不等同于停止已经下发的节点。 |
+| 流程配置 | 下载配置模板、导入流程配置、导出流程配置 | 用于批量维护组、节点和依赖。 |
+| 画布 | 刷新并自动布局 | 重新读取流程数据并按依赖关系整理布局。 |
 
-- 已通过编译验证：`mvn -pl nbatch-admin -am -DskipTests compile`。
-- 全量编译仍需本地 Maven 可解析 `com.gbase:gbase-jdbc:9.5.0.7`。
+新增、编辑、删除对象以及创建、删除依赖均在操作成功后立即保存，无需额外点击“保存流程”。
 
-### 提交建议
+### 流程图操作
 
-- 建议提交前确认只暂存源码、模板、SQL 和 README 变更，不要提交本地运行产物。
-- 推荐提交信息：`feat: enhance workflow rerun and node management UI`。
+1. 在流程图顶部搜索框输入节点或组名称、ID；选择搜索结果后，画布会自动定位并选中该对象。
+2. 点击组标题中的 `[-]` 或 `[+]` 收起、展开组。拖动组会整体移动组内节点；拖动节点只调整该节点位置，组会自动扩展以容纳节点。
+3. 从节点或组右侧圆点拖向目标节点或组，创建“前置 -> 后置”依赖。箭头表示前置对象完成后，后置对象才可执行。
+4. 点击节点、组或依赖线，画布旁会出现相关操作按钮：节点可查看日志、重跑、编辑、删除；组可查看日志、编辑、删除；依赖线仅支持删除。
+5. 使用 `-`、`+` 调整缩放，使用适配画布按钮恢复到合适视图。长流程优先使用搜索和适配画布定位。
 
-## 2026-06-13 修改报告
+所有删除均需二次确认。删除组会同时删除组内节点、相关依赖和节点文件配置；删除节点会清理其依赖和文件配置。组也可以参与依赖关系。
 
-### 后端能力
+![作业流程配置](docs/images/operation-flow-editor.png)
 
-- 运行状态枚举新增 `已跳过` 和 `已停止`，运行作业详情增加跳过数、停止数统计。
-- 新增停止最新运行作业接口：`/work/stopLatestRunWork`，只允许待执行、已下发、进行中的最新运行作业停止。
-- 新增执行器停止指令链路：`StopRunNodeParam`、`ExecutorBiz.stopRunNode`、`/stopRunNode` RPC 入口和 `RunNodeStopHandler`。
-- 执行器线程池支持按 `nodeLogId` 停止队列中或运行中的 `BatchRunnable`，停止后写入 `STOPPED` 本地事件。
-- 运行节点事件拉取新增 `STOPPED` 处理，调度中心收到后更新运行节点日志、节点结束时间和运行作业状态。
-- 失败策略按 `stop`、`skip`、`retry` 统一处理：跳过节点可满足后继依赖，停止节点会阻断运行作业继续推进。
-- 恢复重跑支持从已停止状态恢复，只重置异常、停止、已下发或运行中的节点。
+### 导入与导出
 
-### 前端交互
+在流程配置的导入导出入口可以下载模板、导出当前定义或导入工作簿。工作簿顺序如下：
 
-- 批次流程列表操作菜单新增“停止作业”，对最新一次运行作业执行停止。
-- 批次流程详情运行历史新增“跳过”和“停止”统计列。
-- 作业节点列表和批次流程列表状态标签适配“已跳过”“已停止”。
-- 恢复重跑确认文案更新为异常、停止或卡住节点恢复，已完成和已跳过节点不重跑。
+1. `组`
+2. 每种节点类型各一个 Sheet
+3. `依赖关系`
 
-### 验证结果
+节点类型 Sheet 只包含该类型必要字段，模板自带示例行。导入前应先检查节点 ID、组归属、数据源名称、执行内容和依赖引用，避免覆盖或引入错误的流程定义。
 
-- 本次 README 更新基于提交 `406648e` 的代码差异整理。
-- 建议提交前执行：`mvn -pl nbatch-admin -am -DskipTests compile`。
+## 运行与重试
 
-## 2026-06-27 修改报告
+节点每次下发都会产生独立执行日志。翻牌作业按业务日期推进，顺序作业维护当前流程运行状态；排查同一节点的多次执行时，结合日志中的 `turnDate`、创建时间、开始时间和结束时间判断。
 
-### 前端交互
+| 操作 | 用途 |
+| --- | --- |
+| 停止当前批次 | 向执行器发送停止请求，并等待当前活动节点完成停止闭环；“停止定时”不会停止当前批次。 |
+| 重跑作业 | 从顶部“运行”菜单执行，重置当前作业运行状态并按当前定义重新执行。翻牌作业可指定重跑日期。 |
+| 重跑节点 | 选中节点后从悬浮操作按钮执行；执行前会校验下游节点是否正在运行。 |
+| 重跑依赖节点 | 在节点重跑弹窗中勾选，将目标节点及其下游依赖节点回拨，避免下游使用旧结果。 |
+| 恢复重跑 | 从顶部“运行”菜单执行，继续异常或已停止的节点，已完成和已跳过节点不重复执行。 |
 
-- 批次流程依赖配置页新增“流程预览”能力，可基于当前页面已配置或未保存的依赖关系生成节点依赖流程图。
-- 流程图箭头方向为“依赖节点 → 当前节点”，支持滚轮缩放、画布拖拽平移和一键重置。
-- 节点名称按三行展示，减少长名称截断；缩放时节点字体会跟随缩放并保留最小字号，兼顾可读性和信息密度。
-- 右键点击流程图节点可查看“它依赖的节点”和“依赖它的节点”，并可点击关联节点快速定位。
-- 画布平移增加边界限制，避免流程图被拖离可视区域过远。
-- 修复流程预览按钮初始化时序和右键菜单 JS 拼接语法问题，避免 `openFlowPreview is not defined` 等前端运行错误。
+失败策略支持停止、跳过和重试。重试次数的含义如下：
 
-### 执行端与文件处理
+- `-1`：无限重试
+- `0`：不重试
+- 大于 `0`：最多重试对应次数
 
-- `JobHandlerHolder`、`BatchRunnable`、线程池工具类完成结构整理，降低节点执行、计数器释放和异常处理逻辑的耦合度。
-- `NbatchFileUtil` 优化压缩与解压逻辑，支持目录压缩场景，并减少重复校验和冗余代码。
-- `NbatchCsvUtil`、`GBaseDialect`、`MysqlDialect` 优化 CSV 首行读取和字段数量识别逻辑，兼容 BOM、不可见字符、空行等异常输入。
-- 文件入库处理链路优化导入流程，减少读取首行和正式导入之间的重复处理。
-- `SpecialSqlUtil` 调整特殊 SQL 处理逻辑，去除不必要的执行时间输出。
+对会写库、发送文件或调用外部系统的节点，请先保证幂等性。强制恢复会跳过旧任务退出确认，旧任务未退出时可能与新尝试并发执行，仅应在已确认风险后使用。
 
-### 验证结果
+### 高频操作速查
 
-- 已通过模板语法与渲染后 JS 语法检查。
-- 已通过编译验证：`mvn -pl nbatch-admin -am -DskipTests compile`。
-- 全量编译仍需本地 Maven 可解析 `com.gbase:gbase-jdbc:9.5.0.7`。
+| 目标 | 推荐操作 |
+| --- | --- |
+| 暂停后续定时触发 | 顶部“调度” -> “停止定时”。 |
+| 终止正在执行的批次 | 顶部“运行” -> “停止当前批次”。 |
+| 仅重新执行一个节点 | 选中节点 -> 悬浮工具条 -> 重跑节点。 |
+| 重新执行节点及下游 | 选中节点 -> 重跑节点 -> 勾选“依赖节点重跑”。 |
+| 接续异常或已停止节点 | 顶部“运行” -> “恢复重跑”。 |
 
-## 2026-06-30 修改报告
+## 日志与排障
 
-### 运行快照与重跑
+### 日志查询
 
-- 运行作业改为复用当前快照模型，翻牌作业和顺序作业后续运行不再持续新增 `runwork` 和 `runnode`，而是在上一轮完成后重置当前运行快照。
-- 运行节点同步改为按模板节点重建快照：模板新增节点会补齐运行节点，模板删除节点会级联清理运行节点、节点日志和详细日志。
-- 一键重跑、按初始化翻牌日期重跑、恢复重跑和指定节点重跑统一基于当前快照重置，避免历史运行批次膨胀。
-- 重跑或重试仍会生成新的 `nodeLogId` 执行日志，保留同一 `runNodeId` 下多次执行尝试的历史轨迹。
+“运行日志”可从顶部工具栏打开。选中组或节点后再打开日志，会默认带入该组或节点；也可在日志弹窗的“日志范围”输入框中搜索并切换范围：
 
-### 日志与调度链路
+- 选择“当前作业”：查询该作业所有节点日志。
+- 选择指定组：查询该组内节点日志。
+- 选择指定节点：查询该节点日志。
+- 清空“日志范围”：恢复查询当前作业全部日志。
 
-- 运行节点日志和详细日志新增 `turn_date` 字段，页面日志展示和查询可区分不同翻牌日期。
-- `ExecuteNodeParam`、`RunNodeLogEventParam`、`RunNodeLogDetailParam` 补充翻牌日期传递，保证下发、执行事件和详细日志日期一致。
-- 执行器重复触发判断从单纯 `logId` 改为 `triggerKey`，批次流程按 `runWorkId + turnDate + runNodeId` 组合去重，避免同一调度日志下的不同节点批次互相误判重复。
-- 运行节点下发失败、执行器事件拉取和未闭环日志处理继续保留独立 `nodeLogId`，便于排查每一次下发尝试。
+创建时间可与范围组合筛选。执行日志和详细日志均显示节点名称、节点 ID、运行日期、状态、执行信息及实际执行时间；长文本可悬停查看完整内容。
 
-### 重试与前端交互
+### 排障顺序
 
-- 节点重试次数支持 `-1` 表示无限重试，`0` 表示不重试，大于 `0` 表示最大重试次数。
-- 作业节点新增和修改页面已同步提示 `-1` 无限重试语义，并允许输入最小值 `-1`。
-- 批次流程依赖保存改为前端内存关系表作为数据源，避免列表过滤、DOM 缓存或渲染状态导致新增依赖保存丢失。
-- 依赖关系保存接口改为事务内差异更新，只删除被移除的关系、只插入新增关系，并过滤重复、自依赖和非法节点关系。
+1. 在运行报表确认是否存在最新异常节点或运行中节点。
+2. 在执行器管理确认目标执行器在线，并检查其地址是否可从管理端访问。
+3. 打开节点运行日志，确认最近一次日志的状态、`turnDate`、创建时间和执行信息。
+4. 再检查目标数据源连接、文件目录权限、磁盘空间和网络连通性。
 
-### 数据库变更
+![运行概览](docs/images/operation-dashboard.png)
 
-- `sql/init/mysql.sql` 已新增 `nbatch_job_work_run_node_log.turn_date` 和 `nbatch_job_work_run_node_log_detail.turn_date`。
-
-### 验证结果
-
-- 已通过编译验证：`mvn -pl nbatch-admin -am -DskipTests compile`。
-- 已通过差异格式检查：`git diff --check`，仅存在 Git 换行符提示。
-
-## 常用开发命令
+## 开发与验证
 
 ```bash
-# 编译 admin 和依赖模块
-mvn -pl nbatch-admin -am -DskipTests compile
+# 构建全部模块
+mvn clean package -DskipTests
 
-# 打包 admin
-mvn -pl nbatch-admin -am -DskipTests package
-
-# 编译 core
-mvn -pl nbatch-core -DskipTests compile
-
-# 全量编译
-mvn -DskipTests compile
+# 运行管理端测试；根 POM 默认跳过测试，需要显式覆盖
+mvn -pl nbatch-admin -am -Dmaven.test.skip=false test
 ```
 
-## 目录说明
+## 生产建议
 
-```text
-nbatch-admin/src/main/java/com/nbatch/job/admin
-├── controller      # Web 控制器
-├── service         # 业务服务
-├── core/helper     # 调度、运行作业、运行节点辅助逻辑
-├── core/thread     # 调度线程、注册线程、日志回调处理
-├── mapper          # MyBatis-Plus Mapper
-└── core/domain     # PO、VO、Param 等数据模型
+- 不要使用默认账号、默认访问令牌或示例数据源密码。
+- 使用 HTTPS，并限制管理端、执行器、数据库和文件目录的网络与操作权限。
+- 定期备份 MySQL 元数据；升级前验证升级脚本，并在测试环境演练。
+- 为文件任务设置可控的目录、磁盘容量和来源校验；避免将不可信路径直接交给执行器。
+- 为 SQL、脚本和存储过程配置最小权限账号，并为重跑建立业务幂等保障。
 
-nbatch-admin/src/main/resources
-├── templates       # Freemarker 页面
-├── static          # 前端静态资源
-├── sqlmap          # MyBatis XML
-└── application.yml # 管理端配置
-```
+## License
 
-## 注意事项
-
-- 不要把生产数据库账号、密码、内网 IP 直接提交到仓库。根目录 `.env` 已被 `.gitignore` 忽略，提交时只保留 `.env.example`。
-- `nbatch-admin` 可独立编译运行；`nbatch-handler` 和 `nbatch-consumer` 依赖部分数据库驱动，缺失驱动时需要先处理 Maven 依赖。
-- 执行器端口 `nbatch.job.executor.port` 需要可被调度中心访问。
-- 调度中心和执行器的 `accessToken` 必须一致。
-- 初始化 SQL 中可能包含演示数据，正式环境请按需清理或替换。
+本项目按仓库中的 [LICENSE](LICENSE) 发布。

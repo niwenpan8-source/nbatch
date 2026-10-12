@@ -12,7 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.HashMap;
 
 /**
- * push cookies to model as cookieMap
+ * 将 Cookie 以 cookieMap 形式写入页面模型
  *
  * @author Mr.ni
  */
@@ -25,7 +25,7 @@ public class CookieInterceptor implements AsyncHandlerInterceptor {
 						   Object handler,
 						   ModelAndView modelAndView) {
 
-		// cookie
+		// 读取 Cookie
 		if (modelAndView!=null && request.getCookies()!=null && request.getCookies().length>0) {
 			HashMap<String, Cookie> cookieMap = new HashMap<>();
 			for (Cookie ck : request.getCookies()) {
@@ -34,7 +34,7 @@ public class CookieInterceptor implements AsyncHandlerInterceptor {
 			modelAndView.addObject("cookieMap", cookieMap);
 		}
 
-		// static method
+		// 静态方法
 		if (modelAndView != null) {
 			modelAndView.addObject("I18nUtil", FtlUtil.generateStaticModel(I18nUtil.class.getName()));
 		}

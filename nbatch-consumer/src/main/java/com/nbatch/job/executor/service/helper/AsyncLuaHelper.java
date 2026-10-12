@@ -52,7 +52,7 @@ public class AsyncLuaHelper extends VarArgFunction {
                     try {
                         callback.call(LuaValue.valueOf(result));
                     } catch (Exception e) {
-                        log.error("Lua callback error: {}", e.getMessage());
+                        log.error("Lua 回调失败：{}", e.getMessage());
                         throw new HandlerException(LUA_SCRIPT_FAIL.getCode(), e);
                     }
                 });
@@ -64,7 +64,7 @@ public class AsyncLuaHelper extends VarArgFunction {
                     try {
                         callback.call(LuaValue.valueOf("Task interrupted: " + taskName));
                     } catch (Exception callbackException) {
-                        log.error("Lua callback error after interruption: {}", callbackException.getMessage());
+                        log.error("线程中断后 Lua 回调失败：{}", callbackException.getMessage());
                         throw new HandlerException(LUA_SCRIPT_FAIL.getCode(), e);
                     }
                 });
@@ -92,7 +92,7 @@ public class AsyncLuaHelper extends VarArgFunction {
             if (!EXECUTOR.awaitTermination(5, TimeUnit.SECONDS)) {
                 EXECUTOR.shutdownNow();
                 if (!EXECUTOR.awaitTermination(5, TimeUnit.SECONDS)) {
-                    System.err.println("Thread pool did not terminate");
+                    System.err.println("线程池未能正常终止。");
                 }
             }
         } catch (InterruptedException ie) {

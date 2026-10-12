@@ -8,7 +8,7 @@ import lombok.ToString;
 import java.io.Serializable;
 
 /**
- * common return
+ * 通用返回结果
  * @author Mr.ni
  */
 @Data

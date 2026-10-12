@@ -1,6 +1,8 @@
 package com.nbatch.job.handler.handler.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -17,9 +19,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
+import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.nbatch.job.core.enums.NodeTypeEnum.NODE_TYPE_FILE_TO_DB;
-import static com.nbatch.job.handler.constant.JobHandlerConstant.TODAY_TABLE_SUFFIX;
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.FILE_TO_DB_FAIL;
 
 /**
@@ -43,8 +47,11 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
 
     @Override
     public void execute(ExecuteNodeParam nodeParam) throws Exception {
+
+        log.info("\n\n======================开始执行文件导入数据库节点，表名称【{}】======================", nodeParam.getExecuteFileToDbParam().getFileName());
+        long startTime = System.currentTimeMillis();
         ExecuteFileToDbParam param = nodeParam.getExecuteFileToDbParam();
-        String fileToDbPath = handlerPropertiesConstant.getTempPath();
+        String fileToDbPath = handlerPropertiesConstant.getPath();
         JSONObject replaceObj;
         if (StrUtil.isBlank(param.getFileName())) {
             replaceObj = JSONUtil.parseObj(param.getFileNameParam());
@@ -72,7 +79,7 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
         BaseDialect dialect = dialectHelper.getDialect(nodeParam.getDbType());
         // 导入的逻辑首先将数据导入到中间表，然后进行数据校验
         String importTableName = param.getImportTableName();
-        String importTodayTableName = importTableName + TODAY_TABLE_SUFFIX;
+        String importTodayTableName = StrUtil.format("{}_{}", importTableName, nodeParam.getNodeId());
         dialect.dropTable(dialectHelper.getConnection(nodeParam.getDbType()), importTodayTableName);
         // 全量导入
         if (param.getAllUpdate() == 1) {
@@ -80,22 +87,27 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
             handleAllTable(importTableName, importTodayTableName, param, dialect, nodeParam.getDbType());
         } else {
             dialect.copyTableNotStructure(dialectHelper.getConnection(nodeParam.getDbType()), importTableName, importTodayTableName);
-            handleUpdateTable(importTableName, importTodayTableName, param, dialect, nodeParam.getDbType());
+            handleUpdateTable(importTableName, importTodayTableName, param, dialect, nodeParam.getDbType(), replaceObj);
         }
 
         if (param.getIsGzip() == 1) {
             FileUtil.del(tempFilePath);
         }
+
+        long endTime = System.currentTimeMillis();
+        nodeParam.pushRunNodeLogDetailCallback(StrUtil.format("【文件导入数据库节点执行耗时】：{}ms", endTime - startTime));
         // dialect.dropTable(dialectHelper.getConnection(nodeParam.getDbType()), importTodayTableName);
+
+        log.info("\n\n======================结束执行文件导入数据库节点，表名称【{}】======================", param.getImportTableName());
     }
 
     /**
      * 设置文件路径
      */
     private void setFilePath(ExecuteFileToDbParam param, String finishGenerateFileName) {
-        String dbExportFilePath = handlerPropertiesConstant.getTempPath()
+        String dbExportFilePath = handlerPropertiesConstant.getPath()
                 + File.separator + finishGenerateFileName;
-        String remoteDbExportFilePath = handlerPropertiesConstant.getRemoteTempPath()
+        String remoteDbExportFilePath = handlerPropertiesConstant.getRemotePath()
                 + File.separator + finishGenerateFileName;
         param.setFilePath(dbExportFilePath);
         param.setRemoteFilePath(remoteDbExportFilePath);
@@ -106,27 +118,51 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
     }
 
 
-    private String getDeleteByConditionSql(String tableName, String importTableCondition) {
-        // 将逗号分隔的字段串转换为数组，用于构建 EXISTS 中的关联条件
-        String[] fields = importTableCondition.split(",");
+    private String getDeleteByConditionSql(String tableName, String todayTableName, String importTableCondition, JSONObject replaceObj) {
+        // 使用正则检测是否包含 #{xxx} 格式的占位符
+        Pattern placeholderPattern = Pattern.compile("#\\{(\\w+)\\}");
+        Matcher matcher = placeholderPattern.matcher(importTableCondition);
 
-        StringBuilder whereClause = new StringBuilder();
-        for (int i = 0; i < fields.length; i++) {
-            String field = fields[i].trim();
-            if (i > 0) {
-                whereClause.append(" AND ");
+        String templateSql;
+        String formatted;
+        String whereClause;
+        if (matcher.find()) {
+            templateSql = "DELETE FROM {} t1\n" +
+                    "WHERE {}";
+            // 存在占位符：使用 replaceObj 中的值替换所有 #{} 占位符，直接作为条件
+            StringBuffer sb = new StringBuffer();
+            matcher.reset();
+            while (matcher.find()) {
+                String key = matcher.group(1);
+                Object value = replaceObj.get(key);
+                String valueStr = "";
+                if (value instanceof Date) {
+                    valueStr = DateUtil.format((Date) value, DatePattern.NORM_DATE_FORMAT);
+                }
+                matcher.appendReplacement(sb, StrUtil.format("'{}'", value != null ? valueStr : ""));
             }
-            // 构建 t1.FIELD = t2.FIELD 的格式
-            whereClause.append("t1.").append(field).append(" = t2.").append(field);
+            matcher.appendTail(sb);
+            whereClause = sb.toString();
+            formatted = StrUtil.format(templateSql, tableName, whereClause);
+        } else {
+            templateSql = "DELETE FROM {} t1\n" +
+                    "WHERE EXISTS (\n" +
+                    "    SELECT 1 FROM {} t2\n" +
+                    "    WHERE {}\n" +
+                    ")";
+            // 不存在占位符：原逻辑，将逗号分隔的字段串转换为 t1.FIELD = t2.FIELD 的关联条件
+            String[] fields = importTableCondition.split(",");
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < fields.length; i++) {
+                String field = fields[i].trim();
+                if (i > 0) {
+                    sb.append(" AND ");
+                }
+                sb.append("t1.").append(field).append(" = t2.").append(field);
+            }
+            whereClause = sb.toString();
+            formatted = StrUtil.format(templateSql, tableName, todayTableName, whereClause);
         }
-
-        String templateSql = "DELETE FROM {} t1\n" +
-                "WHERE EXISTS (\n" +
-                "    SELECT 1 FROM {}_today t2\n" +
-                "    WHERE {}\n" +
-                ")";
-
-        String formatted = StrUtil.format(templateSql, tableName, tableName, whereClause.toString());
         log.info("删除临时表数据sql:{}", formatted);
         return formatted;
     }
@@ -152,7 +188,8 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
                                    String importTodayTableName,
                                    ExecuteFileToDbParam param,
                                    BaseDialect dialect,
-                                   String dbType
+                                   String dbType,
+                                   JSONObject replaceObj
     ) throws Exception {
         long importDbCount;
         // 删除临时表数据
@@ -168,7 +205,7 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
             throw new HandlerException(FILE_TO_DB_FAIL.getCode(), "导入文件表条件列不可为空！");
         }
         dialect.executeUpdate(dialectHelper.getConnection(dbType),
-                getDeleteByConditionSql(importTableName, param.getImportTableCondition()));
+                getDeleteByConditionSql(importTableName, importTodayTableName, param.getImportTableCondition(), replaceObj));
         String tableFiled = param.getImportTableFiled();
         if (StrUtil.isEmpty(tableFiled)) {
             log.info("===================导入增量文件导入文件表列不可为空！==================");
@@ -204,6 +241,5 @@ public class FileToDbHandler implements JobNodeHandlerAdapter {
         dialect.renameTable(dialectHelper.getConnection(dbType), importTodayTableName, importTableName);
         return importDbCount;
     }
-
 
 }

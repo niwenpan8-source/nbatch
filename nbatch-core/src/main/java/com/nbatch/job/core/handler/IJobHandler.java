@@ -1,32 +1,29 @@
 package com.nbatch.job.core.handler;
 
 /**
- * job handler
+ * 作业处理器
  *
  * @author Mr.ni 2015-12-19 19:06:38
  */
 public abstract class IJobHandler {
 
-
 	/**
-	 * execute handler, invoked when executor receives a scheduling request
+	 * 执行处理逻辑，执行器收到调度请求后调用
 	 */
 	public abstract void execute() throws Exception;
 
 	/**
-	 * init handler, invoked when JobThread init
+	 * 初始化处理器，在作业线程初始化时调用
 	 */
 	public void init() throws Exception {
-		// do something
+		// 执行业务初始化
 	}
-
 
 	/**
-	 * destroy handler, invoked when JobThread destroy
+	 * 销毁处理器，在作业线程销毁时调用
 	 */
 	public void destroy() throws Exception {
-		// do something
+		// 执行业务清理
 	}
-
 
 }

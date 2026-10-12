@@ -21,7 +21,7 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("nbatch_job_work_export_file")
+@TableName("nbatch_work_export_file")
 public class JobWorkExportFilePo extends Model<JobWorkExportFilePo> {
 
 	/**

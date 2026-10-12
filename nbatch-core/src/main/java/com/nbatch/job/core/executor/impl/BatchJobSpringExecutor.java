@@ -1,7 +1,6 @@
 package com.nbatch.job.core.executor.impl;
 
 import com.nbatch.job.core.executor.BatchJobExecutor;
-import com.nbatch.job.core.glue.GlueFactory;
 import com.nbatch.job.core.handler.annotation.BatchJob;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -19,27 +18,24 @@ import java.util.Map;
 
 
 /**
- * job executor (for spring)
+ * Spring 作业执行器
  *
  * @author Mr.ni
  */
 @Slf4j
 public class BatchJobSpringExecutor extends BatchJobExecutor implements ApplicationContextAware, SmartInitializingSingleton, DisposableBean {
 
-    // start
+    // 启动
     @Override
     public void afterSingletonsInstantiated() {
 
-        // init JobHandler Repository
+        // 初始化作业处理器仓库
         /*initJobHandlerRepository(applicationContext);*/
 
-        // init JobHandler Repository (for method)
+        // 初始化方法作业处理器仓库
         initJobHandlerMethodRepository(applicationContext);
 
-        // refresh GlueFactory
-        GlueFactory.refreshInstance(1);
-
-        // super start
+        // 启动基础执行器
         try {
             super.start();
         } catch (Exception e) {
@@ -47,7 +43,7 @@ public class BatchJobSpringExecutor extends BatchJobExecutor implements Applicat
         }
     }
 
-    // destroy
+    // 销毁
     @Override
     public void destroy() {
         super.destroy();
@@ -58,38 +54,38 @@ public class BatchJobSpringExecutor extends BatchJobExecutor implements Applicat
         if (applicationContext == null) {
             return;
         }
-        // init job handler from method
+            // 从方法初始化作业处理器
         String[] beanDefinitionNames = applicationContext.getBeanNamesForType(Object.class, false, true);
         for (String beanDefinitionName : beanDefinitionNames) {
 
-            // get bean
+            // 获取 Bean
             Object bean;
             Lazy onBean = applicationContext.findAnnotationOnBean(beanDefinitionName, Lazy.class);
             if (onBean!=null){
-                log.debug("job annotation scan, skip @Lazy Bean:{}", beanDefinitionName);
+                log.debug("扫描作业注解时跳过 @Lazy Bean：{}", beanDefinitionName);
                 continue;
             }else {
                 bean = applicationContext.getBean(beanDefinitionName);
             }
 
-            // filter method
-            // referred to ：org.springframework.context.event.EventListenerMethodProcessor.processBean
+            // 筛选方法
+            // 参考 org.springframework.context.event.EventListenerMethodProcessor.processBean
             Map<Method, BatchJob> annotatedMethods = null;   
             try {
                 annotatedMethods = MethodIntrospector.selectMethods(bean.getClass(),
                         (MethodIntrospector.MetadataLookup<BatchJob>) method -> AnnotatedElementUtils.findMergedAnnotation(method, BatchJob.class));
             } catch (Throwable ex) {
-                log.error("job method-jobhandler resolve error for bean[{}].", beanDefinitionName, ex);
+                log.error("解析 Bean[{}] 的作业方法处理器时发生错误。", beanDefinitionName, ex);
             }
             if (annotatedMethods==null || annotatedMethods.isEmpty()) {
                 continue;
             }
 
-            // generate and register method job handler
+            // 创建并注册方法作业处理器
             for (Map.Entry<Method, BatchJob> methodXxlJobEntry : annotatedMethods.entrySet()) {
                 Method executeMethod = methodXxlJobEntry.getKey();
                 BatchJob batchJob = methodXxlJobEntry.getValue();
-                // register
+                // 注册处理器
                 registerJobHandler(batchJob, bean, executeMethod);
             }
 

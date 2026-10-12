@@ -2,20 +2,17 @@ package com.nbatch.job.core.biz.client;
 
 import com.nbatch.job.core.biz.ExecutorBiz;
 import com.nbatch.job.core.biz.model.ExecuteWorkParam;
-import com.nbatch.job.core.biz.model.IdleBeatParam;
-import com.nbatch.job.core.biz.model.KillParam;
-import com.nbatch.job.core.biz.model.LogParam;
-import com.nbatch.job.core.biz.model.LogResult;
 import com.nbatch.job.core.biz.model.ReturnT;
 import com.nbatch.job.core.biz.model.RunNodeLogAckParam;
 import com.nbatch.job.core.biz.model.RunNodeLogPullParam;
 import com.nbatch.job.core.biz.model.RunNodeLogPullResult;
+import com.nbatch.job.core.biz.model.RunNodeStatusQueryParam;
+import com.nbatch.job.core.biz.model.RunNodeStatusQueryResult;
 import com.nbatch.job.core.biz.model.StopRunNodeParam;
-import com.nbatch.job.core.biz.model.TriggerParam;
 import com.nbatch.job.core.util.JobRemotingUtil;
 
 /**
- * admin api test
+ * 执行器接口客户端
  *
  * @author Mr.ni
  */
@@ -26,7 +23,7 @@ public class ExecutorBizClient implements ExecutorBiz {
         this.accessToken = accessToken;
         this.timeout = timeout;
 
-        // valid
+        // 校验地址
         if (!this.addressUrl.endsWith("/")) {
             this.addressUrl = this.addressUrl + "/";
         }
@@ -45,30 +42,26 @@ public class ExecutorBizClient implements ExecutorBiz {
         return JobRemotingUtil.postBody(addressUrl+"beat", accessToken, timeout, "", String.class);
     }
 
-    @Override
-    public ReturnT<String> idleBeat(IdleBeatParam idleBeatParam){
-        return JobRemotingUtil.postBody(addressUrl+"idleBeat", accessToken, timeout, idleBeatParam, String.class);
-    }
+
 
     @Override
-    public ReturnT<String> run(TriggerParam triggerParam) {
-        return JobRemotingUtil.postBody(addressUrl + "run", accessToken, timeout, triggerParam, String.class);
+    public ReturnT<String> runWork(ExecuteWorkParam executeWorkParam) {
+        return JobRemotingUtil.postBody(addressUrl + "runWork", accessToken, timeout, executeWorkParam, String.class);
     }
 
-    @Override
-    public ReturnT<String> kill(KillParam killParam) {
-        return JobRemotingUtil.postBody(addressUrl + "kill", accessToken, timeout, killParam, String.class);
-    }
 
     @Override
     public ReturnT<String> stopRunNode(StopRunNodeParam stopRunNodeParam) {
         return JobRemotingUtil.postBody(addressUrl + "stopRunNode", accessToken, timeout, stopRunNodeParam, String.class);
     }
 
+    /** 调用执行器状态查询接口。 */
     @Override
-    public ReturnT<LogResult> log(LogParam logParam) {
-        return JobRemotingUtil.postBody(addressUrl + "log", accessToken, timeout, logParam, LogResult.class);
+    public ReturnT<RunNodeStatusQueryResult> queryRunNodeStatus(RunNodeStatusQueryParam queryParam) {
+        return JobRemotingUtil.postBody(addressUrl + "queryRunNodeStatus", accessToken, timeout,
+                queryParam, RunNodeStatusQueryResult.class);
     }
+
 
     @Override
     public ReturnT<RunNodeLogPullResult> pullRunNodeLog(RunNodeLogPullParam pullParam) {
@@ -78,6 +71,18 @@ public class ExecutorBizClient implements ExecutorBiz {
     @Override
     public ReturnT<String> ackRunNodeLog(RunNodeLogAckParam ackParam) {
         return JobRemotingUtil.postBody(addressUrl + "ackRunNodeLog", accessToken, timeout, ackParam, String.class);
+    }
+
+    @Override
+    public ReturnT<RunNodeLogPullResult> pullRunNodeLogDetail(RunNodeLogPullParam pullParam) {
+        return JobRemotingUtil.postBody(addressUrl + "pullRunNodeLogDetail", accessToken, timeout,
+                pullParam, RunNodeLogPullResult.class);
+    }
+
+    @Override
+    public ReturnT<String> ackRunNodeLogDetail(RunNodeLogAckParam ackParam) {
+        return JobRemotingUtil.postBody(addressUrl + "ackRunNodeLogDetail", accessToken, timeout,
+                ackParam, String.class);
     }
 
 }

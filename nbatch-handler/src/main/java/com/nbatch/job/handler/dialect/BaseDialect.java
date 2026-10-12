@@ -1,13 +1,10 @@
 package com.nbatch.job.handler.dialect;
 
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.nbatch.job.core.biz.model.ExecuteDbToFileParam;
 import com.nbatch.job.core.biz.model.ExecuteFileToDbParam;
-import com.nbatch.job.handler.utils.SpecialSqlUtil;
 
 import java.sql.Connection;
-import java.util.List;
 
 /**
  * @description: 方言接口
@@ -32,10 +29,14 @@ public interface BaseDialect {
     void executeStoreProcedure(Connection connection, String tableSql, JSONObject paramObj) throws Exception;
 
     /**
-     * 执行存储过程返回str
+     * 执行存储过程返回字符串
      */
-    String executeStoreProcedureReturnStr(Connection connection, String sql, JSONObject paramObj) throws Exception ;
+    String executeStoreProcedureReturnStr(Connection connection, String tableSql, JSONObject paramObj) throws Exception;
 
+    /**
+     * 执行修改
+     */
+    int executeUpdate(Connection connection, String sql, int timeout) throws Exception;
     /**
      * 执行修改
      */

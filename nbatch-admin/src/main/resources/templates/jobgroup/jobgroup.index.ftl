@@ -7,7 +7,7 @@
   	<link rel="stylesheet" href="${request.contextPath}/static/adminlte/bower_components/datatables.net-bs/css/dataTables.bootstrap.min.css">
     <title>${I18n.admin_name}</title>
 </head>
-<body class="hold-transition skin-blue sidebar-mini <#if cookieMap?exists && cookieMap["xxljob_adminlte_settings"]?exists && "off" == cookieMap["xxljob_adminlte_settings"].value >sidebar-collapse</#if> ">
+<body class="hold-transition skin-blue sidebar-mini list-page <#if cookieMap?exists && cookieMap["xxljob_adminlte_settings"]?exists && "off" == cookieMap["xxljob_adminlte_settings"].value >sidebar-collapse</#if> ">
 <div class="wrapper">
 	<!-- header -->
 	<@netCommon.commonHeader />
@@ -34,7 +34,7 @@
 							</div>
 						</div>
 						<div class="box-body">
-							<div class="row">
+							<div class="row list-filter-row">
 								<div class="col-xs-12 col-md-4">
 									<div class="input-group">
 										<span class="input-group-addon">AppName</span>
@@ -47,7 +47,7 @@
 										<input type="text" class="form-control" id="title" placeholder="${I18n.jobgroup_field_title}" >
 									</div>
 								</div>
-								<div class="col-xs-12 col-md-2 col-md-offset-1">
+								<div class="col-xs-12 col-md-1">
 									<button class="btn btn-block btn-info" id="searchBtn">${I18n.system_search}</button>
 								</div>
 							</div>
@@ -58,9 +58,10 @@
 			
 			<div class="row">
 				<div class="col-xs-12">
-					<div class="box">
-		            <div class="box-body">
-			              	<table id="jobgroup_list" class="table table-bordered table-striped display" width="100%" >
+					<div class="box list-table-box">
+						<div class="box-body">
+							<div class="table-responsive-wrap">
+							<table id="jobgroup_list" class="table table-bordered table-striped display" width="100%" >
 				                <thead>
 					            	<tr>
                                         <th name="id" >ID</th>
@@ -74,6 +75,7 @@
                                 <tbody>
 								</tbody>
 							</table>
+							</div>
 						</div>
 					</div>
 				</div>

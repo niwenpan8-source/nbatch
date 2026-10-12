@@ -4,42 +4,53 @@ import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import com.nbatch.job.core.biz.model.ExecuteNodeParam;
-import com.nbatch.job.core.biz.model.RunNodeLogDetailParam;
-import com.nbatch.job.core.context.BatchJobHelper;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
- *  1、内嵌编译器如"PythonInterpreter"无法引用扩展包，因此推荐使用java调用控制台进程方式"Runtime.getRuntime().exec()"来运行脚本(shell或python)；
- *  2、因为通过java调用控制台进程方式实现，需要保证目标机器PATH路径正确配置对应编译器；
- *  3、暂时脚本执行日志只能在脚本执行结束后一次性获取，无法保证实时性；因此为确保日志实时性，可改为将脚本打印的日志存储在指定的日志文件上；
- *  4、python 异常输出优先级高于标准输出，体现在Log文件中，因此推荐通过logging方式打日志保持和异常信息一致；否则用prinf日志顺序会错乱
- *
+ * 1、内嵌编译器如"PythonInterpreter"无法引用扩展包，因此推荐使用java调用控制台进程方式"Runtime.getRuntime().exec()"来运行脚本(shell或python)；
+ * 2、因为通过java调用控制台进程方式实现，需要保证目标机器PATH路径正确配置对应编译器；
+ * 3、暂时脚本执行日志只能在脚本执行结束后一次性获取，无法保证实时性；因此为确保日志实时性，可改为将脚本打印的日志存储在指定的日志文件上；
+ * 4、python 异常输出优先级高于标准输出，体现在Log文件中，因此推荐通过logging方式打日志保持和异常信息一致；否则用printf日志顺序会错乱
  *
  * @author Mr.ni
- * @date 2025/11/05
  */
 @Slf4j
 public class ScriptUtil {
 
     /**
-     * make script file
+     * 脚本先等待正常退出，超时后再进入强制结束阶段。
+     */
+    private static final long PROCESS_GRACEFUL_STOP_SECONDS = 5L;
+    private static final long PROCESS_FORCE_STOP_SECONDS = 5L;
+
+    /**
+     * nodeLogId -> 外部进程，用于停止请求精确定位脚本进程。
+     */
+    private static final Map<String, Process> RUN_NODE_PROCESS_MAP = new ConcurrentHashMap<>();
+
+    /**
+     * 创建脚本文件
      *
-     * @param scriptFileName  script file name
-     * @param content  script content
+     * @param scriptFileName script file name
+     * @param content        script content
      */
     public static void markScriptFile(String scriptFileName, String content) throws IOException {
-        // make file,   filePath/gluesource/666-123456789.py
+        // 创建文件，路径格式为 filePath/gluesource/666-123456789.py
         try (FileOutputStream fileOutputStream = new FileOutputStream(scriptFileName)) {
+            if (scriptFileName.toLowerCase().endsWith(".ps1")) {
+                // Windows PowerShell 5.1 仅能可靠识别带 BOM 的 UTF-8 脚本。
+                fileOutputStream.write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF});
+            }
             fileOutputStream.write(content.getBytes(StandardCharsets.UTF_8));
         }
     }
@@ -47,137 +58,75 @@ public class ScriptUtil {
     /**
      * 脚本执行，日志文件实时输出
      *
-     * @param command 命令
+     * @param param      节点参数
+     * @param command    命令
      * @param scriptFile 脚本文件
-     * @param logFile 日志文件
-     * @param params 参数
-     */
-    public static int execToFile(String command, String scriptFile, String logFile, String... params) {
-
-        FileOutputStream fileOutputStream = null;
-        Thread inputThread = null;
-        Thread errThread = null;
-        try {
-            // file
-            fileOutputStream = new FileOutputStream(logFile, true);
-
-            // command
-            List<String> cmdarray = new ArrayList<>();
-            cmdarray.add(command);
-            cmdarray.add(scriptFile);
-            if (ArrayUtil.isNotEmpty(params)) {
-                Collections.addAll(cmdarray, params);
-            }
-            String[] cmdarrayFinal = cmdarray.toArray(new String[0]);
-
-            BatchJobHelper.log(StrUtil.format("----------- nodeId script file:{}-----------", Arrays.toString(cmdarrayFinal)));
-            log.info(StrUtil.format("----------- nodeId script file:{}-----------", Arrays.toString(cmdarrayFinal)));
-            // process-exec
-            final Process process = Runtime.getRuntime().exec(cmdarrayFinal);
-
-            // log-thread
-            final FileOutputStream finalFileOutputStream = fileOutputStream;
-            inputThread = new Thread(() -> {
-                try {
-                    copy(process.getInputStream(), finalFileOutputStream, new byte[1024]);
-                } catch (IOException e) {
-                    BatchJobHelper.log(e);
-                }
-            });
-            errThread = new Thread(() -> {
-                try {
-                    copy(process.getErrorStream(), finalFileOutputStream, new byte[1024]);
-                } catch (IOException e) {
-                    BatchJobHelper.log(e);
-                }
-            });
-            log.info(StrUtil.format("----------- nodeId script return content:{}-----------", IoUtil.getWriter(finalFileOutputStream, "utf8").getEncoding()));
-            inputThread.start();
-            errThread.start();
-
-            // process-wait
-            // exit code: 0=success, 1=error
-            int exitValue = process.waitFor();
-
-            // log-thread join
-            inputThread.join();
-            errThread.join();
-
-            return exitValue;
-        } catch (Exception e) {
-            BatchJobHelper.log(e);
-            return -1;
-        } finally {
-            if (fileOutputStream != null) {
-                try {
-                    fileOutputStream.close();
-                } catch (IOException e) {
-                    BatchJobHelper.log(e);
-                }
-
-            }
-            if (inputThread != null && inputThread.isAlive()) {
-                inputThread.interrupt();
-            }
-            if (errThread != null && errThread.isAlive()) {
-                errThread.interrupt();
-            }
-        }
-    }
-
-    /**
-     * 脚本执行，日志文件实时输出
-     *
-     * @param param 节点参数
-     * @param command 命令
-     * @param scriptFile 脚本文件
-     * @param params 参数
+     * @param params     参数
      */
     public static int execToFile(ExecuteNodeParam param, String command, String scriptFile, String... params) {
 
         Thread inputThread = null;
         Thread errThread = null;
+        Process process = null;
         try {
-            // command
+            // 执行命令
             List<String> cmdarray = new ArrayList<>();
             cmdarray.add(command);
+            if ("powershell".equalsIgnoreCase(command)) {
+                cmdarray.add("-NoProfile");
+                cmdarray.add("-NonInteractive");
+                cmdarray.add("-ExecutionPolicy");
+                cmdarray.add("Bypass");
+                cmdarray.add("-File");
+            }
             cmdarray.add(scriptFile);
             if (ArrayUtil.isNotEmpty(params)) {
                 Collections.addAll(cmdarray, params);
             }
             String[] cmdArrayFinal = cmdarray.toArray(new String[0]);
-            // process-exec
-            final Process process = Runtime.getRuntime().exec(cmdArrayFinal);
+            // 启动进程
+            process = Runtime.getRuntime().exec(cmdArrayFinal);
+            final Process runningProcess = process;
+            if (StrUtil.isNotBlank(param.getNodeLogId())) {
+                RUN_NODE_PROCESS_MAP.put(param.getNodeLogId(), process);
+            }
             inputThread = new Thread(() -> {
-                String content = IoUtil.readUtf8(process.getInputStream());
+                String content = IoUtil.readUtf8(runningProcess.getInputStream());
                 if (StrUtil.isNotBlank(content)) {
-                    log.info("content:{}", content);
+                    log.info("输出内容：{}", content);
                     param.pushRunNodeLogDetailCallback(content);
                 }
             });
             errThread = new Thread(() -> {
-                String content = IoUtil.readUtf8(process.getErrorStream());
+                String content = IoUtil.readUtf8(runningProcess.getErrorStream());
                 if (StrUtil.isNotBlank(content)) {
-                    log.info("error content:{}", content);
+                    log.info("错误输出内容：{}", content);
                     param.pushRunNodeLogDetailCallback(content);
                 }
             });
             inputThread.start();
             errThread.start();
 
-            // process-wait
-            // exit code: 0=success, 1=error
+            // 等待进程结束
+            // 退出码：0 表示成功，1 表示失败
             int exitValue = process.waitFor();
 
-            // log-thread join
+            // 等待日志线程结束
             inputThread.join();
             errThread.join();
 
             return exitValue;
+        } catch (InterruptedException e) {
+            terminateProcess(process);
+            Thread.currentThread().interrupt();
+            return -1;
         } catch (Exception e) {
-            BatchJobHelper.log(e);
+            log.error("脚本执行异常：{}", e.getMessage());
             return -1;
         } finally {
+            if (process != null && StrUtil.isNotBlank(param.getNodeLogId())) {
+                RUN_NODE_PROCESS_MAP.remove(param.getNodeLogId(), process);
+            }
             if (inputThread != null && inputThread.isAlive()) {
                 inputThread.interrupt();
             }
@@ -188,96 +137,35 @@ public class ScriptUtil {
     }
 
     /**
-     * 数据流Copy（Input自动关闭，Output不处理）
-     *
-     * @param inputStream 输入流
-     * @param outputStream 输出流
-     * @param buffer 缓存
+     * 先请求脚本正常退出；任务线程被中断后会继续等待并在超时后强制结束进程。
      */
-    private static long copy(InputStream inputStream, OutputStream outputStream, byte[] buffer) throws IOException {
-        try {
-            long total = 0;
-            for (; ; ) {
-                int res = inputStream.read(buffer);
-                if (res == -1) {
-                    break;
-                }
-                if (res > 0) {
-                    total += res;
-                    if (outputStream != null) {
-                        outputStream.write(buffer, 0, res);
-                    }
-                }
-            }
-            assert outputStream != null;
-            outputStream.flush();
-            //out = null;
-            inputStream.close();
-            inputStream = null;
-            return total;
-        } finally {
-            if (inputStream != null) {
-                inputStream.close();
-            }
+    public static void stopRunNodeProcess(String nodeLogId) {
+        if (StrUtil.isBlank(nodeLogId)) {
+            return;
+        }
+        Process process = RUN_NODE_PROCESS_MAP.get(nodeLogId);
+        if (process != null && process.isAlive()) {
+            process.destroy();
         }
     }
 
     /**
-     * 脚本执行，日志文件实时输出
-     * 优点：支持将目标数据实时输出到指定日志文件中去
-     * 缺点：
-     *      标准输出和错误输出优先级固定，可能和脚本中顺序不一致
-     *      Java无法实时获取
-     *      <!-- commons-exec -->
-     * 		<dependency>
-     * 			<groupId>org.apache.commons</groupId>
-     * 			<artifactId>commons-exec</artifactId>
-     * 			<version>${commons-exec.version}</version>
-     * 		</dependency>
-     *
-     * @param command
-     * @param scriptFile
-     * @param logFile
-     * @param params
-     * @return
-     * @throws IOException
+     * 正常结束失败后强制销毁进程，并保留当前线程的中断状态。
      */
-    /*public static int execToFileB(String command, String scriptFile, String logFile, String... params) throws IOException {
-        // 标准输出：print （null if watchdog timeout）
-        // 错误输出：logging + 异常 （still exists if watchdog timeout）
-        // 标准输入
-
-        FileOutputStream fileOutputStream = null;   //
-        try {
-            fileOutputStream = new FileOutputStream(logFile, true);
-            PumpStreamHandler streamHandler = new PumpStreamHandler(fileOutputStream, fileOutputStream, null);
-
-            // command
-            CommandLine commandline = new CommandLine(command);
-            commandline.addArgument(scriptFile);
-            if (params!=null && params.length>0) {
-                commandline.addArguments(params);
-            }
-
-            // exec
-            DefaultExecutor exec = new DefaultExecutor();
-            exec.setExitValues(null);
-            exec.setStreamHandler(streamHandler);
-            int exitValue = exec.execute(commandline);  // exit code: 0=success, 1=error
-            return exitValue;
-        } catch (Exception e) {
-            XxlJobLogger.log(e);
-            return -1;
-        } finally {
-            if (fileOutputStream != null) {
-                try {
-                    fileOutputStream.close();
-                } catch (IOException e) {
-                    XxlJobLogger.log(e);
-                }
-
-            }
+    private static void terminateProcess(Process process) {
+        if (process == null || !process.isAlive()) {
+            return;
         }
-    }*/
+        process.destroy();
+        try {
+            if (!process.waitFor(PROCESS_GRACEFUL_STOP_SECONDS, TimeUnit.SECONDS) && process.isAlive()) {
+                process.destroyForcibly();
+                process.waitFor(PROCESS_FORCE_STOP_SECONDS, TimeUnit.SECONDS);
+            }
+        } catch (InterruptedException e) {
+            process.destroyForcibly();
+            Thread.currentThread().interrupt();
+        }
+    }
 
 }

@@ -4,16 +4,12 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodeLogPageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodePageParam;
 import com.nbatch.job.admin.core.domain.param.JobWorkNodeParam;
-import com.nbatch.job.admin.core.domain.param.JobWorkNodeRelationParam;
 import com.nbatch.job.admin.core.domain.po.JobWorkNodePo;
-import com.nbatch.job.admin.core.domain.po.JobWorkNodeRelationPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkPo;
 import com.nbatch.job.admin.core.domain.po.JobWorkRunNodeLogDetailPo;
-import com.nbatch.job.admin.core.domain.vo.JobWorkNodeRelationVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeTypeVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkNodeVo;
 import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeLogVo;
-import com.nbatch.job.admin.core.domain.vo.JobWorkRunNodeVo;
 import com.nbatch.job.core.biz.model.ReturnT;
 
 import java.util.List;
@@ -57,24 +53,9 @@ public interface IJobWorkNodeService {
     int delete(String id);
 
     /**
-     * 得到所有的发布的
-     */
-    List<JobWorkNodePo> getWorkNodeList(String workId);
-
-    /**
      * 获取所有启用的作业
      */
     List<JobWorkPo> getAllWorkList();
-
-    /**
-     * 获得所有作业节点关系
-     */
-    List<JobWorkNodeRelationVo> getWorkNodeRelationByWorkId(String workId);
-
-    /**
-     * 批量插入作业节点关系
-     */
-    int updateWorkNodeRelation(JobWorkNodeRelationParam param);
 
     /**
      * 获取作业节点关系
@@ -90,15 +71,5 @@ public interface IJobWorkNodeService {
      * 获取作业节点
      */
     JobWorkNodePo getWorkNode(String workNodeId);
-
-    /**
-     * 重跑节点及其后继节点
-     */
-    ReturnT<String> rerunNode(String runNodeId);
-
-    /**
-     * 按初始化翻牌日期重跑节点及其后继节点
-     */
-    ReturnT<String> rerunNodeFromInitTurnDate(String runNodeId);
 
 }

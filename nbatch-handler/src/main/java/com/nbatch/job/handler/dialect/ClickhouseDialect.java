@@ -1,6 +1,5 @@
 package com.nbatch.job.handler.dialect;
 
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.clickhouse.client.ClickHouseRequest;
@@ -24,7 +23,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_UPDATE_SQL_FAIL;
+import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_SQL_FAIL;
 
 /**
  * @description: Clickhouse数据库方言
@@ -93,11 +92,11 @@ public class ClickhouseDialect implements BaseDialect {
                 return readRows;
             } catch (Exception e) {
                 log.error("CSV 导入失败:", e);
-                throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(),
-                        "CSV 导入失败: " + ExceptionUtil.getRootCauseMessage(e));
+                throw new HandlerException(EXECUTE_SQL_FAIL.getCode(),
+                        "CSV 导入失败: " + e.getMessage());
             }
         } catch (Exception e) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), e);
         } finally {
             // 这里使用连接代理关闭，重置线程池属性
             if (connection != null && !connection.isClosed()) {
@@ -139,11 +138,11 @@ public class ClickhouseDialect implements BaseDialect {
                 return true;
             } catch (Exception e) {
                 log.error("CSV 导入失败:", e);
-                throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(),
-                        "CSV 导入失败: " + ExceptionUtil.getRootCauseMessage(e));
+                throw new HandlerException(EXECUTE_SQL_FAIL.getCode(),
+                        "CSV 导入失败: " + e.getMessage());
             }
         } catch (Exception e) {
-            throw new HandlerException(EXECUTE_UPDATE_SQL_FAIL.getCode(), e);
+            throw new HandlerException(EXECUTE_SQL_FAIL.getCode(), e);
         } finally {
             // 这里使用连接代理关闭，重置线程池属性
             if (connection != null && !connection.isClosed()) {
@@ -152,6 +151,29 @@ public class ClickhouseDialect implements BaseDialect {
         }
     }
 
+
+    @Override
+    public void executeStoreProcedure(Connection connection, String sql, JSONObject paramObj) throws Exception {
+        log.info("执行存储过程 sql：{}", sql);
+        SpecialSqlUtil.executeStoreProcedure(connection, sql, paramObj);
+    }
+
+    @Override
+    public String executeStoreProcedureReturnStr(Connection connection, String sql, JSONObject paramObj) throws Exception {
+        log.info("执行带有返回值的存储过程 sql：{}", sql);
+        return SpecialSqlUtil.executeStoreProcedureReturnStr(connection, sql, paramObj);
+    }
+
+    @Override
+    public int executeUpdate(Connection connection, String sql) throws Exception {
+        return executeUpdate(connection, sql, 600);
+    }
+
+    @Override
+    public int executeUpdate(Connection connection, String sql , int timeout) throws Exception {
+        log.info("执行 update sql：{}", sql);
+        return SpecialSqlUtil.executeUpdate(connection, sql, timeout);
+    }
 
     /**
      * 删除表根据表名
@@ -191,24 +213,6 @@ public class ClickhouseDialect implements BaseDialect {
         String renameTableSql = StrUtil.format("ALTER TABLE {} RENAME TO {}", currentTableName, targetTableName);
         log.info("执行 rename table sql：{}", renameTableSql);
         return SpecialSqlUtil.executeUpdate(connection, renameTableSql);
-    }
-
-    @Override
-    public void executeStoreProcedure(Connection connection, String sql, JSONObject paramObj) throws Exception {
-        log.info("执行 function paramObj sql：{}", sql);
-        SpecialSqlUtil.executeStoreProcedure(connection, sql, paramObj);
-    }
-
-    @Override
-    public String executeStoreProcedureReturnStr(Connection connection, String sql, JSONObject paramObj) throws Exception {
-        log.info("执行 function paramObj sql：{}", sql);
-        return SpecialSqlUtil.executeStoreProcedureReturnStr(connection, sql, paramObj);
-    }
-
-    @Override
-    public int executeUpdate(Connection connection, String sql) throws Exception {
-        log.info("执行 update sql：{}", sql);
-        return SpecialSqlUtil.executeUpdate(connection, sql);
     }
 
 

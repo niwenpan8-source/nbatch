@@ -7,7 +7,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * annotation for method jobHandler
+ * 作业流程节点处理方法注解
  *
  * @author Mr.ni
  */
@@ -17,17 +17,17 @@ import java.lang.annotation.Target;
 public @interface BatchJobWorkNode {
 
     /**
-     * jobHandler name
+     * 作业处理器名称
      */
     String value();
 
     /**
-     * init handler, invoked when JobThread init
+     * 初始化处理器，在作业线程初始化时调用
      */
     String init() default "";
 
     /**
-     * destroy handler, invoked when JobThread destroy
+     * 销毁处理器，在作业线程销毁时调用
      */
     String destroy() default "";
 
