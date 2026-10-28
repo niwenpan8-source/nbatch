@@ -41,7 +41,7 @@
         }
     </style>
 </head>
-<body class="hold-transition skin-blue sidebar-mini list-page <#if cookieMap?exists && cookieMap["xxljob_adminlte_settings"]?exists && "off" == cookieMap["xxljob_adminlte_settings"].value >sidebar-collapse</#if>">
+<body class="hold-transition skin-blue sidebar-mini list-page <#if cookieMap?exists && cookieMap["nbatch_job_adminlte_settings"]?exists && "off" == cookieMap["nbatch_job_adminlte_settings"].value >sidebar-collapse</#if>">
 <div class="wrapper">
     <!-- header -->
     <@netCommon.commonHeader />

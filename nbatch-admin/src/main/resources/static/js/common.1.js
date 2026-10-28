@@ -207,14 +207,23 @@ $(function(){
 
 	// left menu status v: js + server + cookie
 	$('.sidebar-toggle').click(function(){
-		var xxljob_adminlte_settings = $.cookie('xxljob_adminlte_settings');	// on=open，off=close
-		if ('off' == xxljob_adminlte_settings) {
-            xxljob_adminlte_settings = 'on';
+		var nbatch_job_adminlte_settings = $.cookie('nbatch_job_adminlte_settings');	// on=open，off=close
+		if ('off' == nbatch_job_adminlte_settings) {
+			nbatch_job_adminlte_settings = 'on';
 		} else {
-            xxljob_adminlte_settings = 'off';
+			nbatch_job_adminlte_settings = 'off';
 		}
-		$.cookie('xxljob_adminlte_settings', xxljob_adminlte_settings, { expires: 7 });	//$.cookie('the_cookie', '', { expires: -1 });
+		$.cookie('nbatch_job_adminlte_settings', nbatch_job_adminlte_settings, { expires: 7 });	//$.cookie('the_cookie', '', { expires: -1 });
 	});
+
+	// left menu status v1: js + cookie
+	/*
+	 var nbatch_job_adminlte_settings = $.cookie('nbatch_job_adminlte_settings');
+	 if (nbatch_job_adminlte_settings == 'off') {
+	 	$('body').addClass('sidebar-collapse');
+	 }
+	 */
+
 
     // update pwd
     $('#updatePwd').on('click', function(){

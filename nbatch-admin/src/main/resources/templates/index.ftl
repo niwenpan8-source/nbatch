@@ -41,7 +41,7 @@
         @media (max-width: 991px) {.overview-card {margin-bottom: 12px;}.dashboard-heading {display: block;}.dashboard-heading .dashboard-subtitle {display: block; margin-top: 5px;}}
     </style>
 </head>
-<body class="hold-transition skin-blue sidebar-mini <#if cookieMap?exists && cookieMap["xxljob_adminlte_settings"]?exists && "off" == cookieMap["xxljob_adminlte_settings"].value >sidebar-collapse</#if> ">
+<body class="hold-transition skin-blue sidebar-mini <#if cookieMap?exists && cookieMap["nbatch_job_adminlte_settings"]?exists && "off" == cookieMap["nbatch_job_adminlte_settings"].value >sidebar-collapse</#if> ">
 <div class="wrapper">
 	<!-- header -->
 	<@netCommon.commonHeader />
