@@ -7,8 +7,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * 作业运行监控线程
- *
- * @author Mr.ni
  */
 @Slf4j
 public class JobWorkMonitorHelper {

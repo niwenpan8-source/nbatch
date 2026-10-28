@@ -19,8 +19,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * 线程池 工具类
- *
- * @author Mr.ni
  */
 @Log4j2
 @Component

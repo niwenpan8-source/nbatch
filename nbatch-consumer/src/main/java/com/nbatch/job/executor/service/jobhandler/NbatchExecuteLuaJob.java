@@ -23,8 +23,6 @@ import static com.nbatch.job.handler.enums.ExceptionCodeEnum.LUA_SCRIPT_FAIL;
 
 /**
  * 执行 lua 脚本
- *
- * @author Mr.ni
  */
 @Slf4j
 @Component

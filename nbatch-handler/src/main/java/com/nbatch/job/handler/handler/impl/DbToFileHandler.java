@@ -23,9 +23,7 @@ import static com.nbatch.job.handler.constant.JobHandlerConstant.FILE_TYPE_SUFFI
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_SQL_FAIL;
 
 /**
- * @description: 数据库导出文件处理
- * @author: Mr.ni
- * @date: 2025/11/19
+ * 数据库导出文件处理
  */
 @RequiredArgsConstructor
 @Log

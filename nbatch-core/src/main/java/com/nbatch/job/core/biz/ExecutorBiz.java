@@ -3,9 +3,7 @@ package com.nbatch.job.core.biz;
 import com.nbatch.job.core.biz.model.*;
 
 /**
- * @author Mr.ni
- * @description: 执行器服务
- * @date 2025/11/05
+ * 执行器服务
  */
 public interface ExecutorBiz {
 

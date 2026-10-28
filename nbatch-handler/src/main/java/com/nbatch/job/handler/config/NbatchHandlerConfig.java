@@ -21,9 +21,7 @@ import java.util.Map;
 import static com.nbatch.job.core.enums.NodeTypeEnum.*;
 
 /**
- * @description: 配置类
- * @author: Mr.ni
- * @date: 2025/11/25
+ * 配置类
  */
 @Slf4j
 @Configuration

@@ -24,8 +24,6 @@ import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_SQL_FAIL;
 
 /**
  * Gauss数据库方言
- * @author: Mr.ni
- * @date: 2025/11/19
  */
 @Slf4j
 public class GaussDialect implements BaseDialect {

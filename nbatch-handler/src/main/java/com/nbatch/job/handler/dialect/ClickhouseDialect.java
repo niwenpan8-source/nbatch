@@ -26,9 +26,7 @@ import java.util.concurrent.TimeUnit;
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_SQL_FAIL;
 
 /**
- * @description: Clickhouse数据库方言
- * @author: Mr.ni
- * @date: 2025/11/19
+ * Clickhouse数据库方言
  */
 @Slf4j
 public class ClickhouseDialect implements BaseDialect {

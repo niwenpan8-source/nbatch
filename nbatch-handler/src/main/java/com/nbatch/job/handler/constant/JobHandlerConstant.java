@@ -1,9 +1,7 @@
 package com.nbatch.job.handler.constant;
 
 /**
- * @description: job handler constant
- * @author: Mr.ni
- * @date: 2025/11/25
+ * job handler 常量
  */
 public interface JobHandlerConstant {
 

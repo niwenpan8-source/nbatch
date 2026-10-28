@@ -8,7 +8,6 @@ import java.io.Serializable;
 
 /**
  * 注册参数
- * @author Mr.ni
  */
 @Data
 @ToString

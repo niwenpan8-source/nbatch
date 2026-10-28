@@ -7,9 +7,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 /**
- * @description: 任务执行器锁
- * @author: Mr.ni
- * @date: 2025/11/6
+ * 任务执行器锁
  */
 public interface IJobLockMapper extends BaseMapper<JobLockPo> {
 

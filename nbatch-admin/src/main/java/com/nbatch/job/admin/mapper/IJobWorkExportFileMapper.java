@@ -4,9 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.nbatch.job.admin.core.domain.po.JobWorkExportFilePo;
 
 /**
- * @description: NbatchJobWorkExportFileMapper
- * @author: Mr.ni
- * @date: 2025/11/13
+ * 作业导出文件
  */
 public interface IJobWorkExportFileMapper extends BaseMapper<JobWorkExportFilePo> {
 }

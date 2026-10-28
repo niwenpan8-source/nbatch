@@ -23,9 +23,6 @@ import java.util.stream.Collectors;
 
 /**
  * 注册中心工具类
- *
- * @author: Mr.ni
- * @date: 2026/08/14
  */
 @Component
 @RequiredArgsConstructor

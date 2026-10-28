@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 
 /**
  * 作业注册管理线程
- * @author Mr.ni 2016-10-02 19:10:24
  */
 @Slf4j
 public class JobRegistryHelper {

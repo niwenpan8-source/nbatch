@@ -16,9 +16,6 @@ import java.util.List;
 
 /**
  * GaussDB 表数据复制到 MySQL
- *
- * @author: Mr.ni
- * @date: 2026/1/14
  */
 @Slf4j
 @Component

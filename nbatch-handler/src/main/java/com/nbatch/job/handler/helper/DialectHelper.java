@@ -17,9 +17,7 @@ import java.util.concurrent.TimeUnit;
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_SQL_FAIL;
 
 /**
- * @description: 数据库方言配置
- * @author: Mr.ni
- * @date: 2025/11/19
+ * 数据库方言配置
  */
 @RequiredArgsConstructor
 public class DialectHelper {

@@ -216,15 +216,6 @@ $(function(){
 		$.cookie('xxljob_adminlte_settings', xxljob_adminlte_settings, { expires: 7 });	//$.cookie('the_cookie', '', { expires: -1 });
 	});
 
-	// left menu status v1: js + cookie
-	/*
-	 var xxljob_adminlte_settings = $.cookie('xxljob_adminlte_settings');
-	 if (xxljob_adminlte_settings == 'off') {
-	 	$('body').addClass('sidebar-collapse');
-	 }
-	 */
-
-
     // update pwd
     $('#updatePwd').on('click', function(){
         $('#updatePwdModal').modal({backdrop: false, keyboard: false}).modal('show');

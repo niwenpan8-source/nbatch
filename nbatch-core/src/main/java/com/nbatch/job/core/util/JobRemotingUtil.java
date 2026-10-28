@@ -22,7 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.cert.X509Certificate;
 
 /**
- * @author Mr.ni
+ * 远程通信工具类
  */
 @Slf4j
 public class JobRemotingUtil {

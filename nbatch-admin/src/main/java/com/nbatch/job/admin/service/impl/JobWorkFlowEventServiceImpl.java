@@ -33,9 +33,6 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * 按作业聚合并推送流程图运行态。只发送状态、翻牌日期和剩余重试次数，
  * 流程结构仍由页面初始化和手动刷新接口负责加载。
- *
- * @author: Mr.ni
- * @date: 2026/09/18
  */
 @Service
 @RequiredArgsConstructor

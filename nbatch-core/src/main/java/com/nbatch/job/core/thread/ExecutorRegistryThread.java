@@ -15,8 +15,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * 心跳线程，定期发送执行器注册信息。
- * @author Mr.ni
- * @date 2025/11/05
  */
 @Slf4j
 public class ExecutorRegistryThread {

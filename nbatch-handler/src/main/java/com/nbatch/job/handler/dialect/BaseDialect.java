@@ -7,9 +7,7 @@ import com.nbatch.job.core.biz.model.ExecuteFileToDbParam;
 import java.sql.Connection;
 
 /**
- * @description: 方言接口
- * @author: Mr.ni
- * @date: 2025/11/19
+ * 方言接口
  */
 public interface BaseDialect {
 

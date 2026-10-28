@@ -13,9 +13,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
- * @description: 作业运行节点日志
- * @author: Mr.ni
- * @date: 2025-11-25
+ * 作业运行节点日志
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

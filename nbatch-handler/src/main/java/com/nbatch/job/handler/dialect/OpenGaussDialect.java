@@ -21,9 +21,7 @@ import java.util.Map;
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_SQL_FAIL;
 
 /**
- * @description: Gauss数据库方言
- * @author: Mr.ni
- * @date: 2025/11/19
+ * Gauss数据库方言
  */
 @Slf4j
 public class OpenGaussDialect implements BaseDialect {

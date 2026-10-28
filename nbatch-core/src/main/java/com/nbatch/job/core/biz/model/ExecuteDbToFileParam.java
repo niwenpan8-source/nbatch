@@ -3,9 +3,7 @@ package com.nbatch.job.core.biz.model;
 import lombok.Data;
 
 /**
- * @description: 执行数据库导出到文件参数
- * @author: Mr.ni
- * @date: 2025/11/21
+ * 执行数据库导出到文件参数
  */
 @Data
 public class ExecuteDbToFileParam {

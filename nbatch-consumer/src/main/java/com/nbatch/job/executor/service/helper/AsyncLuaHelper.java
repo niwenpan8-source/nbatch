@@ -12,7 +12,6 @@ import static com.nbatch.job.handler.enums.ExceptionCodeEnum.LUA_SCRIPT_FAIL;
 
 /**
  * 异步回调函数
- * @author Mr.ni
  */
 @Log4j2
 public class AsyncLuaHelper extends VarArgFunction {

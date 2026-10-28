@@ -7,9 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
- * @description: 作业节点表
- * @author: Mr.ni
- * @date: 2025-11-13
+ * 作业节点表
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

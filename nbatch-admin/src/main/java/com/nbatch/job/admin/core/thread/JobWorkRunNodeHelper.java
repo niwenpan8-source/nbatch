@@ -17,8 +17,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * 作业运行节点执行线程
- *
- * @author Mr.ni
  */
 @Slf4j
 public class JobWorkRunNodeHelper {

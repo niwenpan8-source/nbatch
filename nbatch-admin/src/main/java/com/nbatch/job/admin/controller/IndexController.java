@@ -27,7 +27,6 @@ import java.util.Map;
 
 /**
  * 首页控制器
- * @author Mr.ni 2015-12-19 16:13:16
  */
 @Controller
 public class IndexController {

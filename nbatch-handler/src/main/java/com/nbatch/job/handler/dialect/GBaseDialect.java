@@ -17,9 +17,7 @@ import java.util.List;
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_SQL_FAIL;
 
 /**
- * @description: GBase数据库方言
- * @author: Mr.ni
- * @date: 2025/11/19
+ * GBase数据库方言
  */
 @Slf4j
 public class GBaseDialect implements BaseDialect {

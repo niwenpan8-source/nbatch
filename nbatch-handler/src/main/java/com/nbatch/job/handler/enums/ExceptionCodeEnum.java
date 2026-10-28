@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 异常代码枚举
- * @author Mr.ni
  */
 @Getter
 @RequiredArgsConstructor

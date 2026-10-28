@@ -15,9 +15,7 @@ import static com.nbatch.job.core.enums.NodeTypeEnum.NODE_TYPE_STORE_PROCEDURE;
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_SQL_FAIL;
 
 /**
- * @description: 存储过程
- * @author: Mr.ni
- * @date: 2025/11/27
+ * 存储过程
  */
 @RequiredArgsConstructor
 @Log

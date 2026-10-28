@@ -1,9 +1,7 @@
 package com.nbatch.job.core.constant;
 
 /**
- * @description: 魔法值字符串
- * @author: Mr.ni
- * @date: 2025-05-26
+ * 魔法值字符串
  */
 public interface MagicStrConstant {
 

@@ -19,7 +19,6 @@ import java.util.Arrays;
 
 /**
  * 配置类
- * @author Mr.ni
  */
 
 @Component

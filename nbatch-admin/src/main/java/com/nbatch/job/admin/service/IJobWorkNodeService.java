@@ -16,9 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @description: 作业节点
- * @author: Mr.ni
- * @date: 2025/11/13
+ * 作业节点
  */
 public interface IJobWorkNodeService {
 

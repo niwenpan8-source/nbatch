@@ -25,9 +25,7 @@ import static com.nbatch.job.handler.constant.JobHandlerConstant.SQL_FIELD_REPLA
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_SQL_FAIL;
 
 /**
- * @description: 特殊sql运行处理
- * @author: Mr.ni
- * @date: 2025/11/19
+ * 特殊sql运行处理
  */
 @Slf4j
 public class SpecialSqlUtil {

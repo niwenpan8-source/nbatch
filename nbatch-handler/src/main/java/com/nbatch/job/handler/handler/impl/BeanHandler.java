@@ -14,9 +14,7 @@ import static com.nbatch.job.core.enums.NodeTypeEnum.NODE_TYPE_BEAN;
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.SYSTEM_ERROR;
 
 /**
- * @description: 方法 job 作业节点 处理
- * @author: Mr.ni
- * @date: 2025/11/27
+ * 方法 job 作业节点 处理
  */
 @RequiredArgsConstructor
 @Log

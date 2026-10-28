@@ -1,6 +1,5 @@
 package com.nbatch.job.core.biz.model;
 
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.IdUtil;
 import com.nbatch.job.core.files.RunNodeLogDetailLog;
 import lombok.Data;
@@ -10,18 +9,20 @@ import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
- * @description: 执行节点参数
- * @author: Mr.ni
- * @date: 2025/11/20
+ * 执行节点参数
  */
 @Data
 @Accessors(chain = true)
 public class ExecuteNodeParam {
 
-    /** 作业标识 */
+    /**
+     * 作业标识
+     */
     private String workId;
 
-    /** 步骤标识 */
+    /**
+     * 步骤标识
+     */
     private String nodeId;
 
     /**
@@ -29,7 +30,9 @@ public class ExecuteNodeParam {
      */
     private String groupId;
 
-    /** 节点执行日志标识 */
+    /**
+     * 节点执行日志标识
+     */
     private String nodeLogId = IdUtil.getSnowflakeNextIdStr();
 
     /**

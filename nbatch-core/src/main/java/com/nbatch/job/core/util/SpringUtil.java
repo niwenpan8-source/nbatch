@@ -7,9 +7,7 @@ import org.springframework.context.ApplicationContextAware;
 import java.util.Map;
 
 /**
- * @description:
- * @author: Mr.ni
- * @date: 2025/11/21
+ * spring 工具类
  */
 public class SpringUtil implements ApplicationContextAware {
 

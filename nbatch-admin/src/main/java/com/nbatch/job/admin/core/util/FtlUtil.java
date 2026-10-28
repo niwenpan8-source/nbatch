@@ -8,8 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Freemarker 模板工具类
- *
- * @author Mr.ni
  */
 @Slf4j
 public class FtlUtil {

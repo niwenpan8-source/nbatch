@@ -19,8 +19,6 @@ import java.util.Map;
 
 /**
  * Spring 作业执行器
- *
- * @author Mr.ni
  */
 @Slf4j
 public class BatchJobSpringExecutor extends BatchJobExecutor implements ApplicationContextAware, SmartInitializingSingleton, DisposableBean {
@@ -82,9 +80,9 @@ public class BatchJobSpringExecutor extends BatchJobExecutor implements Applicat
             }
 
             // 创建并注册方法作业处理器
-            for (Map.Entry<Method, BatchJob> methodXxlJobEntry : annotatedMethods.entrySet()) {
-                Method executeMethod = methodXxlJobEntry.getKey();
-                BatchJob batchJob = methodXxlJobEntry.getValue();
+            for (Map.Entry<Method, BatchJob> methodNbatchJobEntry : annotatedMethods.entrySet()) {
+                Method executeMethod = methodNbatchJobEntry.getKey();
+                BatchJob batchJob = methodNbatchJobEntry.getValue();
                 // 注册处理器
                 registerJobHandler(batchJob, bean, executeMethod);
             }

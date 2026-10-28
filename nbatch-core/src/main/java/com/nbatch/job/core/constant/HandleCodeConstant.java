@@ -1,9 +1,7 @@
 package com.nbatch.job.core.constant;
 
 /**
- * @description: 处理码常量
- * @author: Mr.ni
- * @date: 2025/11/25
+ * 处理码常量
  */
 public interface HandleCodeConstant {
 

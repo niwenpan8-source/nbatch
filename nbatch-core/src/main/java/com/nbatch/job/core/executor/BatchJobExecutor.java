@@ -27,7 +27,6 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * 作业执行器
- * @author Mr.ni
  */
 @Slf4j
 public class BatchJobExecutor {

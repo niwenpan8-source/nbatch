@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 回调类型枚举
- * @author Mr.ni
  */
 
 @Getter

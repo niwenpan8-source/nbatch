@@ -13,9 +13,7 @@ import com.baomidou.mybatisplus.extension.activerecord.Model;
 import java.util.Date;
 
 /**
- * @description: 作业节点导入节点表
- * @author: Mr.ni
- * @date: 2025-11-13
+ * 作业节点导入节点表
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

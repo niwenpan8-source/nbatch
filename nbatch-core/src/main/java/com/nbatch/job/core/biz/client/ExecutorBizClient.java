@@ -13,8 +13,6 @@ import com.nbatch.job.core.util.JobRemotingUtil;
 
 /**
  * 执行器接口客户端
- *
- * @author Mr.ni
  */
 public class ExecutorBizClient implements ExecutorBiz {
 

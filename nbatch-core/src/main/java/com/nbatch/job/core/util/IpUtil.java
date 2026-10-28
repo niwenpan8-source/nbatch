@@ -13,8 +13,6 @@ import java.util.regex.Pattern;
 
 /**
  * IP 地址工具类
- *
- * @author Mr.ni 2016-5-22 11:38:05
  */
 @Slf4j
 public class IpUtil {

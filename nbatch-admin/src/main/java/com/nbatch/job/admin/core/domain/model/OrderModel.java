@@ -4,7 +4,6 @@ import lombok.Data;
 
 /**
  * 排序参数
- * @author Mr.ni
  */
 @Data
 public class OrderModel {

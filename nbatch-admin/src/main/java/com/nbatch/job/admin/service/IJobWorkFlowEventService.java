@@ -4,9 +4,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 /**
  * 作业流程运行态事件服务。
- *
- * @author: Mr.ni
- * @date: 2026/09/18
  */
 public interface IJobWorkFlowEventService {
 

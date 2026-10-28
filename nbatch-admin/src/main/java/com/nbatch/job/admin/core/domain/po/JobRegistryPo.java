@@ -11,9 +11,7 @@ import lombok.experimental.Accessors;
 import java.util.Date;
 
 /**
- * @description: 任务注册表实体类
- * @author: Mr.ni
- * @date: 2025/11/6
+ * 任务注册表实体类
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

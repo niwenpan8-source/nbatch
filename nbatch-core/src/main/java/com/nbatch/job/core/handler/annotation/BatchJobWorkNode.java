@@ -8,8 +8,6 @@ import java.lang.annotation.Target;
 
 /**
  * 作业流程节点处理方法注解
- *
- * @author Mr.ni
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

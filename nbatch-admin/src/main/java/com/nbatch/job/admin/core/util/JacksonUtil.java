@@ -9,10 +9,6 @@ import java.io.IOException;
 
 /**
  * Jackson 工具类
- * 1、obj need private and set/get；
- * 2、do not support inner class；
- *
- * @author Mr.ni 2015-9-25 18:02:56
  */
 @Slf4j
 public class JacksonUtil {

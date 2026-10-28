@@ -19,7 +19,6 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * 任务调度初始化
- * @author Mr.ni
  */
 @Slf4j
 public class JobScheduler {

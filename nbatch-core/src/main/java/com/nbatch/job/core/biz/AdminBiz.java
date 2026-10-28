@@ -4,7 +4,7 @@ import com.nbatch.job.core.biz.model.RegistryParam;
 import com.nbatch.job.core.biz.model.ReturnT;
 
 /**
- * @author Mr.ni 2017-07-27 21:52:49
+ * 服务端处理接口
  */
 public interface AdminBiz {
 

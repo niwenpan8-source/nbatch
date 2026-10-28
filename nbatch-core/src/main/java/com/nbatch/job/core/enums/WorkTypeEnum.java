@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 作业状态枚举
- * @author Mr.ni
  */
 @Getter
 @RequiredArgsConstructor

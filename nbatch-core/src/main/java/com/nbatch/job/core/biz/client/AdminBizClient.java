@@ -8,8 +8,6 @@ import com.nbatch.job.core.util.JobRemotingUtil;
 
 /**
  * 管理端接口客户端
- *
- * @author Mr.ni
  */
 public class AdminBizClient implements AdminBiz {
 

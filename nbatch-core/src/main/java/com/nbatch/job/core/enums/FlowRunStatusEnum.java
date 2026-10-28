@@ -6,8 +6,6 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 运行流程状态
- *
- * @author Mr.ni
  */
 @Getter
 @RequiredArgsConstructor

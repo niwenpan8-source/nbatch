@@ -8,9 +8,6 @@ import org.springframework.stereotype.Component;
 
 /**
  * yml 配置文件加密解密工具
- *
- * @author: Mr.ni
- * @date: 2026/09/04
  */
 @Log4j2
 @Component("ymlStringEncryptorHelper")

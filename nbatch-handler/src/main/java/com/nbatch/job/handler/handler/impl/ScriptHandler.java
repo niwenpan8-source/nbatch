@@ -17,9 +17,7 @@ import static com.nbatch.job.core.enums.NodeTypeEnum.NODE_TYPE_SCRIPT;
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.SCRIPT_FAIL;
 
 /**
- * @description: 脚本处理
- * @author: Mr.ni
- * @date: 2025/11/27
+ * 脚本处理
  */
 @Slf4j
 public class ScriptHandler implements JobNodeHandlerAdapter {

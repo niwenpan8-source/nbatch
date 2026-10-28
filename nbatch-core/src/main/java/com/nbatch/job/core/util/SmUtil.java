@@ -13,9 +13,7 @@ import org.apache.logging.log4j.Logger;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
 
 /**
- * @description:
- * @author: Mr.ni
- * @date: 2025-06-18
+ * 加密工具类
  */
 public class SmUtil {
 

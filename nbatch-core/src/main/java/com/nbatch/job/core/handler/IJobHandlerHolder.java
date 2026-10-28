@@ -3,9 +3,7 @@ package com.nbatch.job.core.handler;
 import com.nbatch.job.core.biz.model.ExecuteWorkParam;
 
 /**
- * @description: job handler 容器
- * @author: Mr.ni
- * @date: 2025/11/21
+ * job handler 容器
  */
 public interface IJobHandlerHolder {
 

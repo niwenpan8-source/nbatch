@@ -4,9 +4,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * @description: 节点类型枚举
- * @author: Mr.ni
- * @date: 2025/11/13
+ * 节点类型枚举
  */
 @Getter
 @RequiredArgsConstructor

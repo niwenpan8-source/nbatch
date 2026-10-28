@@ -8,8 +8,6 @@ import javax.annotation.Resource;
 
 /**
  * Web MVC 配置
- *
- * @author Mr.ni
  */
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {

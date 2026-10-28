@@ -10,7 +10,6 @@ import java.util.List;
 
 /**
  * 基础param
- * @author Mr.ni
  */
 @Data
 public class BaseModel<T> {

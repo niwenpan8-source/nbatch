@@ -7,9 +7,7 @@ import lombok.experimental.Accessors;
 import org.springframework.util.StringUtils;
 
 /**
- * @description: 任务用户实体类
- * @author: Mr.ni
- * @date: 2025/11/6
+ * 任务用户实体类
  */
 @Data
 @Accessors(chain = true)

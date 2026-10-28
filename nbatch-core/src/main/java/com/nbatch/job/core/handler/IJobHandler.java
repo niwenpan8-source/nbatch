@@ -2,8 +2,6 @@ package com.nbatch.job.core.handler;
 
 /**
  * 作业处理器
- *
- * @author Mr.ni 2015-12-19 19:06:38
  */
 public abstract class IJobHandler {
 

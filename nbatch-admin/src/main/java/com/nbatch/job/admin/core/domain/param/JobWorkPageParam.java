@@ -5,9 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * @description: 作业节点分页参数
- * @author: Mr.ni
- * @date: 2025/11/13
+ * 作业节点分页参数
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

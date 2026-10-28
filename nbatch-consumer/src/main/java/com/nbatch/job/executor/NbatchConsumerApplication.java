@@ -5,7 +5,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
  * 启动类
- * @author Mr.ni
  */
 @SpringBootApplication
 public class NbatchConsumerApplication {

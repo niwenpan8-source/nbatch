@@ -9,8 +9,6 @@ import org.springframework.stereotype.Service;
 
 /**
  * 管理端接口实现
- *
- * @author Mr.ni
  */
 @Service
 public class AdminBizImpl implements AdminBiz {

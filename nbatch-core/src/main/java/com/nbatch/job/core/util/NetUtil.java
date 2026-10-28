@@ -7,8 +7,6 @@ import java.net.ServerSocket;
 
 /**
  * 网络工具类
- *
- * @author Mr.ni 2017-11-29 17:00:25
  */
 @Slf4j
 public class NetUtil {

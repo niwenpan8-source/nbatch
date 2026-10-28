@@ -4,7 +4,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 /**
- * @author Mr.ni
+ * 抛出异常工具类
  */
 public class ThrowableUtil {
 

@@ -9,9 +9,7 @@ import lombok.experimental.Accessors;
 import java.util.Date;
 
 /**
- * @description: 任务锁
- * @author: Mr.ni
- * @date: 2025/11/6
+ * 任务锁
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

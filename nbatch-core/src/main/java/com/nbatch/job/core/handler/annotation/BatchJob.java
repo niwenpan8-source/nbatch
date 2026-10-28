@@ -4,8 +4,6 @@ import java.lang.annotation.*;
 
 /**
  * 作业处理方法注解
- *
- * @author Mr.ni 2019-12-11 20:50:13
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

@@ -3,9 +3,7 @@ package com.nbatch.job.handler.handler;
 import com.nbatch.job.core.biz.model.ExecuteNodeParam;
 
 /**
- * @description: BeanHandler 上下文
- * @author: Mr.ni
- * @date: 2025/12/19
+ * BeanHandler 上下文
  */
 public class BeanHandlerContext {
 

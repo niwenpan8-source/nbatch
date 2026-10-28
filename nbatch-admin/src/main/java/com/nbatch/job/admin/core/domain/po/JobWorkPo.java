@@ -15,9 +15,7 @@ import lombok.experimental.Accessors;
 import java.util.Date;
 
 /**
- * @description: 作业表
- * @author: Mr.ni
- * @date: 2025-11-13
+ * 作业表
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

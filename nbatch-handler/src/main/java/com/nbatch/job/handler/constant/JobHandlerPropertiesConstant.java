@@ -4,9 +4,7 @@ import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 
 /**
- * @description:
- * @author: Mr.ni
- * @date: 2025/11/25
+ * job handler 配置属性常量
  */
 @Data
 public class JobHandlerPropertiesConstant {

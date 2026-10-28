@@ -12,9 +12,7 @@ import lombok.RequiredArgsConstructor;
 import static com.nbatch.job.core.enums.NodeTypeEnum.NODE_TYPE_STORE_PROCEDURE;
 
 /**
- * @description: 存储过程
- * @author: Mr.ni
- * @date: 2025/11/27
+ * 存储过程
  */
 @RequiredArgsConstructor
 public class StoreProcedureHandler implements JobNodeHandlerAdapter {

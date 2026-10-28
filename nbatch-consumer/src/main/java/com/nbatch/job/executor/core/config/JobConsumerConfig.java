@@ -8,8 +8,6 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * 作业执行器配置
- *
- * @author Mr.ni
  */
 @Slf4j
 @Configuration

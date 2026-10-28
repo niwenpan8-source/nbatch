@@ -9,7 +9,6 @@ import java.io.Serializable;
 
 /**
  * 通用返回结果
- * @author Mr.ni
  */
 @Data
 @ToString

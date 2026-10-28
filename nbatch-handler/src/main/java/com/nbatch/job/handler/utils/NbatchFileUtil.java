@@ -31,9 +31,7 @@ import static com.nbatch.job.handler.constant.JobHandlerConstant.FILE_NAME_REPLA
 import static com.nbatch.job.handler.enums.ExceptionCodeEnum.DB_TO_FILE_FAIL;
 
 /**
- * @description: 文件工具类
- * @author: Mr.ni
- * @date: 2025/11/26
+ * 文件工具类
  */
 @Slf4j
 public class NbatchFileUtil {

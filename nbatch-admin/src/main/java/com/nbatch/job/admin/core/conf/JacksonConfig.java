@@ -28,9 +28,6 @@ import static cn.hutool.core.date.DatePattern.NORM_TIME_PATTERN;
 
 /**
  * Jackson 默认配置
- *
- * @author: zzy
- * @date: 2025-12-10
  */
 @Configuration
 public class JacksonConfig {

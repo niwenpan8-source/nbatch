@@ -10,9 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @description: Gauss数据库执行sql帮助类
- * @author: Mr.ni
- * @date: 2025/12/19
+ * Gauss数据库执行sql帮助类
  */
 public class ExecuteGaussSqlHelper {
 

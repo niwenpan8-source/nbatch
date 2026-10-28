@@ -4,7 +4,7 @@ import com.nbatch.job.admin.core.util.I18nUtil;
 import lombok.Getter;
 
 /**
- * @author Mr.ni
+ * 定时类型
  */
 @Getter
 public enum ScheduleTypeEnum {

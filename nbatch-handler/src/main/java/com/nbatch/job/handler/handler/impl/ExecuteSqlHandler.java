@@ -9,9 +9,7 @@ import lombok.RequiredArgsConstructor;
 import static com.nbatch.job.core.enums.NodeTypeEnum.NODE_TYPE_EXECUTE_SQL;
 
 /**
- * @description: 执行sql
- * @author: Mr.ni
- * @date: 2025/11/27
+ * 执行sql
  */
 @RequiredArgsConstructor
 public class ExecuteSqlHandler implements JobNodeHandlerAdapter {

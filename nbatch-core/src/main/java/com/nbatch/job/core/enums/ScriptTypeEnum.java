@@ -4,9 +4,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * @description: 脚本类型
- * @author: Mr.ni
- * @date: 2025/11/13
+ * 脚本类型
  */
 @Getter
 @RequiredArgsConstructor

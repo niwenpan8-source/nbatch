@@ -150,10 +150,10 @@ public class JobRunNodeLogPullHelper {
                 if (eventOffset != null) {
                     ackOffset = eventOffset;
                 }
-            } catch (Throwable e) {
+            } catch (IllegalArgumentException e) {
                 log.error("处理运行节点事件日志失败，地址：{}，offset：{}，事件：{}",
                         address, eventOffset, logRecord, e);
-                // 当前事件失败后不能跳过，否则 ACK 会永久丢失该事件。
+                // 当前事件失败后不能跳过，会进行跳过
                 break;
             }
         }

@@ -2,7 +2,7 @@
   <node TEXT="nbatch 批量作业调度平台">
     <node TEXT="项目定位">
       <node TEXT="Spring Boot 批处理平台"/>
-      <node TEXT="基于 XXL-JOB 调度模型扩展"/>
+      <node TEXT="基于 NBATCH-JOB 调度模型扩展"/>
       <node TEXT="支持作业流程编排"/>
       <node TEXT="支持多节点批处理"/>
       <node TEXT="支持跨库处理与脚本执行"/>

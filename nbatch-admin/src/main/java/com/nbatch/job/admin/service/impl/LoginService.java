@@ -17,12 +17,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.math.BigInteger;
 
 /**
- * @author Mr.ni 2019-05-04 22:13:264
+ * 登录service
  */
 @Service
 public class LoginService {
 
-    public static final String LOGIN_IDENTITY_KEY = "XXL_JOB_LOGIN_IDENTITY";
+    public static final String LOGIN_IDENTITY_KEY = "NBATCH_JOB_LOGIN_IDENTITY";
 
     @Resource
     private IJobUserMapper jobUserMapper;

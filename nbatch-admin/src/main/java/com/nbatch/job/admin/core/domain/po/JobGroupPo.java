@@ -18,9 +18,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * @description: 任务执行器分组实体类
- * @author: Mr.ni
- * @date: 2025/11/6
+ * 任务执行器分组实体类
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

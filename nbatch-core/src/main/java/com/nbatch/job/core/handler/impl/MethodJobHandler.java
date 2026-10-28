@@ -6,7 +6,6 @@ import java.lang.reflect.Method;
 
 /**
  * 方法任务处理器
- * @author Mr.ni
  */
 public class MethodJobHandler extends IJobHandler {
 

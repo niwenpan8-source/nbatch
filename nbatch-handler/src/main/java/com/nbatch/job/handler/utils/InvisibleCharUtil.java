@@ -3,9 +3,7 @@ package com.nbatch.job.handler.utils;
 import cn.hutool.core.util.StrUtil;
 
 /**
- * @description: 隐藏字符工具类
- * @author: Mr.ni
- * @date: 2026/1/19
+ * 隐藏字符工具类
  */
 public class InvisibleCharUtil {
 

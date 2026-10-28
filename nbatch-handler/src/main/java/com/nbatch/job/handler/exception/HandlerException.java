@@ -4,9 +4,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * @description: 处理异常
- * @author: Mr.ni
- * @date: 2025/11/19
+ * 处理异常
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

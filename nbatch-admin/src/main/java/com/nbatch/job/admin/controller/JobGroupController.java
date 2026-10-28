@@ -35,8 +35,6 @@ import java.util.Map;
 
 /**
  * 作业组控制器
- *
- * @author Mr.ni
  */
 @Controller
 @RequestMapping("/jobgroup")

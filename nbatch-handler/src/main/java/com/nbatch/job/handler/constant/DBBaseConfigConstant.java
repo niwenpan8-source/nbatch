@@ -6,9 +6,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 /**
- * @description: 数据源配置
- * @author: Mr.ni
- * @date: 2025/11/19
+ * 数据源配置
  */
 @Data
 @Component

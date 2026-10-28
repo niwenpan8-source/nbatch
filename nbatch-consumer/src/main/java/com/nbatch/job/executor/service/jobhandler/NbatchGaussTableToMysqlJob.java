@@ -14,8 +14,6 @@ import static com.nbatch.job.handler.enums.ExceptionCodeEnum.EXECUTE_SQL_FAIL;
 
 /**
  * 通过表名将高斯数据库表迁移到MySQL
- * @author: Mr.ni
- * @date: 2026/1/15
  */
 @Slf4j
 @Component

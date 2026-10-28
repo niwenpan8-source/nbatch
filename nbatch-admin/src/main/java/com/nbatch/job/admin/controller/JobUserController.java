@@ -32,7 +32,6 @@ import java.util.Map;
 
 /**
  * 账号管理
- * @author Mr.ni
  */
 @Controller
 @RequestMapping("/user")

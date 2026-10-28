@@ -16,8 +16,6 @@ import java.io.IOException;
 
 /**
  * 通用异常解析器
- *
- * @author Mr.ni
  */
 @Slf4j
 @Component

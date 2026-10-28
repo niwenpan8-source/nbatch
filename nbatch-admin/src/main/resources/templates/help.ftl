@@ -25,7 +25,7 @@
 				<h4>${I18n.admin_name_full}</h4>
 				<br>
 				<p>
-					<a target="_blank" href="https://github.com/nbatch/xxl-job">Github</a>&nbsp;&nbsp;&nbsp;&nbsp;
+					<a target="_blank" href="https://github.com/niwenpan8-source/nbatch">Github</a>&nbsp;&nbsp;&nbsp;&nbsp;
 					<iframe src="https://ghbtns.com/github-btn.html?user=nbatch&repo=xxl-job&type=star&count=true" frameborder="0" scrolling="0" width="170px" height="20px" style="margin-bottom:-5px;"></iframe>
 					<br><br>
                     <a target="_blank" href="https://www.nbatch.com/xxl-job/">${I18n.job_help_document}</a>

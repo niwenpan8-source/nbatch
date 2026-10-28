@@ -6,9 +6,7 @@ import lombok.experimental.Accessors;
 import java.util.List;
 
 /**
- * @description: 作业节点类型表
- * @author: Mr.ni
- * @date: 2025/11/18
+ *作业节点类型表
  */
 @Data
 @Accessors(chain = true)

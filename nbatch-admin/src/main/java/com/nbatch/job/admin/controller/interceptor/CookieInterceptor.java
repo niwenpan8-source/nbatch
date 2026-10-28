@@ -13,8 +13,6 @@ import java.util.HashMap;
 
 /**
  * 将 Cookie 以 cookieMap 形式写入页面模型
- *
- * @author Mr.ni
  */
 @Component
 public class CookieInterceptor implements AsyncHandlerInterceptor {

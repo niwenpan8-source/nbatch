@@ -36,8 +36,6 @@ import java.util.Map;
 
 /**
  * 作业节点控制器
- *
- * @author Mr.ni
  */
 @Slf4j
 @Controller

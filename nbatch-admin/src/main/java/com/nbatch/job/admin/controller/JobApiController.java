@@ -21,8 +21,6 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * API 接口控制器
- * @author Mr.ni
- * @date 2025/11/05
  */
 @Controller
 @RequestMapping("/api")

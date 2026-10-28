@@ -5,8 +5,6 @@ import lombok.Getter;
 
 /**
  * 错过策略枚举
- *
- * @author Mr.ni
  */
 @Getter
 public enum MisfireStrategyEnum {

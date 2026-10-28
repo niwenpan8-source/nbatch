@@ -15,8 +15,6 @@ import java.util.Properties;
 
 /**
  * 国际化工具类
- *
- * @author Mr.ni
  */
 @Slf4j
 public class I18nUtil {

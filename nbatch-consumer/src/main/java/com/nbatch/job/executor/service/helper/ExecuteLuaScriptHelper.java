@@ -9,8 +9,6 @@ import static com.nbatch.job.handler.enums.ExceptionCodeEnum.LUA_SCRIPT_FAIL;
 
 /**
  * Lua 脚本执行工具类
- * @author: Mr.ni
- * @date: 2025/12/22
  */
 @Slf4j
 public class ExecuteLuaScriptHelper {

@@ -7,8 +7,6 @@ import java.util.Date;
 
 /**
  * @description: 任务执行器分组实体类
- * @author: Mr.ni
- * @date: 2025/11/6
  */
 @Data
 @Accessors(chain = true)

@@ -27,9 +27,6 @@ import static com.nbatch.job.handler.enums.ExceptionCodeEnum.SYSTEM_ERROR;
 
 /**
  * 作业处理器容器
- *
- * @author Mr.ni
- * @date 2025/11/19
  */
 @Slf4j
 @RequiredArgsConstructor

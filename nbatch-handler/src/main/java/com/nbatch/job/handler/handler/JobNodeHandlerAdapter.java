@@ -3,9 +3,7 @@ package com.nbatch.job.handler.handler;
 import com.nbatch.job.core.biz.model.ExecuteNodeParam;
 
 /**
- * @description: 适配器
- * @author: Mr.ni
- * @date: 2025/11/19
+ * 适配器
  */
 public interface JobNodeHandlerAdapter {
 

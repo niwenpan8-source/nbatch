@@ -9,9 +9,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * @description: 作业节点表
- * @author: Mr.ni
- * @date: 2025-11-13
+ * 作业节点表
  */
 @Data
 @Accessors(chain = true)

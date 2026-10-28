@@ -9,9 +9,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
- * @description: 作业运行节点详细日志
- * @author: Mr.ni
- * @date: 2025-12-03
+ * 作业运行节点详细日志
  */
 @Data
 @Accessors(chain = true)

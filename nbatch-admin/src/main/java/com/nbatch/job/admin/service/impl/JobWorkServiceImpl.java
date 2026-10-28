@@ -45,9 +45,6 @@ import java.util.stream.Collectors;
 /**
  * 作业配置与调度服务。
  * 运行快照的停止、恢复及重跑由 {@link JobWorkRunServiceImpl} 处理。
- *
- * @author Mr.ni
- * @date 2025/11/13
  */
 @Service
 public class JobWorkServiceImpl implements IJobWorkService {

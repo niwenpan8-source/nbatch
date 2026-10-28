@@ -48,8 +48,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 基于netty实现的通信服务端
- *
- * @author Mr.ni
  */
 @Slf4j
 public class EmbedServer {
@@ -142,8 +140,6 @@ public class EmbedServer {
 
     /**
      * Netty HTTP 请求处理器
-     *
-     * @author Mr.ni 2015-11-05 22:25:15
      */
     public static class EmbedHttpServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
 
